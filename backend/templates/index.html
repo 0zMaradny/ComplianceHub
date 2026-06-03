@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TÜV AUSTRIA - Audit Document Generator</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header>
+    <div class="logo">TÜV <span>AUSTRIA</span></div>
+    <div class="subtitle">Audit Package Generator</div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Step 1: Upload Your Files</h2>
+
+      <div class="form-group">
+        <label>
+          Your Audit Notes
+          <span class="tooltip-trigger" data-tip="These are the notes you took during the audit. The AI reads them to create professional documents. Supports .docx or .txt files.">ⓘ</span>
+        </label>
+        <div class="file-upload" id="notes-upload">
+          <input type="file" accept=".docx,.txt" id="audit_notes" required>
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Drag your audit notes here, or click to browse</div>
+          <div class="upload-hint">Supports .docx (Word) or .txt files</div>
+          <div class="file-status" id="notes-status"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Manday Calculation
+          <span class="tooltip-trigger" data-tip="The Manday document shows how many auditor days were planned. The AI uses this to build team schedules and resource tables. Must be a .docx file.">ⓘ</span>
+        </label>
+        <div class="file-upload" id="manday-upload">
+          <input type="file" accept=".docx" id="manday" required>
+          <div class="upload-icon">📊</div>
+          <div class="upload-text">Drop your Manday calculation here, or click to browse</div>
+          <div class="upload-hint">Supports .docx (Word) files</div>
+          <div class="file-status" id="manday-status"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          TÜV Checklist Template (optional)
+          <span class="tooltip-trigger" data-tip="If you have an official TÜV AUSTRIA blank checklist template, upload it here. The AI will fill it in. If you skip this, we will create a standard checklist for you.">ⓘ</span>
+        </label>
+        <div class="file-upload" id="template-upload">
+          <input type="file" accept=".docx" id="checklist_template">
+          <div class="upload-icon">📋</div>
+          <div class="upload-text">Drop a blank TÜV template here, or click to browse</div>
+          <div class="upload-hint">Optional — skip if you don't have one</div>
+          <div class="file-status" id="template-status"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 2: Pick Your Standards</h2>
+      <div class="standards-grid">
+        {% for key, label in standards.items() %}
+        <label class="std-item">
+          <input type="checkbox" name="standards" value="{{ key }}">
+          <span>{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 3: Connect to AI</h2>
+      <div class="form-group">
+        <label>
+          Your Google Gemini API Key
+          <span class="tooltip-trigger" data-tip="This lets the AI generate your documents. Your key is sent directly to Google and is never stored. You can get a free key at Google AI Studio.">ⓘ</span>
+        </label>
+        <div class="key-input-wrap">
+          <input type="password" id="api_key" placeholder="Paste your Gemini API key here..." autocomplete="off">
+          <span id="key-toggle" onclick="toggleApiKey()" class="key-toggle">👁</span>
+        </div>
+        <div class="hint">
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Get a free API key ↗</a>
+          — your key is sent directly to Google and never stored
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Step 4: Generate</h2>
+
+      <div class="summary-bar" id="summary-bar">
+        <span id="summary-files">📄 No files selected</span>
+        <span id="summary-standards">📋 No standards selected</span>
+        <span id="summary-key">🔑 No API key</span>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-primary" id="generate-btn" onclick="generate()">
+          🚀 Generate Audit Package
+        </button>
+      </div>
+
+      <div class="progress-section" id="progress-section">
+        <div class="progress-bar">
+          <div class="fill" id="progress-fill"></div>
+        </div>
+        <div class="doc-progress" id="doc-progress">
+          <div class="doc-step" data-doc="Audit_Plan_Stage_1">📋 Plan S1</div>
+          <div class="doc-step" data-doc="Audit_Plan_Stage_2">📋 Plan S2</div>
+          <div class="doc-step" data-doc="Participation_List">👥 Participants</div>
+          <div class="doc-step" data-doc="Audit_Report">📝 Report</div>
+          <div class="doc-step" data-doc="ISO_Checklist">✅ Checklist</div>
+          <div class="doc-step" data-doc="Certificate_Text">📜 Certificate</div>
+        </div>
+        <div class="status-text" id="status-text"></div>
+      </div>
+
+      <div class="error-msg" id="error-msg"></div>
+      <div class="success-msg" id="success-msg"></div>
+
+      <div class="results-section" id="results-section">
+        <h3>Your Documents Are Ready</h3>
+        <div class="results-grid" id="results-grid"></div>
+        <div class="action-bar">
+          <a id="download-btn" class="btn btn-success" style="text-decoration:none;">
+            📥 Download Full Audit Package (.ZIP)
+          </a>
+          <button class="btn btn-outline" onclick="resetAll()">🔄 Start Over</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentJobId = null;
+    let pollTimer = null;
+    const MAX_FILE_SIZE = 45 * 1024 * 1024;
+
+    const FRIENDLY_ERRORS = {
+      'Failed to parse': 'One of your files could not be read. Please check the file format and try again.',
+      'API key': 'The API key is missing or invalid. Please check and try again.',
+      'not found': 'The uploaded files could not be found. Please upload again.',
+      'Network error': 'Could not reach the server. Please check your connection and try again.',
+      'timed out': 'The AI took too long to respond. Please try again.',
+      'quota': 'Your API key has reached its usage limit. Please wait or use a different key.',
+    };
+
+    function friendlyError(msg) {
+      if (!msg) return 'Something went wrong. Please try again.';
+      for (const [keyword, friendly] of Object.entries(FRIENDLY_ERRORS)) {
+        if (msg.includes(keyword)) return friendly;
+      }
+      if (msg.length > 80) return 'The AI encountered an issue. Please try again in a moment.';
+      return msg;
+    }
+
+    // Persist API key in localStorage — enter once, stays across visits
+    function saveApiKey() {
+      const key = document.getElementById('api_key').value.trim();
+      if (key) localStorage.setItem('tuv_gemini_key', key);
+    }
+
+    function loadApiKey() {
+      const saved = localStorage.getItem('tuv_gemini_key');
+      if (saved) {
+        document.getElementById('api_key').value = saved;
+        updateSummary();
+      }
+    }
+
+    function toggleApiKey() {
+      const el = document.getElementById('api_key');
+      const toggle = document.getElementById('key-toggle');
+      if (el.type === 'password') {
+        el.type = 'text';
+        toggle.textContent = '🙈';
+      } else {
+        el.type = 'password';
+        toggle.textContent = '👁';
+      }
+    }
+
+    document.getElementById('api_key').addEventListener('change', saveApiKey);
+    document.getElementById('api_key').addEventListener('blur', saveApiKey);
+    window.addEventListener('DOMContentLoaded', loadApiKey);
+
+    function updateSummary() {
+      const notes = document.getElementById('audit_notes').files[0];
+      const manday = document.getElementById('manday').files[0];
+      const template = document.getElementById('checklist_template').files[0];
+      const key = document.getElementById('api_key').value.trim();
+      const count = document.querySelectorAll('input[name="standards"]:checked').length;
+
+      let parts = [];
+      if (notes) parts.push('📄 Notes ✓');
+      else parts.push('📄 No notes');
+      if (manday) parts.push('📊 Manday ✓');
+      else parts.push('📊 No Manday');
+      if (template) parts.push('📋 Template ✓');
+      document.getElementById('summary-files').textContent = parts.join(' | ');
+
+      document.getElementById('summary-standards').textContent =
+        count > 0 ? '📋 ' + count + ' standard' + (count > 1 ? 's' : '') + ' selected' : '📋 No standards selected';
+
+      document.getElementById('summary-key').textContent = key ? '🔑 Key set' : '🔑 No API key';
+    }
+
+    document.querySelectorAll('input[type="file"]').forEach(el => {
+      el.addEventListener('change', function() {
+        updateSummary();
+        if (this.files.length && this.files[0].size > MAX_FILE_SIZE) {
+          showError('"' + this.files[0].name + '" is too large. Maximum file size is 45 MB.');
+          this.value = '';
+          updateSummary();
+          return;
+        }
+        const statusEl = this.parentElement.querySelector('.file-status');
+        if (this.files.length) {
+          statusEl.textContent = '✓ ' + this.files[0].name + ' (' + (this.files[0].size / 1024).toFixed(0) + ' KB)';
+          this.parentElement.classList.add('has-file');
+        }
+      });
+    });
+
+    document.getElementById('api_key').addEventListener('input', updateSummary);
+
+    document.querySelectorAll('input[name="standards"]').forEach(el => {
+      el.addEventListener('change', updateSummary);
+    });
+
+    updateSummary();
+
+    async function generate() {
+      const notesFile = document.getElementById('audit_notes').files[0];
+      const mandayFile = document.getElementById('manday').files[0];
+      const templateFile = document.getElementById('checklist_template').files[0];
+      const apiKey = document.getElementById('api_key').value.trim();
+      const standardChecks = document.querySelectorAll('input[name="standards"]:checked');
+      const standards = Array.from(standardChecks).map(c => c.value);
+
+      const errors = [];
+      if (!notesFile) errors.push('Upload your Audit Notes');
+      if (!mandayFile) errors.push('Upload your Manday calculation');
+      if (standards.length === 0) errors.push('Select at least one ISO standard');
+      if (!apiKey) errors.push('Enter your Gemini API key');
+      if (errors.length > 0) {
+        showError('Please complete these steps first:<br>' + errors.map(e => '• ' + e).join('<br>'));
+        return;
+      }
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Working...';
+      hideError();
+      hideSuccess();
+      document.getElementById('results-section').classList.remove('active');
+      showProgress('Uploading files...');
+      setProgress(5);
+      resetDocSteps();
+
+      const formData = new FormData();
+      formData.append('audit_notes', notesFile);
+      formData.append('manday', mandayFile);
+      if (templateFile) formData.append('checklist_template', templateFile);
+      formData.append('api_key', apiKey);
+      standards.forEach(s => formData.append('standards', s));
+
+      try {
+        const uploadResp = await fetch('/upload', { method: 'POST', body: formData });
+        const uploadData = await uploadResp.json();
+
+        if (uploadData.error) {
+          showError(friendlyError(uploadData.error));
+          btn.disabled = false;
+          btn.textContent = '🚀 Generate Audit Package';
+          hideProgress();
+          return;
+        }
+
+        if (uploadData.api_key_required) {
+          currentJobId = uploadData.job_id;
+          setProgress(10);
+          showProgress('Starting generation...');
+
+          const genForm = new FormData();
+          genForm.append('job_id', currentJobId);
+          genForm.append('api_key', apiKey);
+          standards.forEach(s => genForm.append('standards', s));
+
+          const genResp = await fetch('/generate', { method: 'POST', body: genForm });
+          const genData = await genResp.json();
+
+          if (genData.error) {
+            showError(friendlyError(genData.error));
+            btn.disabled = false;
+            btn.textContent = '🚀 Generate Audit Package';
+            hideProgress();
+            return;
+          }
+
+          currentJobId = genData.job_id;
+          startPolling(genData.job_id);
+        } else if (uploadData.async) {
+          currentJobId = uploadData.job_id;
+          startPolling(uploadData.job_id);
+        } else {
+          handleResults(uploadData);
+        }
+      } catch (err) {
+        showError('Could not reach the server. Error: ' + err.message + '. Make sure the server is running on this machine (run: python app.py) and try again.');
+        btn.disabled = false;
+        btn.textContent = '🚀 Generate Audit Package';
+        hideProgress();
+      }
+    }
+
+    function startPolling(jobId) {
+      showProgress('AI is reading your documents...');
+      setProgress(10);
+      pollTimer = setInterval(async () => {
+        try {
+          const resp = await fetch('/status/' + jobId);
+          const data = await resp.json();
+          if (data.error) {
+            clearInterval(pollTimer);
+            showError(friendlyError(data.error));
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('generate-btn').textContent = '🚀 Generate Audit Package';
+            hideProgress();
+            return;
+          }
+
+          setProgress(data.progress);
+
+          const docProg = data.doc_progress || {};
+          const totalDocs = Object.keys(docProg).length;
+          let doneCount = Object.values(docProg).filter(v => v === 'done' || v === 'error').length;
+
+          // Update per-doc step indicators
+          for (const [key, status] of Object.entries(docProg)) {
+            const el = document.querySelector('.doc-step[data-doc="' + key + '"]');
+            if (!el) continue;
+            el.classList.remove('generating', 'done', 'error');
+            if (status === 'generating') el.classList.add('generating');
+            else if (status === 'done') el.classList.add('done');
+            else if (status === 'error') el.classList.add('error');
+          }
+
+          if (data.current_doc) {
+            showProgress('Creating ' + data.current_doc + '...');
+          } else if (data.status === 'extracting_context') {
+            showProgress('AI is analyzing your documents...');
+          } else if (doneCount > 0 && doneCount < totalDocs) {
+            showProgress('Generated ' + doneCount + ' of ' + totalDocs + ' documents...');
+          } else if (doneCount === totalDocs) {
+            showProgress('Finalizing package...');
+          }
+
+          if (data.status === 'done') {
+            clearInterval(pollTimer);
+            handleResults(data);
+          } else if (data.status === 'error') {
+            clearInterval(pollTimer);
+            showError(friendlyError(data.error || 'Generation failed'));
+            document.getElementById('generate-btn').disabled = false;
+            document.getElementById('generate-btn').textContent = '🚀 Generate Audit Package';
+            hideProgress();
+          }
+        } catch (e) {
+          clearInterval(pollTimer);
+          showError('Connection lost. Error: ' + e.message + '. The server may have stopped. Restart it with: python app.py');
+          document.getElementById('generate-btn').disabled = false;
+          document.getElementById('generate-btn').textContent = '🚀 Generate Audit Package';
+          hideProgress();
+        }
+      }, 1000);
+    }
+
+    function resetDocSteps() {
+      document.querySelectorAll('.doc-step').forEach(el => {
+        el.classList.remove('generating', 'done', 'error');
+      });
+    }
+
+    function launchBalloons() {
+      const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6BCB77', '#9B59B6', '#3498DB', '#FF8C42', '#E74C3C'];
+      const container = document.createElement('div');
+      container.className = 'balloon-container';
+      document.body.appendChild(container);
+      for (let i = 0; i < 30; i++) {
+        const b = document.createElement('div');
+        b.className = 'balloon';
+        b.style.left = Math.random() * 100 + '%';
+        b.style.background = colors[Math.floor(Math.random() * colors.length)];
+        b.style.animationDuration = (3 + Math.random() * 3) + 's';
+        b.style.animationDelay = (Math.random() * 2) + 's';
+        b.style.width = (40 + Math.random() * 30) + 'px';
+        b.style.height = (55 + Math.random() * 40) + 'px';
+        container.appendChild(b);
+      }
+      setTimeout(() => container.remove(), 8000);
+    }
+
+    function handleResults(data) {
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = false;
+      btn.textContent = '🚀 Generate Audit Package';
+      hideProgress();
+
+      currentJobId = data.job_id;
+      const grid = document.getElementById('results-grid');
+      grid.innerHTML = '';
+      let hasError = false;
+
+      const labels = {
+        'Audit_Plan_Stage_1': '📋 Plan Stage 1',
+        'Audit_Plan_Stage_2': '📋 Plan Stage 2',
+        'Participation_List': '👥 Participation List',
+        'Audit_Report': '📝 Audit Report',
+        'ISO_Checklist': '✅ ISO Checklist',
+        'Certificate_Text': '📜 Certificate Text',
+      };
+
+      for (const [key, value] of Object.entries(data.documents || data.results || {})) {
+        const div = document.createElement('div');
+        const isError = !!(value && value.error);
+        div.className = 'result-item ' + (isError ? 'error' : 'success');
+        const label = labels[key] ? labels[key] : key;
+        const icon = label.split(' ')[0] || '📄';
+        div.innerHTML = `
+          <div class="result-icon">${icon}</div>
+          <div class="result-name">${label.replace(/^[^\s]+\s/, '') || key}</div>
+          <div class="result-status">${isError ? '✗ Failed' : '✓ Ready'}</div>
+          ${!isError && currentJobId ? '<a href="/download_doc/' + currentJobId + '/' + key + '" class="result-download">Download</a>' : ''}
+        `;
+        grid.appendChild(div);
+        if (isError) hasError = true;
+      }
+
+      const dlBtn = document.getElementById('download-btn');
+      dlBtn.href = data.download_url || '#';
+
+      document.getElementById('results-section').classList.add('active');
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      if (hasError) {
+        showSuccess('Done! Some documents had issues, but you can download what succeeded.');
+      } else {
+        showSuccess('All done! Your audit package is ready to download.');
+        launchBalloons();
+      }
+    }
+
+    function showProgress(text) {
+      document.getElementById('status-text').textContent = text;
+      document.getElementById('progress-section').classList.add('active');
+    }
+
+    function setProgress(pct) {
+      document.getElementById('progress-fill').style.width = pct + '%';
+    }
+
+    function hideProgress() {
+      document.getElementById('progress-section').classList.remove('active');
+      setProgress(0);
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('error-msg');
+      el.innerHTML = msg;
+      el.classList.add('active');
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideError() {
+      document.getElementById('error-msg').classList.remove('active');
+    }
+
+    function showSuccess(msg) {
+      const el = document.getElementById('success-msg');
+      el.innerHTML = msg;
+      el.classList.add('active');
+    }
+
+    function hideSuccess() {
+      document.getElementById('success-msg').classList.remove('active');
+    }
+
+    function resetAll() {
+      ['audit_notes', 'manday', 'checklist_template'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.querySelectorAll('.file-status').forEach(el => el.textContent = '');
+      document.querySelectorAll('.file-upload').forEach(el => el.classList.remove('has-file'));
+      document.getElementById('results-section').classList.remove('active');
+      hideError();
+      hideSuccess();
+      currentJobId = null;
+      if (pollTimer) clearInterval(pollTimer);
+      updateSummary();
+      document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  </script>
+</body>
+</html>
