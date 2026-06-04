@@ -12,7 +12,7 @@ class ClaudeProvider(AIProvider):
         self.api_key = os.environ.get('CLAUDE_API_KEY', '')
         self.model = os.environ.get('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
 
-    def _call_with_retry(self, prompt, system_prompt=None, max_retries=3, temperature=0.3):
+    def _call_with_retry(self, prompt, system_prompt=None, max_retries=3, temperature=0.3, max_tokens=4096):
         from anthropic import Anthropic
 
         client = Anthropic(api_key=self.api_key)
@@ -21,6 +21,7 @@ class ClaudeProvider(AIProvider):
             try:
                 kwargs = {
                     'model': self.model,
+                    'max_tokens': max_tokens,
                     'messages': [{'role': 'user', 'content': prompt}],
                     'temperature': temperature,
                 }

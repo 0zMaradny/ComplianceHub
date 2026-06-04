@@ -148,7 +148,10 @@ class Autodebugger:
             if attempt > 0:
                 self._log('self_heal_retry', {'attempt': attempt})
 
-            result = provider_fn(current_prompt, system_prompt=system_prompt, **kwargs)
+            call_kwargs = dict(kwargs)
+            if system_prompt is not None:
+                call_kwargs['system_prompt'] = system_prompt
+            result = provider_fn(current_prompt, **call_kwargs)
             self._log('provider_response', {'attempt': attempt, 'has_error': 'error' in result})
 
             output_errors = self.validate_output(result)
