@@ -31,6 +31,8 @@ OUTPUT_DOCUMENTS = [
     'Audit_Report',
     'ISO_Checklist',
     'Certificate_Text',
+    'TNL',
+    'Certificate',
 ]
 
 DOC_LABELS = {
@@ -40,6 +42,8 @@ DOC_LABELS = {
     'Audit_Report': 'Audit Report',
     'ISO_Checklist': 'ISO Checklist',
     'Certificate_Text': 'Certificate Text',
+    'TNL': 'Test / Nonconformity Log',
+    'Certificate': 'Certificate',
 }
 
 DEFAULT_LOGO_PATH = os.path.join(BASE_DIR, 'static', 'tuv_logo.png')

@@ -18,6 +18,8 @@ from app.config import (
 from app.services.file_parser import extract_audit_notes, extract_manday_data
 from app.services.ai_pipeline import generate_document as ai_generate, extract_shared_context
 from app.services.document_generator import generate_document_file
+from app.services.template_manager import get_template_path
+from app.services.pdf_converter import convert_to_pdf
 
 app = FastAPI(title="ComplianceHub API", version="1.0.0")
 
@@ -55,6 +57,8 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
     if not os.path.exists(template_path):
         template_path = None
 
+    standard_key = selected_standards[0] if selected_standards else None
+
     progress_store[job_id]['status'] = 'extracting_context'
     progress_store[job_id]['progress'] = 10
     progress_store[job_id]['current_doc'] = 'Analyzing documents...'
@@ -86,12 +90,15 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
                 results[doc_type] = {'error': ai_result['error']}
                 progress_store[job_id]['doc_progress'][doc_type] = 'error'
             else:
-                path = generate_document_file(doc_type, ai_result, output_dir, template_path)
+                path = generate_document_file(doc_type, ai_result, output_dir, template_path, standard_key)
                 if path:
                     if not client_name or client_name == 'Client':
                         client_name = ai_result.get('client_name', 'Client')
                     filename = os.path.basename(path)
                     doc_info = {'path': path, 'filename': filename}
+                    pdf_path = convert_to_pdf(path)
+                    if pdf_path:
+                        doc_info['pdf_path'] = pdf_path
                     results[doc_type] = doc_info
                     progress_store[job_id]['doc_progress'][doc_type] = 'done'
                 else:
@@ -113,6 +120,9 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         for doc_type, result in results.items():
             if 'path' in result and os.path.exists(result['path']):
                 zf.write(result['path'], result.get('filename', os.path.basename(result['path'])))
+            if 'pdf_path' in result and os.path.exists(result['pdf_path']):
+                pdf_filename = result.get('filename', os.path.basename(result['path'])).rsplit('.', 1)[0] + '.pdf'
+                zf.write(result['pdf_path'], pdf_filename)
 
     shutil.rmtree(job_dir, ignore_errors=True)
 

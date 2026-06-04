@@ -1,4 +1,5 @@
 import os
+import re
 from docx import Document
 from docx.shared import Inches, Pt, Cm, RGBColor, Emu
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -238,6 +239,324 @@ def add_bullet(doc, text):
 
 
 def add_border_box(doc):
+    sect = doc.sections[0]
+    sect.left_margin = Cm(1.5)
+    sect.right_margin = Cm(1.5)
+    sect.top_margin = Cm(1.5)
+    sect.bottom_margin = Cm(1.5)
+    pg = sect._sectPr
+    pgBorders = OxmlElement('w:pgBorders')
+    pgBorders.set(qn('w:offsetFrom'), 'page')
+    for side, sz, color, space in [
+        ('top', '24', '003D7A', '24'),
+        ('left', '24', '003D7A', '24'),
+        ('bottom', '24', '003D7A', '24'),
+        ('right', '24', '003D7A', '24'),
+    ]:
+        border = OxmlElement(f'w:{side}')
+        border.set(qn('w:val'), 'single')
+        border.set(qn('w:sz'), sz)
+        border.set(qn('w:color'), color)
+        border.set(qn('w:space'), space)
+        pgBorders.append(border)
+    pg.append(pgBorders)
+
+
+# ── RTL / Arabic text support ──────────────────────────────────────────────
+
+def set_rtl_paragraph(paragraph):
+    """Enable RTL for a paragraph (Arabic support)."""
+    pPr = paragraph._p.get_or_add_pPr()
+    bidi = OxmlElement('w:bidi')
+    pPr.append(bidi)
+
+
+def add_body_text_rtl(doc, text, bold=False):
+    """Add RTL body text (for Arabic)."""
+    p = doc.add_paragraph()
+    set_rtl_paragraph(p)
+    run = p.add_run(text)
+    run.font.size = Pt(10)
+    run.bold = bold
+    p.space_after = Pt(4)
+    return p
+
+
+def add_cover_page_rtl(doc, title, client_name, standard, date, lead_auditor=''):
+    """Add cover page with RTL support."""
+    if os.path.exists(DEFAULT_LOGO_PATH):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run()
+        run.add_picture(DEFAULT_LOGO_PATH, width=Inches(3.0))
+    for _ in range(4):
+        doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(title)
+    run.font.size = Pt(24)
+    run.bold = True
+    run.font.color.rgb = TUV_BLUE
+    doc.add_paragraph()
+    info_items = [
+        ('العميل / Client', client_name),
+        ('المواصفة / Standard', standard),
+        ('التاريخ / Date', date),
+    ]
+    if lead_auditor:
+        info_items.append(('المراجع الرئيسي / Lead Auditor', lead_auditor))
+    for label, value in info_items:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run(f'{label}: ')
+        run.font.size = Pt(11)
+        run.bold = True
+        run.font.color.rgb = TUV_BLUE
+        run = p.add_run(value)
+        run.font.size = Pt(11)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('_' * 40)
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(0xAA, 0xAA, 0xAA)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('هذه الوثيقة سرية ومخصصة لاستخدام العميل فقط')
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+    run.italic = True
+    doc.add_page_break()
+
+
+# ── Missing document generators ────────────────────────────────────────────
+
+def generate_tnl(data, output_path):
+    """Test/Nonconformity Log (TNL) document."""
+    doc = Document()
+    setup_document(doc)
+    add_cover_page(doc, 'Test / Nonconformity Log (TNL)',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('audit_date', 'N/A'))
+
+    add_section_heading(doc, 'Nonconformity & Observation Log')
+
+    table = doc.add_table(rows=1, cols=8)
+    table.style = 'Table Grid'
+    add_header_row(table, ['TNL #', 'Clause', 'Type', 'Description', 'Severity', 'Auditee', 'Due Date', 'Status'])
+    for entry in data.get('entries', []):
+        etype = entry.get('type', '')
+        row_color = None
+        if etype == 'NC':
+            row_color = TUV_RED
+        elif etype == 'OFI':
+            row_color = RGBColor(0xCC, 0x7A, 0x00)
+        add_data_row(table, [
+            entry.get('tnl_number', ''),
+            entry.get('clause', ''),
+            etype,
+            entry.get('description', ''),
+            entry.get('severity', ''),
+            entry.get('auditee', ''),
+            entry.get('due_date', ''),
+            entry.get('status', ''),
+        ], color=row_color)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary')
+        add_body_text(doc, f"Total Nonconformities: {summary.get('total_nc', 0)}")
+        add_body_text(doc, f"  Major: {summary.get('major', 0)}")
+        add_body_text(doc, f"  Minor: {summary.get('minor', 0)}")
+        add_body_text(doc, f"Opportunities for Improvement: {summary.get('ofi', 0)}")
+        add_body_text(doc, f"Observations: {summary.get('observations', 0)}")
+    doc.save(output_path)
+    return output_path
+
+
+def generate_certificate(data, output_path):
+    """Standalone certificate document with border box and decision coloring."""
+    doc = Document()
+    setup_document(doc)
+    add_border_box(doc)
+    for _ in range(3):
+        doc.add_paragraph()
+    if os.path.exists(DEFAULT_LOGO_PATH):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run()
+        run.add_picture(DEFAULT_LOGO_PATH, width=Inches(2.0))
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('CERTIFICATE')
+    run.font.size = Pt(20)
+    run.bold = True
+    run.font.color.rgb = TUV_BLUE
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('of Audit')
+    run.font.size = Pt(16)
+    run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"Certificate No: {data.get('certificate_number', 'N/A')}")
+    run.font.size = Pt(10)
+    run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('This is to certify that an audit was performed by')
+    run.font.size = Pt(11)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"{data.get('certification_body', 'TÜV AUSTRIA')}")
+    run.font.size = Pt(11)
+    run.bold = True
+    run.font.color.rgb = TUV_BLUE
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('at the premises of:')
+    run.font.size = Pt(11)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(data.get('client_name', 'N/A'))
+    run.bold = True
+    run.font.size = Pt(16)
+    run.font.color.rgb = TUV_BLUE
+    doc.add_paragraph()
+    info_lines = [
+        f"Audit Date: {data.get('audit_date', 'N/A')}",
+        f"Standard: {data.get('standard', 'N/A')}",
+        f"Scope: {data.get('scope', 'N/A')}",
+        f"Lead Auditor: {data.get('lead_auditor', 'N/A')}",
+    ]
+    for line in info_lines:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run(line)
+        run.font.size = Pt(10)
+        run.font.color.rgb = RGBColor(0x44, 0x44, 0x44)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    decision = data.get('certification_decision', 'Not Certified')
+    run = p.add_run(f'Certification Decision: {decision}')
+    run.font.size = Pt(14)
+    run.bold = True
+    if decision == 'Certified':
+        run.font.color.rgb = TUV_BLUE
+    elif decision == 'Conditional':
+        run.font.color.rgb = RGBColor(0xCC, 0x7A, 0x00)
+    else:
+        run.font.color.rgb = TUV_RED
+    if data.get('conditions'):
+        doc.add_paragraph()
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = p.add_run('Conditions:')
+        run.bold = True
+        run.font.size = Pt(10)
+        for cond in data['conditions']:
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = p.add_run(f'• {cond}')
+            run.font.size = Pt(9)
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(f"Issue Date: {data.get('issue_date', 'N/A')}     Expiry Date: {data.get('expiry_date', 'N/A')}")
+    run.font.size = Pt(9)
+    run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
+    doc.add_paragraph()
+    doc.add_paragraph()
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('_________________________')
+    run.font.color.rgb = TUV_BLUE
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run(data.get('authorized_signatory', ''))
+    run.bold = True
+    run.font.size = Pt(10)
+    p = doc.add_paragraph()
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = p.add_run('TÜV AUSTRIA')
+    run.font.size = Pt(10)
+    run.font.color.rgb = TUV_BLUE
+    doc.save(output_path)
+    return output_path
+
+
+# ── Excel checklist generation (ISO 27001) ─────────────────────────────────
+
+def _generate_checklist_excel(template_path, data, output_dir, safe_name):
+    from openpyxl import load_workbook
+    from openpyxl.styles import PatternFill
+    import shutil
+
+    out_path = os.path.join(output_dir, f'ISO_Checklist_{safe_name}.xlsx')
+    shutil.copy(template_path, out_path)
+
+    wb = load_workbook(out_path)
+    ws = wb.active
+
+    sections = data.get('sections', [])
+    section_map = {}
+    for s in sections:
+        clause = s.get('clause', '').strip()
+        if clause:
+            section_map[clause] = s
+
+    filled = 0
+    for row in ws.iter_rows(min_row=4, max_row=ws.max_row):
+        ref_cell = row[1]
+        rate_cell = row[3]
+        evidence_cell = row[4]
+        notes_cell = row[7] if len(row) > 7 else None
+
+        ref = str(ref_cell.value or '').strip()
+        if not ref:
+            continue
+
+        match = section_map.get(ref)
+        if not match:
+            for clause, s in section_map.items():
+                if ref.startswith(clause) or clause.startswith(ref):
+                    match = s
+                    break
+
+        if match:
+            status = match.get('status', '')
+            rate_map = {
+                'Conformant': 'FC',
+                'Partially Conformant': 'PF',
+                'Non-Conformant': 'NC',
+                'Not Reviewed': 'NR',
+            }
+            rate = rate_map.get(status, '')
+            evidence = match.get('evidence', '')
+            notes = match.get('notes', '')
+
+            if rate:
+                rate_cell.value = rate
+            if evidence:
+                evidence_cell.value = evidence
+            if notes and notes_cell is not None:
+                notes_cell.value = notes
+
+            if status == 'Non-Conformant':
+                for c in row:
+                    c.fill = PatternFill(start_color='FFF0F0', end_color='FFF0F0', fill_type='solid')
+            elif status == 'Partially Conformant':
+                for c in row:
+                    c.fill = PatternFill(start_color='FFF8E1', end_color='FFF8E1', fill_type='solid')
+            filled += 1
+
+    wb.save(out_path)
+    return out_path
     sect = doc.sections[0]
     sect.left_margin = Cm(1.5)
     sect.right_margin = Cm(1.5)
@@ -581,6 +900,132 @@ def _inject_into_template_table(table, sections, data_row_start=1):
                     run.font.color.rgb = row_color
 
 
+# ── Template injection helpers ──────────────────────────────────────────────
+
+def _inject_into_template_by_clause(table, sections, data_start_row, col_clause=0,
+                                     col_evidence=None, col_assessment=None,
+                                     assessment_map=None, evidence_cols=None):
+    """Inject AI evidence/assessment into pre-filled clause rows by matching clause reference."""
+    section_map = {}
+    for s in sections:
+        clause = s.get('clause', '').strip()
+        if clause:
+            section_map[clause] = s
+
+    filled = 0
+    for row_idx in range(data_start_row, len(table.rows)):
+        row = table.rows[row_idx]
+        if col_clause >= len(row.cells):
+            continue
+        clause_text = row.cells[col_clause].text.strip()
+        if not clause_text:
+            continue
+        first_line = clause_text.split('\n')[0].strip()
+        if not re.search(r'\d+\.\d+', first_line):
+            continue
+
+        match = None
+        for c, s in section_map.items():
+            if first_line.startswith(c) or (len(c) > 3 and first_line.startswith(c)):
+                match = s
+                break
+        if not match:
+            for c, s in section_map.items():
+                if first_line and c and first_line[0:10] == c[0:10]:
+                    match = s
+                    break
+
+        if match:
+            status = match.get('status', '')
+            evidence = match.get('evidence', '')
+
+            ev_cols = evidence_cols if evidence_cols is not None else ([col_evidence] if col_evidence is not None else [])
+            for ec in ev_cols:
+                if evidence and ec < len(row.cells):
+                    cell = row.cells[ec]
+                    cell.text = ''
+                    p = cell.paragraphs[0]
+                    run = p.add_run(evidence)
+                    run.font.size = Pt(8)
+
+            if status and col_assessment is not None and col_assessment < len(row.cells):
+                if assessment_map:
+                    assessment = assessment_map.get(status, '')
+                else:
+                    assessment = status
+                cell = row.cells[col_assessment]
+                cell.text = ''
+                p = cell.paragraphs[0]
+                run = p.add_run(str(assessment))
+                run.font.size = Pt(8)
+                if status == 'Non-Conformant':
+                    run.font.color.rgb = TUV_RED
+                elif status == 'Partially Conformant':
+                    run.font.color.rgb = RGBColor(0xCC, 0x7A, 0x00)
+            filled += 1
+    return filled
+
+
+def _combine_evidence_notes(section):
+    """Combine evidence and notes into one cell value for auditor-notes-together templates."""
+    evidence = section.get('evidence', '').strip()
+    notes = section.get('notes', '').strip()
+    if evidence and notes:
+        return evidence + '\nNotes: ' + notes
+    return evidence or notes
+
+
+def _inject_into_22301_template(table, sections):
+    """Inject into BSO_Audit_Questionaire_ISO22301 (3-col: Requirements, Evidence+Notes, A)."""
+    assessment_map = {
+        'Conformant': 1,
+        'Partially Conformant': 2,
+        'Non-Conformant': 3,
+        'Not Reviewed': '',
+    }
+    orig = {}
+    for s in sections:
+        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
+        s['evidence'] = _combine_evidence_notes(s)
+    result = _inject_into_template_by_clause(
+        table, sections, data_start_row=4,
+        col_clause=0, col_evidence=1, col_assessment=2,
+        assessment_map=assessment_map
+    )
+    for s in sections:
+        ev, nt = orig[id(s)]
+        s['evidence'] = ev
+        s['notes'] = nt
+    return result
+
+
+def _inject_into_20000_template(table, sections):
+    """Inject into AQC template (4-col, cols 1+2 merged span=2: Requirements, Evidence+Notes, A)."""
+    assessment_map = {
+        'Conformant': 1,
+        'Partially Conformant': 2,
+        'Non-Conformant': 3,
+        'Not Reviewed': '',
+    }
+    orig = {}
+    for s in sections:
+        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
+        s['evidence'] = _combine_evidence_notes(s)
+    result = _inject_into_template_by_clause(
+        table, sections, data_start_row=3,
+        col_clause=0, col_assessment=3,
+        assessment_map=assessment_map,
+        evidence_cols=[1, 2]
+    )
+    for s in sections:
+        ev, nt = orig[id(s)]
+        s['evidence'] = ev
+        s['notes'] = nt
+    return result
+
+
+# ── Generator registry ─────────────────────────────────────────────────────
+
 GENERATORS = {
     'Audit_Plan_Stage_1': generate_audit_plan_stage_1,
     'Audit_Plan_Stage_2': generate_audit_plan_stage_2,
@@ -588,23 +1033,41 @@ GENERATORS = {
     'Audit_Report': generate_audit_report,
     'ISO_Checklist': generate_iso_checklist,
     'Certificate_Text': generate_certificate_text,
+    'TNL': generate_tnl,
+    'Certificate': generate_certificate,
 }
 
 
-def generate_document_file(doc_type, data, output_dir, template_path=None):
+def generate_document_file(doc_type, data, output_dir, template_path=None, standard_key=None):
+    from app.services.template_manager import get_template_path, get_checklist_is_excel
+
     os.makedirs(output_dir, exist_ok=True)
     safe_name = data.get('client_name', 'Client').replace(' ', '_')
 
     effective_template = template_path if (template_path and os.path.exists(template_path)) else None
+    if not effective_template and doc_type == 'ISO_Checklist':
+        effective_template = get_template_path(doc_type, standard_key)
+
+    if doc_type == 'ISO_Checklist' and effective_template:
+        if get_checklist_is_excel(standard_key):
+            result = _generate_checklist_excel(effective_template, data, output_dir, safe_name)
+            if result and os.path.exists(result):
+                return result
+            return None
+        filename = f'{doc_type}_{safe_name}.docx'
+        output_path = os.path.join(output_dir, filename)
+        generator = GENERATORS.get(doc_type)
+        if generator:
+            result = generator(data, output_path, effective_template)
+            if result and os.path.exists(result):
+                return result
+        return None
 
     filename = f'{doc_type}_{safe_name}.docx'
     output_path = os.path.join(output_dir, filename)
     generator = GENERATORS.get(doc_type)
     if generator:
-        if doc_type == 'ISO_Checklist':
-            result = generator(data, output_path, effective_template)
-        else:
-            result = generator(data, output_path)
+        result = generator(data, output_path)
         if result and os.path.exists(result):
             return result
         return None
