@@ -20,6 +20,7 @@ from app.services.ai_pipeline import generate_document as ai_generate, extract_s
 from app.services.document_generator import generate_document_file
 from app.services.template_manager import get_template_path
 from app.services.pdf_converter import convert_to_pdf
+from app.services.offline_generator import generate_all as offline_generate_all
 
 app = FastAPI(title="ComplianceHub API", version="1.0.0")
 
@@ -58,16 +59,24 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         template_path = None
 
     standard_key = selected_standards[0] if selected_standards else None
+    use_offline = not api_key or api_key.strip().lower() == 'local'
 
     progress_store[job_id]['status'] = 'extracting_context'
     progress_store[job_id]['progress'] = 10
     progress_store[job_id]['current_doc'] = 'Analyzing documents...'
 
-    shared_context = extract_shared_context(
-        api_key, notes_data['text'], manday_data['text']
-    )
-    if 'error' in shared_context:
-        shared_context = None
+    shared_context = None
+    if use_offline:
+        offline_results = offline_generate_all(
+            notes_data['text'], manday_data['text'],
+            standards_full, selected_standards
+        )
+    else:
+        shared_context = extract_shared_context(
+            api_key, notes_data['text'], manday_data['text']
+        )
+        if 'error' in shared_context:
+            shared_context = None
 
     results = {}
     total = len(OUTPUT_DOCUMENTS)
@@ -80,6 +89,27 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         progress_store[job_id]['doc_progress'][doc_type] = 'generating'
         base_progress = 20 + int((idx / total) * 70)
         progress_store[job_id]['progress'] = base_progress
+
+        if use_offline:
+            doc_data = offline_results.get(doc_type, {})
+            if 'error' not in doc_data:
+                path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key)
+                if path:
+                    if not client_name or client_name == 'Client':
+                        client_name = doc_data.get('client_name', 'Client')
+                    filename = os.path.basename(path)
+                    doc_info = {'path': path, 'filename': filename}
+                    pdf_path = convert_to_pdf(path)
+                    if pdf_path:
+                        doc_info['pdf_path'] = pdf_path
+                    results[doc_type] = doc_info
+                    progress_store[job_id]['doc_progress'][doc_type] = 'done'
+                    progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
+                    continue
+            results[doc_type] = {'error': doc_data.get('error', 'Offline generation failed')}
+            progress_store[job_id]['doc_progress'][doc_type] = 'error'
+            progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
+            continue
 
         try:
             ai_result = ai_generate(
@@ -228,12 +258,10 @@ async def upload_files(
 @app.post("/api/generate")
 async def generate_docs(
     job_id: str = Form(...),
-    api_key: str = Form(...),
+    api_key: str = Form(''),
     standards: str = Form('[]'),
 ):
     selected_standards = json.loads(standards)
-    if not api_key:
-        raise HTTPException(status_code=400, detail='API key is required')
 
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
     output_dir = os.path.join(OUTPUT_FOLDER, job_id)

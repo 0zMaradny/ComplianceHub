@@ -13,7 +13,7 @@ from . import AIProvider
 class GeminiProvider(AIProvider):
     def __init__(self):
         self.api_key = os.environ.get('GEMINI_API_KEY', '')
-        self.model = os.environ.get('GEMINI_MODEL', 'models/gemini-2.5-pro')
+        self.model = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 
     def _get_client(self):
         key = self.api_key or os.environ.get('GEMINI_API_KEY', '')

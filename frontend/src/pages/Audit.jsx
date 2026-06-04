@@ -49,8 +49,6 @@ export default function Audit({ API, standards }) {
   }
 
   const handleGenerate = async () => {
-    if (!apiKey) { alert('API key is required'); return }
-
     const form = new FormData()
     form.append('job_id', jobId)
     form.append('api_key', apiKey)
@@ -163,13 +161,16 @@ export default function Audit({ API, standards }) {
           </div>
 
           <div className="form-group">
-            <label>Gemini API Key (for AI generation)</label>
+            <label>AI Provider (optional — leave empty for local/offline mode)</label>
             <input
               type="password"
-              placeholder="Enter your Google Gemini API key"
+              placeholder="API key or leave empty for offline mode"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
             />
+            <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
+              {!apiKey ? '🔒 Offline mode — no API key needed, content generated locally' : '☁️ AI-powered content generation'}
+            </div>
           </div>
 
           <button
@@ -186,19 +187,22 @@ export default function Audit({ API, standards }) {
         <div className="card">
           <h3>API Key Required</h3>
           <p style={{ marginBottom: 16, color: 'var(--gray-600)' }}>
-            Files uploaded successfully. Enter your API key to generate documents.
+            Files uploaded successfully. Optionally enter an API key for AI-powered content, or leave empty for offline mode.
           </p>
           <div className="form-group">
-            <label>Gemini API Key</label>
+            <label>API Key (optional for offline mode)</label>
             <input
               type="password"
-              placeholder="Enter your Google Gemini API key"
+              placeholder="Leave empty for local/offline mode"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
             />
+            <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
+              {!apiKey ? '🔒 Offline mode — no API key needed' : '☁️ AI-powered mode'}
+            </div>
           </div>
-          <button className="btn btn-primary" onClick={handleGenerate} disabled={!apiKey}>
-            Generate Documents
+          <button className="btn btn-primary" onClick={handleGenerate}>
+            {apiKey ? 'Generate with AI' : 'Generate Offline'}
           </button>
           <button className="btn btn-secondary" onClick={handleReset} style={{ marginLeft: 8 }}>
             Cancel
