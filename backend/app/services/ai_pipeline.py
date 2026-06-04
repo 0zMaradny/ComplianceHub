@@ -1,7 +1,6 @@
-import os
 import json
 
-from .ai import create_provider
+from .ai.router import generate as router_generate, extract_structured as router_extract
 
 SYSTEM_PROMPT = """You are an expert ISO Lead Auditor at TÜV AUSTRIA with 20+ years of experience. You generate professional, legally-defensible audit documents based on rough audit notes and Manday calculation data.
 
@@ -59,10 +58,7 @@ def _build_shared_prompt(notes_text, manday_text):
 
 def extract_shared_context(api_key, notes_text, manday_text):
     prompt = _build_shared_prompt(notes_text, manday_text)
-    os.environ['GEMINI_API_KEY'] = api_key
-    os.environ['OPENAI_API_KEY'] = api_key
-    provider = create_provider()
-    return provider.extract_structured(prompt)
+    return router_extract('extract_shared_context', prompt, api_key=api_key)
 
 
 def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=None):
@@ -234,10 +230,4 @@ Return JSON with:
 
 def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None):
     prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context)
-    os.environ['GEMINI_API_KEY'] = api_key
-    os.environ['OPENAI_API_KEY'] = api_key
-    provider = create_provider()
-    result = provider.generate(prompt, system_prompt=SYSTEM_PROMPT)
-    if 'error' not in result or result['error'] is None:
-        return result
-    return {'error': result.get('error')}
+    return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key)

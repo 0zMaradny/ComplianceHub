@@ -11,4 +11,5 @@ aiofiles==24.1.0
 # AI Providers
 google-genai==2.7.0        # Gemini
 openai>=1.55.0              # OpenAI (optional)
+anthropic>=0.49.0            # Claude
 requests>=2.34.2            # Ollama (built-in)

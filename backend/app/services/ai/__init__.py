@@ -13,16 +13,26 @@ class AIProvider(ABC):
         pass
 
 
+_PROVIDER_CACHE: dict[str, AIProvider] = {}
+
+
 def create_provider(provider_name: str | None = None) -> AIProvider:
     """Factory: create AI provider by name (reads AI_PROVIDER env if None)."""
     name = (provider_name or os.environ.get('AI_PROVIDER', 'gemini')).lower().strip()
+    cached = _PROVIDER_CACHE.get(name)
+    if cached is not None:
+        return cached
 
-    if name == 'openai':
-        from .openai_provider import OpenAIProvider
-        return OpenAIProvider()
-    elif name == 'ollama':
-        from .ollama_provider import OllamaProvider
-        return OllamaProvider()
-    else:
-        from .gemini_provider import GeminiProvider
-        return GeminiProvider()
+    providers = {
+        'gemini': ('.gemini_provider', 'GeminiProvider'),
+        'openai': ('.openai_provider', 'OpenAIProvider'),
+        'claude': ('.claude_provider', 'ClaudeProvider'),
+        'ollama': ('.ollama_provider', 'OllamaProvider'),
+    }
+    mod_path, cls_name = providers.get(name, providers['gemini'])
+    import importlib
+    mod = importlib.import_module(mod_path, __package__)
+    cls = getattr(mod, cls_name)
+    inst = cls()
+    _PROVIDER_CACHE[name] = inst
+    return inst
