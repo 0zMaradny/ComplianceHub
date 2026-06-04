@@ -78,7 +78,7 @@ export default function Audit({ API, standards }) {
           if (data.results) setResults(data.results)
           if (data.status === 'done') setStep('done')
         }
-      } catch {}
+      } catch (e) { console.error('Poll error:', e) }
     }, 1500)
   }
 

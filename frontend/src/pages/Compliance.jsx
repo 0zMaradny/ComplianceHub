@@ -23,7 +23,7 @@ export default function Compliance({ API }) {
       const res = await fetch(`${API}/compliance/checklist/${id}`)
       const data = await res.json()
       setChecklist(data)
-    } catch {}
+    } catch (e) { console.error('Failed to load checklist:', e) }
   }
 
   if (!frameworks) {

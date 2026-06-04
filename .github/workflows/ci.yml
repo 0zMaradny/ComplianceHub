@@ -26,11 +26,24 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Check imports load
-      run: python -c "from app.config import ISO_STANDARDS; print(f'OK: {len(ISO_STANDARDS)} standards loaded')"
+    - name: Check all Python syntax
+      run: |
+        python -m compileall . -q
+        echo "All Python files pass syntax check"
 
-    - name: Check syntax
-      run: python -m py_compile app/main.py && python -m py_compile app/services/document_generator.py && echo "Syntax OK"
+    - name: Check imports load
+      run: python -c "
+from app.config import ISO_STANDARDS, OUTPUT_DOCUMENTS
+from app.services.ai import create_provider
+from app.services.ai.router import TASK_ROUTING
+from app.services.ai.debugger import Autodebugger, REQUIRED_FIELDS
+print(f'OK: {len(ISO_STANDARDS)} standards, {len(OUTPUT_DOCUMENTS)} docs, {len(TASK_ROUTING)} routes')
+for name in ['gemini', 'openai', 'claude', 'ollama']:
+    p = create_provider(name)
+    print(f'  Provider {name}: {type(p).__name__}')
+for t in REQUIRED_FIELDS:
+    print(f'  Debugger schema: {t} ({len(REQUIRED_FIELDS[t])} fields)')
+"
 
   frontend:
     runs-on: ubuntu-latest
@@ -48,6 +61,9 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    - name: Lint
+      run: npm run lint
 
     - name: Build
       run: npm run build
