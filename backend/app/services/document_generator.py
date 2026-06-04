@@ -16,6 +16,9 @@ BLACK = RGBColor(0x00, 0x00, 0x00)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 GREY = RGBColor(0xF2, 0xF2, 0xF2)
 
+# ── RTL mode flag (set before calling any generator) ──────────────────────
+_RTL_MODE = False
+
 
 def set_cell_shading(cell, color):
     shading = OxmlElement('w:shd')

@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 from . import create_provider
+from .debugger import Autodebugger
 
 logger = logging.getLogger(__name__)
 
@@ -46,20 +47,40 @@ def resolve_chain(task_type: str, override_provider: str | None = None) -> list[
     return TASK_ROUTING.get(task_type, ['gemini', 'openai'])
 
 
+def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt: str,
+                        system_prompt: str | None = None, **kwargs) -> tuple[dict, list[str]]:
+    """Call a provider wrapped in Autodebugger self-healing."""
+    debugger = Autodebugger(task_type)
+    result = debugger.call_with_self_heal(
+        provider_fn, prompt, system_prompt=system_prompt, **kwargs
+    )
+    errors = result.pop('_validation_errors', [])
+    return result, errors
+
+
 def generate(task_type: str, prompt: str, system_prompt: str | None = None,
              api_key: str = '', override_provider: str | None = None,
              **kwargs) -> dict[str, Any]:
-    """Route a generation task through the best provider chain with fallback."""
+    """Route a generation task through the best provider chain with fallback
+    and autodebugger self-healing on each provider."""
     chain = resolve_chain(task_type, override_provider)
     last_error = None
     for provider_name in chain:
         try:
             set_api_key(provider_name, api_key)
             provider = create_provider(provider_name)
-            result = provider.generate(prompt, system_prompt=system_prompt, **kwargs)
+
+            result, validation_errors = _call_with_debugger(
+                task_type, provider_name,
+                provider.generate, prompt,
+                system_prompt=system_prompt, **kwargs
+            )
             if 'error' not in result or result['error'] is None:
-                return result
-            last_error = result['error']
+                if not validation_errors:
+                    return result
+                last_error = f"Validation failed after self-heal: {'; '.join(validation_errors)}"
+            else:
+                last_error = result['error']
             logger.warning('Provider %s failed for %s: %s', provider_name, task_type, last_error)
         except Exception as e:
             last_error = str(e)
@@ -70,17 +91,25 @@ def generate(task_type: str, prompt: str, system_prompt: str | None = None,
 def extract_structured(task_type: str, prompt: str,
                        api_key: str = '', override_provider: str | None = None,
                        **kwargs) -> dict[str, Any]:
-    """Route a structured extraction task through the best provider chain."""
+    """Route a structured extraction task through the best provider chain
+    with autodebugger self-healing on each provider."""
     chain = resolve_chain(task_type, override_provider)
     last_error = None
     for provider_name in chain:
         try:
             set_api_key(provider_name, api_key)
             provider = create_provider(provider_name)
-            result = provider.extract_structured(prompt, **kwargs)
+
+            result, validation_errors = _call_with_debugger(
+                task_type, provider_name,
+                provider.extract_structured, prompt, **kwargs
+            )
             if 'error' not in result or result['error'] is None:
-                return result
-            last_error = result['error']
+                if not validation_errors:
+                    return result
+                last_error = f"Validation failed after self-heal: {'; '.join(validation_errors)}"
+            else:
+                last_error = result['error']
             logger.warning('Provider %s failed extraction for %s: %s', provider_name, task_type, last_error)
         except Exception as e:
             last_error = str(e)
