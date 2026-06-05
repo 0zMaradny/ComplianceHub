@@ -18,6 +18,9 @@ env/
 backend/uploads/
 backend/output/
 
+# Local AI models (multi-GB, downloaded separately)
+models/
+
 # Node
 frontend/node_modules/
 frontend/dist/

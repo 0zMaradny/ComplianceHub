@@ -12,15 +12,15 @@ logger = logging.getLogger(__name__)
 # Provider names must match create_provider() keys: gemini, openai, claude, ollama.
 
 TASK_ROUTING = {
-    'extract_shared_context': ['gemini', 'openai', 'claude', 'ollama'],
-    'Audit_Plan_Stage_1': ['openai', 'claude', 'gemini', 'ollama'],
-    'Audit_Plan_Stage_2': ['openai', 'claude', 'gemini', 'ollama'],
-    'Participation_List': ['openai', 'gemini', 'claude', 'ollama'],
-    'Audit_Report': ['claude', 'openai', 'gemini', 'ollama'],
-    'ISO_Checklist': ['gemini', 'openai', 'claude', 'ollama'],
-    'Certificate_Text': ['claude', 'openai', 'gemini', 'ollama'],
-    'Certificate': ['claude', 'openai', 'gemini', 'ollama'],
-    'TNL': ['openai', 'claude', 'gemini', 'ollama'],
+    'extract_shared_context': ['gemini', 'openai', 'claude', 'hf', 'local'],
+    'Audit_Plan_Stage_1': ['openai', 'claude', 'gemini', 'hf', 'local'],
+    'Audit_Plan_Stage_2': ['openai', 'claude', 'gemini', 'hf', 'local'],
+    'Participation_List': ['openai', 'gemini', 'claude', 'hf', 'local'],
+    'Audit_Report': ['claude', 'openai', 'gemini', 'hf', 'local'],
+    'ISO_Checklist': ['gemini', 'openai', 'claude', 'hf', 'local'],
+    'Certificate_Text': ['claude', 'openai', 'gemini', 'hf', 'local'],
+    'Certificate': ['claude', 'openai', 'gemini', 'hf', 'local'],
+    'TNL': ['openai', 'claude', 'gemini', 'hf', 'local'],
 }
 
 
@@ -30,14 +30,19 @@ def set_api_key(provider_name: str, api_key: str):
         'gemini': 'GEMINI_API_KEY',
         'openai': 'OPENAI_API_KEY',
         'claude': 'CLAUDE_API_KEY',
+        'hf': 'HF_API_KEY',
     }
     var = env_map.get(provider_name)
     if var:
         os.environ[var] = api_key
 
 
-def resolve_chain(task_type: str, override_provider: str | None = None) -> list[str]:
-    """Return ordered provider chain for a task type."""
+def resolve_chain(task_type: str, override_provider: str | None = None, api_key: str = '') -> list[str]:
+    """Return ordered provider chain for a task type.
+    Falls straight to local provider when no API key is available."""
+    if not api_key:
+        return ['local']
+
     if override_provider:
         chain = [override_provider]
         fallback_str = os.environ.get('AI_FALLBACK_PROVIDERS', '').strip()
@@ -63,7 +68,7 @@ def generate(task_type: str, prompt: str, system_prompt: str | None = None,
              **kwargs) -> dict[str, Any]:
     """Route a generation task through the best provider chain with fallback
     and autodebugger self-healing on each provider."""
-    chain = resolve_chain(task_type, override_provider)
+    chain = resolve_chain(task_type, override_provider, api_key)
     last_error = None
     for provider_name in chain:
         try:
@@ -93,7 +98,7 @@ def extract_structured(task_type: str, prompt: str,
                        **kwargs) -> dict[str, Any]:
     """Route a structured extraction task through the best provider chain
     with autodebugger self-healing on each provider."""
-    chain = resolve_chain(task_type, override_provider)
+    chain = resolve_chain(task_type, override_provider, api_key)
     last_error = None
     for provider_name in chain:
         try:

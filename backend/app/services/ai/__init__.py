@@ -27,7 +27,8 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         'gemini': ('.gemini_provider', 'GeminiProvider'),
         'openai': ('.openai_provider', 'OpenAIProvider'),
         'claude': ('.claude_provider', 'ClaudeProvider'),
-        'ollama': ('.ollama_provider', 'OllamaProvider'),
+        'hf': ('.hf_provider', 'HFProvider'),
+        'local': ('.local_provider', 'LocalProvider'),
     }
     mod_path, cls_name = providers.get(name, providers['gemini'])
     import importlib

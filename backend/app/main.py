@@ -49,6 +49,19 @@ def cleanup_old_jobs():
                 shutil.rmtree(d, ignore_errors=True)
 
 
+def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data):
+    """Generate a DOCX file from data, return doc_info dict or None."""
+    path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key)
+    if not path:
+        return None
+    filename = os.path.basename(path)
+    doc_info = {'path': path, 'filename': filename}
+    pdf_path = convert_to_pdf(path)
+    if pdf_path:
+        doc_info['pdf_path'] = pdf_path
+    return doc_info
+
+
 def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards):
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
     output_dir = os.path.join(OUTPUT_FOLDER, job_id)
@@ -59,22 +72,16 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         template_path = None
 
     standard_key = selected_standards[0] if selected_standards else None
-    use_offline = not api_key or api_key.strip().lower() == 'local'
+    notes_text = notes_data['text']
+    manday_text = manday_data['text']
 
     progress_store[job_id]['status'] = 'extracting_context'
     progress_store[job_id]['progress'] = 10
     progress_store[job_id]['current_doc'] = 'Analyzing documents...'
 
     shared_context = None
-    if use_offline:
-        offline_results = offline_generate_all(
-            notes_data['text'], manday_data['text'],
-            standards_full, selected_standards
-        )
-    else:
-        shared_context = extract_shared_context(
-            api_key, notes_data['text'], manday_data['text']
-        )
+    if api_key and api_key.strip().lower() not in ('', 'local'):
+        shared_context = extract_shared_context(api_key, notes_text, manday_text)
         if 'error' in shared_context:
             shared_context = None
 
@@ -90,54 +97,46 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         base_progress = 20 + int((idx / total) * 70)
         progress_store[job_id]['progress'] = base_progress
 
-        if use_offline:
-            doc_data = offline_results.get(doc_type, {})
-            if 'error' not in doc_data:
-                path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key)
-                if path:
-                    if not client_name or client_name == 'Client':
-                        client_name = doc_data.get('client_name', 'Client')
-                    filename = os.path.basename(path)
-                    doc_info = {'path': path, 'filename': filename}
-                    pdf_path = convert_to_pdf(path)
-                    if pdf_path:
-                        doc_info['pdf_path'] = pdf_path
-                    results[doc_type] = doc_info
-                    progress_store[job_id]['doc_progress'][doc_type] = 'done'
-                    progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
-                    continue
-            results[doc_type] = {'error': doc_data.get('error', 'Offline generation failed')}
-            progress_store[job_id]['doc_progress'][doc_type] = 'error'
-            progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
-            continue
-
-        try:
-            ai_result = ai_generate(
-                api_key, notes_data['text'], manday_data['text'],
-                standards_full, doc_type, shared_context
-            )
-            if 'error' in ai_result:
-                results[doc_type] = {'error': ai_result['error']}
-                progress_store[job_id]['doc_progress'][doc_type] = 'error'
-            else:
-                path = generate_document_file(doc_type, ai_result, output_dir, template_path, standard_key)
-                if path:
-                    if not client_name or client_name == 'Client':
-                        client_name = ai_result.get('client_name', 'Client')
-                    filename = os.path.basename(path)
-                    doc_info = {'path': path, 'filename': filename}
-                    pdf_path = convert_to_pdf(path)
-                    if pdf_path:
-                        doc_info['pdf_path'] = pdf_path
-                    results[doc_type] = doc_info
-                    progress_store[job_id]['doc_progress'][doc_type] = 'done'
+        # 1) Try AI pipeline (router → local/cloud provider)
+        doc_data = None
+        ai_error = None
+        if True:
+            try:
+                ai_result = ai_generate(
+                    api_key, notes_text, manday_text,
+                    standards_full, doc_type, shared_context
+                )
+                if 'error' not in ai_result:
+                    doc_data = ai_result
                 else:
-                    results[doc_type] = {'error': 'Document generation failed'}
-                    progress_store[job_id]['doc_progress'][doc_type] = 'error'
-        except Exception as e:
-            results[doc_type] = {'error': str(e)}
-            progress_store[job_id]['doc_progress'][doc_type] = 'error'
+                    ai_error = ai_result['error']
+            except Exception as e:
+                ai_error = str(e)
 
+        # 2) If AI failed, fall back to offline generator
+        if doc_data is None:
+            offline_results = offline_generate_all(
+                notes_text, manday_text,
+                standards_full, selected_standards
+            )
+            doc_data = offline_results.get(doc_type, {})
+            if 'error' in doc_data:
+                ai_error = ai_error or doc_data['error']
+                doc_data = None
+
+        # 3) Generate the DOCX from whatever data we have
+        if doc_data:
+            doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data)
+            if doc_info:
+                if not client_name or client_name == 'Client':
+                    client_name = doc_data.get('client_name', 'Client')
+                results[doc_type] = doc_info
+                progress_store[job_id]['doc_progress'][doc_type] = 'done'
+                progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
+                continue
+
+        results[doc_type] = {'error': ai_error or 'Document generation failed'}
+        progress_store[job_id]['doc_progress'][doc_type] = 'error'
         progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
 
     progress_store[job_id]['progress'] = 95
