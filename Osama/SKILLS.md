@@ -474,3 +474,41 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 - ✅ aiCallLimiter.canProceed() before every AI call
 - ✅ AbortController per AI call, cleanup in unmount
 - ✅ <ErrorBoundary> wrapping <App/>
+
+---
+
+## Skill 19 — Productivity & Workflow Engine
+
+**Trigger:** "Run Productivity Prompt #[1-20]" / "Help me manage my time/tasks" / "Productivity framework"
+**Agent:** Agent 8 (Prompt Architect) to structure it · Agent 6 (Concierge) for personal routines
+
+### The 20 Frameworks
+
+| # | Framework | Core Output |
+|---|-----------|-------------|
+| 1 | Deep Work Planner | Focus blocks, distraction elimination, recovery periods |
+| 2 | AI Executive Assistant | Prioritize tasks by urgency/impact, optimize schedule |
+| 3 | Productivity Audit | Audit routines/tools, identify bottlenecks and time leaks |
+| 4 | Daily Schedule Optimizer | Schedule based on goals, energy levels, and recovery |
+| 5 | Task Prioritization System | Rank by ROI/importance, delegate/automate/eliminate |
+| 6 | Time Blocking System | Weekly schedule with deep/shallow blocks and interruption rules |
+| 7 | Meeting Optimization | Agendas, action items, async communication systems |
+| 8 | Knowledge Management | Workflows for capturing, tagging, and retrieving info |
+| 9 | Anti-Procrastination Framework | Systems for discipline and execution when unmotivated |
+| 10 | Workflow Automation Planner | AI tool recommendations for repetitive tasks |
+| 11 | Weekly Review System | Reflection prompts, KPI tracking, bottleneck analysis |
+| 12 | Goal Execution Planner | Milestones, daily tasks, and accountability systems |
+| 13 | Productivity Dashboard Creator | Track focus hours, habits, and project KPIs |
+| 14 | Energy Optimization System | Maximize clarity/focus based on sleep, exercise, and workload |
+| 15 | Learning Productivity System | Meta-learning roadmap, active recall, revision schedules |
+| 16 | Inbox Management System | Prioritization, batching, templates, and filtering |
+| 17 | Decision-Making Framework | Prioritization, risk analysis, reducing cognitive overload |
+| 18 | Content Creator Productivity | Workflow for ideation, scripting, editing, and publishing |
+| 19 | Multi-Project Management | Dependency maps, workload balancing, execution timelines |
+| 20 | Second Brain System | Digital organization for capturing and reviewing long-term knowledge |
+
+### Steps
+1. Confirm which of the 20 prompts is being triggered
+2. Ask the user for the necessary inputs required by that specific prompt (e.g., current task list, goals, pain points)
+3. Execute the prompt exactly as defined, maintaining structured output (tables, bullet points, strict actionability)
+4. Do not offer generic advice — act strictly within the requested framework
