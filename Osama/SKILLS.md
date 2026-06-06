@@ -1,6 +1,6 @@
 # Skills.md — Master Playbook (SOPs)
 
-Standardized processes. Claude runs these without re-explanation. Trigger a skill by name or by describing the task. Any agent can run any skill.
+Standardized processes. Claude runs these without re-explanation. **All skills auto-trigger based on the intent of your message — just describe what you need in natural language. No need to say "Run Skill X" or mention skill numbers.**
 
 **Platform:** ComplianceHub — full-stack FastAPI + Vite/React (https://github.com/0zMaradny/ComplianceHub)
 **Legacy:** React artifact (TUV_Platform_Fixed.jsx) — archived, superseded by ComplianceHub
@@ -9,13 +9,15 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 01 — New Session Startup
 
-**Trigger:** Start of any new Claude session
+**Trigger:** Start of any new session / "Let's start" / "New session" / first message
+
+**Auto-trigger:** ALWAYS runs at the start of every session. No user action needed.
 
 **Steps:**
 1. Load Context.md — read the full dual role structure:
    - Track A (Auditor): Am I here to audit a client seeking certification? → Agent 1 (Judge)
    - Track B (Implementer): Am I here to build/deliver for a client? → Agent 2 (Architect)
-   - Both tracks can be active in the same session (e.g. reviewing an audit gap, then building the fix)
+   - Both tracks can be active in the same session
 2. Load Agents.md — identify which agent(s) are needed
 3. Review Memory.md — apply all confirmed preferences, avoid all logged mistakes
 4. Client isolation check: Which client is active?
@@ -31,7 +33,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 02 — IMS Audit (Multi-Standard)
 
-**Trigger:** "Audit this document" / "Check against [ISO standards]" / "Surveillance audit prep"
+**Trigger:** "Audit this" / "Check against ISO" / "Surveillance audit" / "Initial audit" / "Recertification" / "Audit prep" / "NC finding" / "Nonconformity" / "Major NC" / "Minor NC" / "OFI" / "Audit report" / "Compliance check" / "Clause check" / "ISO audit" / "Multi-standard audit" / "IMS audit" / "Stage 1" / "Stage 2" / "Find gaps" / "What's missing" / "Are we compliant" / "Audit readiness"
+
+**Auto-trigger:** ANY message about auditing, checking compliance, finding gaps, NCs, OFIs, or reviewing documents against ISO standards.
+
 **Agent:** Agent 1 (The Judge) — Track A: Lead Auditor role
 
 **Scheme Responsibility Context:** Osama is Scheme Head at TÜV Austria GCC for:
@@ -56,7 +61,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 03 — Build Excel Risk Register
 
-**Trigger:** "Build a risk register" / "Create [X] risk register workbook"
+**Trigger:** "Risk register" / "Build risk register" / "Create risk register" / "Risk workbook" / "Risk assessment Excel" / "Risk matrix" / "Risk scoring" / "L×S rating" / "Nested IF risk" / "Risk dashboard" / "KPI risk" / "Risk ID" / "VLOOKUP risk" / "Treatment plan" / "Risk treatment" / "I need a risk register" / "Build me a risk tracker" / "Risk log" / "Enterprise risk" / "Corporate risk"
+
+**Auto-trigger:** ANY message about building, creating, or updating risk registers, risk matrices, risk scoring, or risk-related Excel workbooks.
+
 **Agent:** Agent 4 (Excel Engineer) + Agent 2 (Implementer) for content
 
 **Steps:**
@@ -76,7 +84,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 04 — Build BIA Workbook
 
-**Trigger:** "Build BIA" / "Business Impact Analysis workbook"
+**Trigger:** "BIA" / "Business Impact Analysis" / "Build BIA" / "BIA workbook" / "MTD" / "RTO" / "RPO" / "Criticality" / "Recovery strategy" / "Process criticality" / "BIA table" / "Impact analysis" / "Business continuity analysis" / "Which processes are critical" / "Recovery priority"
+
+**Auto-trigger:** ANY message about business impact analysis, process criticality, recovery priorities, MTD/RTO/RPO, or BIA-related Excel workbooks.
+
 **Agent:** Agent 4 (Excel Engineer)
 
 **Steps:**
@@ -92,7 +103,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 05 — Write Arabic BCM Document
 
-**Trigger:** "Write BCM document" / "Arabic business continuity plan"
+**Trigger:** "BCM document" / "Business continuity plan" / "Arabic BCM" / "Arabic document" / "Write in Arabic" / "Arabic policy" / "Arabic procedure" / "BCP" / "Business continuity" / "Operational scenarios" / "Response plans" / "Implementation roadmap" / "KPI framework" / "Compliance mapping" / "DGA" / "NRC" / "BIA tables" / "Phased response" / "12-month roadmap" / "RTL document" / "Arabic Word"
+
+**Auto-trigger:** ANY message about writing Arabic documents, BCM plans, business continuity, or any document that needs RTL/Arabic formatting.
+
 **Agent:** Agent 5 (Arabic Writer) + Agent 2 (Implementer) for structure
 
 **Steps:**
@@ -114,10 +128,13 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 06 — ISO 42001 AI Management Implementation
 
-**Trigger:** "ISO 42001" / "AI management system" / "AI policy" / "AIMS"
+**Trigger:** "ISO 42001" / "AI management" / "AI policy" / "AIMS" / "AI governance" / "AI risk" / "AI impact assessment" / "AIIA" / "AI system inventory" / "AI lifecycle" / "AI incident" / "AI change management" / "Human oversight" / "Explainability" / "AI bias" / "AI fairness" / "SoA AI" / "AI controls" / "Annex A AI" / "AI mandatory documents" / "AI compliance" / "Responsible AI" / "AI ethics"
+
+**Auto-trigger:** ANY message about ISO 42001, AI management systems, AI governance, AI risk assessment, AI impact assessment, AI policies, or AI compliance.
+
 **Agent:** Agent 2 (Implementer) + Agent 3 (Developer) for automation layer
 
-### 24 Mandatory Documents — ISO/IEC 42001:2023 (complete list):
+### 24 Mandatory Documents — ISO/IEC 42001:2023:
 
 | # | Document | Clause | Type |
 |---|----------|--------|------|
@@ -165,13 +182,13 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 |------|------|------------|
 | 1 | Define AI System Context | System description: purpose, intended use, life cycle stage, key components |
 | 2 | Identify Stakeholders | Register of direct/indirect users, affected parties, vulnerable groups |
-| 3 | Identify Impact Categories | Assessment across 10 categories (see below) |
-| 4 | Assess Severity & Likelihood | Inherent Risk = Severity (1–5) × Likelihood (1–5). Consider scale, duration, reversibility |
+| 3 | Identify Impact Categories | Assessment across 10 categories |
+| 4 | Assess Severity & Likelihood | Inherent Risk = Severity (1–5) × Likelihood (1–5) |
 | 5 | Review Controls & Mitigations | Existing controls adequacy + additional mitigations with owners and timelines |
 | 6 | Determine Residual Impact | Residual Severity × Residual Likelihood = Overall Residual Impact Level |
 | 7 | Governance Decision & Review | Accept / Conditionally Accept / Escalate / Reject + documented rationale + action plan |
 
-### 10 ISO 42005 Impact Categories (Step 3 — must assess ALL):
+### 10 ISO 42005 Impact Categories:
 
 | # | Category | What to Check |
 |---|----------|---------------|
@@ -186,24 +203,14 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 | 9 | Legal | Compliance with applicable laws: GDPR, labour law, liability |
 | 10 | Human Autonomy | Degree to which AI overrides or undermines human decision-making |
 
-### AIIA Audit Key Points (checklist for auditors):
-- AI system purpose and intended use documented
-- All stakeholder groups identified including vulnerable groups
-- All 10 impact categories assessed (N/A requires justification)
-- Each impact scored: Severity (1–5) × Likelihood (1–5)
-- Controls identified and evaluated for adequacy
-- Additional mitigations planned with responsible owners and target dates
-- Residual impact determined after controls applied
-- Governance body has reviewed and recorded decision (Accept/Escalate/Reject)
-- Action plan exists for all conditional acceptances
-- Monitoring and periodic review schedule defined
-- Communication to affected stakeholders documented
-
 ---
 
 ## Skill 07 — ISO Compliance Gap Check
 
-**Trigger:** "Gap analysis" / "Check compliance against [standard]"
+**Trigger:** "Gap analysis" / "Gap check" / "Compliance check" / "What gaps do we have" / "Are we ready for audit" / "Pre-audit" / "Readiness check" / "What's missing" / "Compliance status" / "How compliant are we" / "Clause-by-clause" / "Gap report" / "Compliance score" / "Audit readiness" / "IMS gaps" / "Multi-standard gaps"
+
+**Auto-trigger:** ANY message about gap analysis, compliance checking, audit readiness, or identifying what's missing against ISO standards.
+
 **Agent:** Agent 1 (Judge) for gaps · Agent 2 (Implementer) for remediation
 
 **Steps:**
@@ -218,7 +225,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 08 — Build Python Automation Tool
 
-**Trigger:** "Automate [task]" / "Build a script for [workflow]"
+**Trigger:** "Automate" / "Build a script" / "Python script" / "Automation tool" / "Write code for" / "Create a tool" / "Build a bot" / "Workflow automation" / "Python tool" / "Script for" / "Automate my workflow" / "I need a script" / "Code this" / "Program for" / "ISO monitoring script" / "Compliance tracking"
+
+**Auto-trigger:** ANY message about building Python scripts, automating workflows, creating tools, or writing code for ISO compliance monitoring.
+
 **Agent:** Agent 3 (Automator) + Agent 2 (Implementer) for ISO control layer
 
 **Steps:**
@@ -233,7 +243,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 09 — Add Treatment Plan Sheet
 
-**Trigger:** "Add treatment plan" / "Link treatments to risk register"
+**Trigger:** "Treatment plan" / "Link treatments" / "Risk treatment" / "Treatment sheet" / "VLOOKUP treatment" / "Risk action plan" / "Remediation plan" / "Risk response" / "What actions for risks" / "Who owns this risk" / "Risk due date" / "Treatment status" / "Residual risk after treatment"
+
+**Auto-trigger:** ANY message about treatment plans, risk remediation, risk action plans, or linking treatments to risk registers.
+
 **Agent:** Agent 4 (Excel Engineer)
 
 **Steps:**
@@ -248,7 +261,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 10 — Travel & Savings Optimizer
 
-**Trigger:** "Plan trip" / "Find deal for [destination/purchase]"
+**Trigger:** "Plan trip" / "Book flight" / "Travel to" / "Flight deal" / "Saudia" / "Flynas" / "EgyptAir" / "Alexandria" / "Makkah" / "Madinah" / "Umrah" / "Ziyara" / "Cashback" / "STC Pay" / "Urpay" / "Noon deal" / "Amazon KSA" / "Al-Rajhi" / "SNB offer" / "Save money" / "Best deal" / "Cheapest flight" / "Travel hack" / "Bank promotion" / "Credit card offer" / "How to save" / "Discount" / "Promo code"
+
+**Auto-trigger:** ANY message about travel planning, flights, Umrah, Ziyara, cashback, bank offers, deals, discounts, or saving money on purchases.
+
 **Agent:** Agent 6 (Personal Concierge)
 
 **Steps:**
@@ -262,8 +278,11 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 11 — ComplianceHub Full-Stack Development
 
-**Trigger:** "Fix the platform" / "Add feature to ComplianceHub" / "Debug backend/frontend"
-**Agent:**  Agent 3 (Developer) + Agent 7 (Platform Engineer)
+**Trigger:** "Fix the platform" / "Add feature" / "Debug backend" / "Debug frontend" / "Build feature" / "Platform issue" / "ComplianceHub" / "Backend error" / "Frontend bug" / "API not working" / "Server down" / "Build fails" / "npm error" / "Python error" / "FastAPI" / "React issue" / "Vite" / "Update platform" / "New endpoint" / "Add page" / "UI fix" / "Database issue" / "AI not generating" / "Document generation failed"
+
+**Auto-trigger:** ANY message about developing, debugging, fixing, or enhancing the ComplianceHub platform — backend, frontend, AI pipeline, document generation, or deployment.
+
+**Agent:** Agent 3 (Developer) + Agent 7 (Platform Engineer)
 
 ### Tech Stack
 - **Backend:** FastAPI + Uvicorn (port 8000) — `backend/app/`
@@ -291,9 +310,12 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ---
 
-## Skill 12 — CAPA Plan Generation (Corrective & Preventive Action)
+## Skill 12 — CAPA Plan Generation
 
-**Trigger:** "Generate CAPA" / "Minor NC / Major NC found" / "Corrective action needed"
+**Trigger:** "CAPA" / "Corrective action" / "Preventive action" / "Root cause" / "5-Whys" / "NC found" / "Nonconformity" / "Major NC" / "Minor NC" / "Containment" / "Effectiveness verification" / "CAPA log" / "CAPA plan" / "Fix this finding" / "How do I close this NC" / "Action plan for" / "Remediation" / "Corrective and preventive"
+
+**Auto-trigger:** ANY message about CAPA, corrective actions, preventive actions, root cause analysis, 5-Whys, NC remediation, or action plans for audit findings.
+
 **Agent:** Agent 1 (Judge) to confirm finding · Agent 2 (Implementer) to write CAPA
 
 **Steps:**
@@ -312,7 +334,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 13 — GitHub vs Platform Delta Comparison
 
-**Trigger:** "Compare GitHub version" / "What's new in this code" / "Merge improvements"
+**Trigger:** "Compare GitHub" / "What's new in the code" / "Merge improvements" / "Delta check" / "GitHub version" / "Pull latest" / "What changed" / "Code comparison" / "Sync with GitHub" / "Update from repo" / "Fetch latest" / "Code diff"
+
+**Auto-trigger:** ANY message about comparing code with GitHub, pulling updates, checking what changed, or syncing the local workspace with the remote repo.
+
 **Agent:** Agent 3 (Developer)
 
 **Steps:**
@@ -326,7 +351,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 14 — ComplianceHub: Audit Document Package Generation
 
-**Trigger:** "Generate audit package" / "Create all documents for [client]" / "Generate 8 docs"
+**Trigger:** "Generate audit package" / "Create all documents" / "Generate 8 docs" / "Audit documents" / "Full audit package" / "Stage 1 plan" / "Stage 2 plan" / "Audit report" / "Certificate" / "Participation list" / "ISO checklist" / "TNL" / "Certificate text" / "Upload audit notes" / "Generate docs" / "Audit paperwork" / "Certification documents" / "Document package"
+
+**Auto-trigger:** ANY message about generating audit documents, creating certification packages, uploading audit notes, or producing any of the 8 document types.
+
 **Agent:** Agent 7 (Platform Engineer) + Agent 2 (Implementer) for content
 
 ### 8 Document Types (OUTPUT_DOCUMENTS)
@@ -363,18 +391,13 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ---
 
-## Skill 15 — AI Prompt Engineering (Merged 12-part Anatomy Framework)
+## Skill 15 — AI Prompt Engineering (12-part Anatomy Framework)
 
-**Trigger:** "Write a prompt" / "Improve this prompt" / "Build me a prompt for [task]" / "Help me prompt" / "Prompt engineering" / "How do I ask AI to" / "Structure my prompt" / "Make this prompt better" / "Optimize my prompt" / "I need a prompt for" / "Can you write a prompt" / "Prompt template" / "Help me get better results from AI" / "How should I phrase this for AI"
+**Trigger:** "Write a prompt" / "Improve this prompt" / "Build me a prompt" / "Help me prompt" / "Prompt engineering" / "How do I ask AI to" / "Structure my prompt" / "Make this prompt better" / "Optimize my prompt" / "I need a prompt for" / "Can you write a prompt" / "Prompt template" / "Help me get better results from AI" / "How should I phrase this for AI" / "ChatGPT prompt" / "Claude prompt" / "Gemini prompt" / "AI instructions" / "System prompt" / "I want AI to" / "Can you make a prompt that" / "Better AI output" / "AI gave me bad results"
+
+**Auto-trigger:** ANY message that involves writing, structuring, or improving prompts for AI tools; asking how to phrase something for AI; requesting prompt templates; or wanting better results from ChatGPT, Claude, Gemini, or any AI tool.
+
 **Agent:** Agent 8 (Prompt Architect)
-
-**Auto-trigger:** ANY message that involves:
-- Writing, structuring, or improving a prompt for AI
-- Asking how to phrase something for an AI tool
-- Requesting a prompt template or framework
-- Mentioning "prompt engineering" or "prompt design"
-- Asking for help getting better results from ChatGPT, Claude, Gemini, or any AI tool
-- Any request that starts with "I want AI to..." or "Can you make a prompt that..."
 
 **Framework:** Merged from Ruben Hassid (9-part) + serveai.ig → 12-part master framework
 **Always include:** ROLE + TASK + OUTPUT + PUSH. Add others as needed.
@@ -416,7 +439,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 16 — Six-Gate Delivery Pipeline (ISO Project)
 
-**Trigger:** "Plan the project" / "What's the delivery sequence?"
+**Trigger:** "Plan the project" / "Delivery sequence" / "Project plan" / "Implementation roadmap" / "How do we start" / "What's the process" / "ISO project" / "Certification project" / "Delivery pipeline" / "Project phases" / "Project gates" / "Where do we begin" / "Implementation plan" / "Certification timeline" / "Scope the project"
+
+**Auto-trigger:** ANY message about planning ISO implementation projects, certification timelines, project phases, delivery sequences, or where to begin with a new client engagement.
+
 **Agent:** Agent 9 (Delivery Manager) coordinating Agents 1–6
 
 | Gate | Name | Agent | Output |
@@ -434,7 +460,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 17 — ComplianceHub Debugging Checklist
 
-**Trigger:** "Something's broken" / "Error in platform" / "Build fails"
+**Trigger:** "Something's broken" / "Error in platform" / "Build fails" / "Not working" / "Bug fix" / "Debug" / "Troubleshoot" / "Server error" / "API error" / "Frontend crash" / "Backend crash" / "Won't start" / "npm error" / "Python error" / "Import error" / "Module not found" / "AI not responding" / "Document won't generate" / "Upload failed" / "Download failed"
+
+**Auto-trigger:** ANY message about errors, bugs, crashes, build failures, servers not starting, or anything not working in the ComplianceHub platform.
+
 **Agent:** Agent 3 (Developer)
 
 ### Backend Triage
@@ -465,7 +494,10 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 18 — Legacy React Artifact (Reference Only)
 
-**Trigger:** Questions about the old TUV_Platform_Fixed.jsx artifact
+**Trigger:** "Old platform" / "React artifact" / "TUV_Platform_Fixed" / "window.storage" / "Anthropic artifact" / "Claude artifact" / "Old JSX" / "Legacy code" / "Previous platform" / "Artifact sandbox"
+
+**Auto-trigger:** ANY message referencing the old single-file React artifact, TUV_Platform_Fixed.jsx, or legacy artifact sandbox rules.
+
 **Agent:** Agent 7 (Platform Engineer)
 
 **Status:** Archived — superseded by ComplianceHub full-stack. Kept for reference only.
@@ -487,21 +519,11 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 19 — Productivity & Workflow Engine
 
-**Trigger:** "Run Productivity Prompt #[1-20]" / "Help me manage my time" / "Productivity framework" / "Time management" / "Task prioritization" / "Deep work" / "Focus plan" / "Schedule optimization" / "Weekly review" / "Goal planning" / "Inbox management" / "Decision framework" / "Energy optimization" / "Learning system" / "Second brain" / "Knowledge management" / "Workflow automation" / "Meeting optimization" / "Anti-procrastination" / "Content creation workflow" / "Multi-project management" / "Productivity dashboard" / "I'm overwhelmed" / "Help me focus" / "How do I prioritize" / "I need a system for" / "Help me get organized" / "I keep procrastinating" / "Manage my tasks" / "Plan my week" / "Plan my day" / "I have too many projects" / "Help me build a routine"
-**Agent:** Agent 8 (Prompt Architect) to structure it · Agent 6 (Concierge) for personal routines
+**Trigger:** "Productivity" / "Time management" / "Task prioritization" / "Deep work" / "Focus plan" / "Schedule optimization" / "Weekly review" / "Goal planning" / "Inbox management" / "Decision framework" / "Energy optimization" / "Learning system" / "Second brain" / "Knowledge management" / "Workflow automation" / "Meeting optimization" / "Anti-procrastination" / "Content creation workflow" / "Multi-project management" / "Productivity dashboard" / "I'm overwhelmed" / "Help me focus" / "How do I prioritize" / "I need a system" / "Help me get organized" / "I keep procrastinating" / "Manage my tasks" / "Plan my week" / "Plan my day" / "I have too many projects" / "Help me build a routine" / "I need structure" / "Help me plan" / "I'm stuck" / "Can't focus" / "Too much to do" / "Where do I start" / "Help me decide" / "What should I work on" / "I wasted my day" / "No motivation" / "Burnout" / "Work-life balance"
 
-**Auto-trigger:** ANY message that involves:
-- Managing time, tasks, priorities, or schedules
-- Feeling overwhelmed or needing organization
-- Wanting to build systems, routines, or habits
-- Asking about productivity methods (Deep Work, Time Blocking, GTD, etc.)
-- Needing help with focus, procrastination, or energy management
-- Planning goals, milestones, or weekly reviews
-- Managing multiple projects or dependencies
-- Inbox/email management
-- Decision-making frameworks
-- Content creation workflows
-- Building a "second brain" or knowledge management system
+**Auto-trigger:** ANY message about managing time, tasks, priorities, schedules, focus, procrastination, energy, goals, routines, habits, productivity systems, decision-making, inbox management, knowledge management, content creation, multi-project management, or feeling overwhelmed/stuck/burned out.
+
+**Agent:** Agent 8 (Prompt Architect) to structure it · Agent 6 (Concierge) for personal routines
 
 ### The 20 Frameworks
 
@@ -529,7 +551,7 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 | 20 | Second Brain System | Digital organization for capturing and reviewing long-term knowledge |
 
 ### Steps
-1. Confirm which of the 20 prompts is being triggered
-2. Ask the user for the necessary inputs required by that specific prompt (e.g., current task list, goals, pain points)
-3. Execute the prompt exactly as defined, maintaining structured output (tables, bullet points, strict actionability)
+1. Confirm which of the 20 frameworks is being triggered
+2. Ask the user for the necessary inputs (current task list, goals, pain points, etc.)
+3. Execute the framework exactly as defined, maintaining structured output (tables, bullet points, strict actionability)
 4. Do not offer generic advice — act strictly within the requested framework
