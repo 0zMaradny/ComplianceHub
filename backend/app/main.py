@@ -5,11 +5,9 @@ import uuid
 import shutil
 import threading
 import time
-from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.config import (
     UPLOAD_FOLDER, OUTPUT_FOLDER, ISO_STANDARDS,
@@ -18,7 +16,6 @@ from app.config import (
 from app.services.file_parser import extract_audit_notes, extract_manday_data
 from app.services.ai_pipeline import generate_document as ai_generate, extract_shared_context
 from app.services.document_generator import generate_document_file
-from app.services.template_manager import get_template_path
 from app.services.pdf_converter import convert_to_pdf
 from app.services.offline_generator import generate_all as offline_generate_all
 
@@ -59,6 +56,13 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
     pdf_path = convert_to_pdf(path)
     if pdf_path:
         doc_info['pdf_path'] = pdf_path
+    for k in ('certification_decision', 'conditions', 'findings_summary',
+              'conclusion', 'methodology', 'sections', 'summary',
+              'client_name', 'audit_date', 'standard', 'scope', 'lead_auditor',
+              'report_number', 'certificate_number', 'nonconformities',
+              'positive_findings', 'opportunities_for_improvement'):
+        if k in doc_data:
+            doc_info[k] = doc_data[k]
     return doc_info
 
 
@@ -130,6 +134,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             if doc_info:
                 if not client_name or client_name == 'Client':
                     client_name = doc_data.get('client_name', 'Client')
+                doc_info['_data'] = doc_data
                 results[doc_type] = doc_info
                 progress_store[job_id]['doc_progress'][doc_type] = 'done'
                 progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
@@ -263,8 +268,6 @@ async def generate_docs(
     selected_standards = json.loads(standards)
 
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
-    output_dir = os.path.join(OUTPUT_FOLDER, job_id)
-
     notes_path = None
     for ext in ('.docx', '.txt'):
         candidate = os.path.join(job_dir, f'audit_notes{ext}')
@@ -320,8 +323,18 @@ def get_status(job_id: str):
         for doc_type, result in result_data.items():
             cleaned = {}
             for k, v in result.items():
-                if k not in ('path', 'pdf_path'):
+                if k not in ('path', 'pdf_path', '_data'):
                     cleaned[k] = v
+            data = result.get('_data', {})
+            if doc_type == 'Audit_Report':
+                cleaned['findings_summary_preview'] = (data.get('findings_summary') or '')[:200]
+                cleaned['methodology'] = data.get('methodology')
+                cleaned['certification_decision'] = data.get('certification_decision')
+            elif doc_type in ('Certificate', 'Certificate_Text'):
+                cleaned['certification_decision'] = data.get('certification_decision')
+                cleaned['conditions'] = data.get('conditions', [])
+            elif doc_type == 'ISO_Checklist':
+                cleaned['total_sections'] = len(data.get('sections', []))
             cleaned_results[doc_type] = cleaned
 
     return {

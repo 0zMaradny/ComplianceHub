@@ -11,13 +11,6 @@ if shutil.which('libreoffice'):
 elif shutil.which('soffice'):
     PDF_AVAILABLE = True
     PDF_ENGINE = 'libreoffice'
-elif shutil.which('docx2pdf'):
-    try:
-        import docx2pdf
-        PDF_AVAILABLE = True
-        PDF_ENGINE = 'docx2pdf'
-    except ImportError:
-        pass
 
 
 def convert_to_pdf(docx_path):

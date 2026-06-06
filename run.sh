@@ -52,7 +52,8 @@ if [ "$START_LOCAL" = true ]; then
 
   if [ -n "$MODEL" ]; then
     /opt/llama-server/llama-server \
-      -m "$MODEL" -c 4096 -t 8 --host 0.0.0.0 --port $LOCAL_AI_PORT --temp 0.3 \
+      -m "$MODEL" -c 4096 -t 4 -b 2048 --mlock \
+      --host 0.0.0.0 --port $LOCAL_AI_PORT --temp 0.3 \
       > /tmp/llama-server.log 2>&1 &
     LOCAL_AI_PID=$!
     sleep 2
@@ -97,6 +98,9 @@ echo -e "${BOLD}${GREEN}║  Content modes:                                  ║
 echo -e "${BOLD}${GREEN}║  • Offline (default): no API key needed         ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Local AI: run with --local-ai                ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Cloud AI: enter Gemini/OpenAI key in UI      ║${NC}"
+if grep -q "^HF_API_KEY=hf_" backend/.env 2>/dev/null; then
+  echo -e "${BOLD}${GREEN}║  • HF Free Tier: active (Llama-3-8B via API)    ║${NC}"
+fi
 echo -e "${BOLD}${GREEN}║                                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  Press Ctrl+C to stop all servers               ║${NC}"
 echo -e "${BOLD}${GREEN}║                                                  ║${NC}"

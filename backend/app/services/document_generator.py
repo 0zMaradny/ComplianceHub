@@ -1,12 +1,12 @@
 import os
 import re
 from docx import Document
-from docx.shared import Inches, Pt, Cm, RGBColor, Emu
+from docx.shared import Inches, Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_ORIENT
-from docx.oxml.ns import qn, nsdecls
-from docx.oxml import parse_xml, OxmlElement
+from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 from app.config import DEFAULT_LOGO_PATH
 
@@ -560,27 +560,6 @@ def _generate_checklist_excel(template_path, data, output_dir, safe_name):
 
     wb.save(out_path)
     return out_path
-    sect = doc.sections[0]
-    sect.left_margin = Cm(1.5)
-    sect.right_margin = Cm(1.5)
-    sect.top_margin = Cm(1.5)
-    sect.bottom_margin = Cm(1.5)
-    pg = sect._sectPr
-    pgBorders = OxmlElement('w:pgBorders')
-    pgBorders.set(qn('w:offsetFrom'), 'page')
-    for side, sz, color, space in [
-        ('top', '24', '003D7A', '24'),
-        ('left', '24', '003D7A', '24'),
-        ('bottom', '24', '003D7A', '24'),
-        ('right', '24', '003D7A', '24'),
-    ]:
-        border = OxmlElement(f'w:{side}')
-        border.set(qn('w:val'), 'single')
-        border.set(qn('w:sz'), sz)
-        border.set(qn('w:color'), color)
-        border.set(qn('w:space'), space)
-        pgBorders.append(border)
-    pg.append(pgBorders)
 
 
 def generate_audit_plan_stage(data, output_path, stage_label):
@@ -745,21 +724,44 @@ def generate_audit_report(data, output_path):
     for member in data.get('audit_team', []):
         add_data_row(table, [member.get('name', ''), member.get('role', ''), str(member.get('days', ''))])
 
-    add_section_heading(doc, '3. Summary of Findings')
-    add_body_text(doc, data.get('findings_summary', ''))
+    add_section_heading(doc, '3. Executive Summary')
+    exec_summary = data.get('findings_summary', '')
+    add_body_text(doc, exec_summary)
+    if data.get('positive_findings'):
+        add_sub_heading(doc, '3.1 Key Strengths')
+        for pf in data['positive_findings']:
+            add_bullet(doc, pf)
+
+    add_section_heading(doc, '4. Audit Methodology')
+    methodology = data.get('methodology', {
+        'approach': 'The audit was conducted in accordance with ISO 19011:2018 guidelines for auditing management systems. A process-based approach was employed, following the Plan-Do-Check-Act (PDCA) cycle across all relevant clauses of the applicable standard(s).',
+        'sampling': 'Audit evidence was gathered through interviews with personnel at all relevant levels, observation of processes and activities, and review of documented information including policies, procedures, records, and reports. Sampling techniques were applied in accordance with ISO 19011:2018, taking into account the complexity and risk profile of each process.',
+        'criteria': f'The audit criteria consisted of the requirements of {data.get("standard", "the applicable standard")}, the organization\'s own management system documentation, and applicable statutory and regulatory requirements.',
+        'methods': 'Methods employed included: (1) document review and records analysis, (2) observation of operational activities and work practices, (3) interviews with top management, process owners, and operational personnel, (4) verification of resources and infrastructure, and (5) traceability audits from records back to source documentation.',
+    })
+    add_sub_heading(doc, '4.1 Audit Approach')
+    add_body_text(doc, methodology.get('approach', ''))
+    add_sub_heading(doc, '4.2 Sampling Methodology')
+    add_body_text(doc, methodology.get('sampling', ''))
+    add_sub_heading(doc, '4.3 Audit Criteria')
+    add_body_text(doc, methodology.get('criteria', ''))
+    add_sub_heading(doc, '4.4 Audit Methods')
+    add_body_text(doc, methodology.get('methods', ''))
+
+    add_section_heading(doc, '5. Detailed Findings')
 
     if data.get('positive_findings'):
-        add_sub_heading(doc, '3.1 Positive Findings')
+        add_sub_heading(doc, '5.1 Positive Findings')
         for pf in data['positive_findings']:
             add_bullet(doc, pf)
 
     if data.get('opportunities_for_improvement'):
-        add_sub_heading(doc, '3.2 Opportunities for Improvement')
+        add_sub_heading(doc, '5.2 Opportunities for Improvement')
         for ofi in data['opportunities_for_improvement']:
             add_bullet(doc, ofi)
 
     if data.get('nonconformities'):
-        add_sub_heading(doc, '3.3 Nonconformities')
+        add_sub_heading(doc, '5.3 Nonconformities')
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
         add_header_row(table, ['Clause', 'Severity', 'Description', 'Due Date'])
@@ -773,7 +775,7 @@ def generate_audit_report(data, output_path):
                 nc.get('due_date', ''),
             ], color=row_color)
 
-    add_section_heading(doc, '4. Conclusion')
+    add_section_heading(doc, '6. Conclusion')
     add_body_text(doc, data.get('conclusion', ''))
 
     p = doc.add_paragraph()
@@ -790,17 +792,14 @@ def generate_iso_checklist(data, output_path, template_path=None):
         setup_document(doc, landscape=True)
         sections = data.get('sections', [])
 
-        injected = False
         for table in doc.tables:
             if len(table.rows) < 3:
                 continue
-            first_row_text = ' '.join(c.text for c in table.rows[0].cells).lower()
             num_cols = len(table.rows[0].cells)
 
             if num_cols >= 5:
                 _inject_into_template_table(table, sections)
                 set_col_widths(table, [12, 22, 12, 28, 14, 12], available_inches=9.5)
-                injected = True
                 break
 
         overall = data.get('overall_assessment', '')

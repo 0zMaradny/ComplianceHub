@@ -34,6 +34,7 @@ REQUIRED_FIELDS = {
         ('client_name', str), ('audit_date', str), ('standard', str),
         ('report_number', str), ('scope', str), ('lead_auditor', str),
         ('findings_summary', str), ('conclusion', str),
+        ('methodology', dict),
     ],
     'ISO_Checklist': [
         ('client_name', str), ('audit_date', str), ('standard', str),
@@ -46,9 +47,11 @@ REQUIRED_FIELDS = {
     'Certificate': [
         ('client_name', str), ('certificate_number', str), ('standard', str),
         ('audit_date', str), ('scope', str), ('certification_decision', str),
+        ('conditions', list),
     ],
     'TNL': [
         ('client_name', str), ('audit_date', str), ('standard', str),
+        ('summary', dict),
     ],
 }
 
@@ -111,6 +114,18 @@ class Autodebugger:
                     val = entry.get(f)
                     if val is None or (isinstance(val, str) and not val.strip()):
                         errors.append(f"daily_schedule[{i}] missing '{f}'")
+
+        if self.task_type == 'Audit_Report':
+            methodology = result.get('methodology', {})
+            for sub in ('approach', 'sampling', 'criteria', 'methods'):
+                val = methodology.get(sub, '')
+                if not val or not val.strip():
+                    errors.append(f"methodology.{sub} is empty")
+
+        if self.task_type == 'Certificate':
+            conditions = result.get('conditions', [])
+            if not isinstance(conditions, list):
+                errors.append("conditions must be a list")
 
         if self.task_type == 'Participation_List':
             for i, p in enumerate(result.get('participants', [])):

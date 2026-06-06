@@ -25,7 +25,10 @@ TASK_ROUTING = {
 
 
 def set_api_key(provider_name: str, api_key: str):
-    """Set the correct env var for the given provider."""
+    """Set the correct env var for the given provider.
+    Only sets if api_key is non-empty (avoids overwriting .env values).
+    Validates api_key pattern matches the provider to avoid overwriting
+    with garbage like 'hf' or 'gemini' that was meant as override."""
     env_map = {
         'gemini': 'GEMINI_API_KEY',
         'openai': 'OPENAI_API_KEY',
@@ -33,23 +36,53 @@ def set_api_key(provider_name: str, api_key: str):
         'hf': 'HF_API_KEY',
     }
     var = env_map.get(provider_name)
-    if var:
-        os.environ[var] = api_key
+    if not var or not api_key:
+        return
+    # Only set if key looks valid for this provider
+    valid_prefixes = {
+        'gemini': 'AIza',
+        'openai': 'sk-',
+        'claude': 'sk-ant-',
+        'hf': 'hf_',
+    }
+    prefix = valid_prefixes.get(provider_name)
+    if prefix and not api_key.startswith(prefix):
+        return  # Don't overwrite env var with non-matching key
+    os.environ[var] = api_key
+
+
+KEY_PROVIDER_ENV = {
+    'hf': 'HF_API_KEY',
+}
 
 
 def resolve_chain(task_type: str, override_provider: str | None = None, api_key: str = '') -> list[str]:
     """Return ordered provider chain for a task type.
-    Falls straight to local provider when no API key is available."""
-    if not api_key:
-        return ['local']
-
+    Checks both passed api_key and environment variables for available providers."""
     if override_provider:
         chain = [override_provider]
         fallback_str = os.environ.get('AI_FALLBACK_PROVIDERS', '').strip()
         if fallback_str:
             chain.extend(p.strip() for p in fallback_str.split(',') if p.strip())
         return chain
-    return TASK_ROUTING.get(task_type, ['gemini', 'openai'])
+
+    if api_key:
+        if api_key == 'hf' or api_key.startswith('hf_'):
+            chain = ['hf']
+        else:
+            chain = list(TASK_ROUTING.get(task_type, ['gemini', 'openai']))
+    else:
+        chain = []
+
+    for provider_name, env_var in KEY_PROVIDER_ENV.items():
+        if os.environ.get(env_var, '').strip():
+            if provider_name not in chain:
+                chain.append(provider_name)
+
+    if 'local' not in chain:
+        chain.append('local')
+
+    return chain if chain else ['local']
 
 
 def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt: str,

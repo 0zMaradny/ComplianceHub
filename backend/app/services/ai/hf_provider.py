@@ -1,20 +1,15 @@
-"""HuggingFace Inference API provider — uses HF's free hosted inference.
-Requires a free HuggingFace token (sign up at huggingface.co)."""
+"""HuggingFace Inference API provider — uses HF's hosted inference.
+Requires a free HF token AND Inference Providers enabled at
+https://huggingface.co/settings/inference-providers"""
 
 import os
 import json
 import re
-import time
-import random
-import urllib.request
-import urllib.error
 from typing import Any
 
+from huggingface_hub import InferenceClient
+
 from . import AIProvider
-
-
-MODEL = os.environ.get('HF_MODEL', 'Qwen/Qwen2.5-1.5B-Instruct')
-API_URL = f'https://api-inference.huggingface.co/models/{MODEL}'
 
 
 def _clean_json(text: str) -> str:
@@ -26,60 +21,45 @@ def _clean_json(text: str) -> str:
 class HFProvider(AIProvider):
     def __init__(self):
         self.api_key = os.environ.get('HF_API_KEY', '')
-        self.model = os.environ.get('HF_MODEL', MODEL)
+        self.model = os.environ.get('HF_MODEL', 'meta-llama/Meta-Llama-3-8B-Instruct')
 
     def _request(self, prompt: str, system_prompt: str | None = None, max_tokens: int = 4096, temperature: float = 0.3) -> dict:
         key = self.api_key or os.environ.get('HF_API_KEY', '')
         if not key:
             return {'error': 'HF_API_KEY not set. Get a free token at huggingface.co/settings/tokens'}
 
-        messages = []
-        if system_prompt:
-            messages.append({'role': 'system', 'content': system_prompt})
-        messages.append({'role': 'user', 'content': prompt})
-
-        payload = {
-            'inputs': prompt,
-            'parameters': {
-                'max_new_tokens': max_tokens,
-                'temperature': temperature,
-                'return_full_text': False,
-            },
-            'options': {'use_cache': False, 'wait_for_model': True},
-        }
-
-        data = json.dumps(payload).encode()
-        url = f'https://api-inference.huggingface.co/models/{self.model}'
-        req = urllib.request.Request(
-            url, data=data,
-            headers={
-                'Authorization': f'Bearer {key}',
-                'Content-Type': 'application/json',
-            },
-        )
-
         try:
-            resp = urllib.request.urlopen(req, timeout=120)
-            result = json.loads(resp.read().decode())
-            if isinstance(result, list):
-                text = result[0].get('generated_text', '')
-            elif isinstance(result, dict):
-                text = result.get('generated_text', '')
-            else:
-                return {'error': f'Unexpected response: {result}'}
+            client = InferenceClient(token=key)
+            messages = []
+            if system_prompt:
+                messages.append({'role': 'system', 'content': system_prompt})
+            messages.append({'role': 'user', 'content': prompt})
+
+            resp = client.chat_completion(
+                messages=messages,
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+            text = resp.choices[0].message.content
             return {'text': text}
-        except urllib.error.HTTPError as e:
-            body = e.read().decode()
-            return {'error': f'HF API HTTP {e.code}: {body[:200]}'}
+
         except Exception as e:
-            return {'error': f'HF API error: {e}'}
+            msg = str(e)
+            if 'model_not_supported' in msg or 'not supported by any provider' in msg:
+                return {'error': (
+                    f'Model "{self.model}" is not available on your HF account. '
+                    'Enable Inference Providers at '
+                    'https://huggingface.co/settings/inference-providers, '
+                    'then try a supported model.'
+                )}
+            return {'error': f'HF API error: {msg[:200]}'}
 
     def _parse_json(self, text: str) -> dict:
         cleaned = _clean_json(text)
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError:
-            # Try to extract JSON from the response
             m = re.search(r'\{.*\}', cleaned, re.DOTALL)
             if m:
                 try:

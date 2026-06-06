@@ -169,7 +169,9 @@ export default function Audit({ API, standards }) {
               onChange={e => setApiKey(e.target.value)}
             />
             <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
-              {!apiKey ? '🔒 Offline mode — no API key needed, content generated locally' : '☁️ AI-powered content generation'}
+              {!apiKey ? '🔒 Offline mode — no API key needed, content generated locally' :
+               apiKey.startsWith('hf_') ? '🤗 HuggingFace Free Tier — Llama-3-8B via API' :
+               '☁️ AI-powered content generation'}
             </div>
           </div>
 
@@ -198,7 +200,9 @@ export default function Audit({ API, standards }) {
               onChange={e => setApiKey(e.target.value)}
             />
             <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
-              {!apiKey ? '🔒 Offline mode — no API key needed' : '☁️ AI-powered mode'}
+              {!apiKey ? '🔒 Offline mode — no API key needed' :
+               apiKey.startsWith('hf_') ? '🤗 HuggingFace Free Tier' :
+               '☁️ AI-powered mode'}
             </div>
           </div>
           <button className="btn btn-primary" onClick={handleGenerate}>
@@ -221,14 +225,14 @@ export default function Audit({ API, standards }) {
           </p>
           {progress.doc_progress && Object.keys(progress.doc_progress).length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {standards.documents.map(doc => (
+              {Object.keys(progress.doc_progress).map(doc => (
                 <div key={doc} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
                   <span className={`status-badge ${progress.doc_progress[doc] || 'pending'}`}>
                     {progress.doc_progress[doc] === 'done' ? '✓' :
                      progress.doc_progress[doc] === 'error' ? '✗' :
                      progress.doc_progress[doc] === 'generating' ? '⟳' : '○'}
                   </span>
-                  <span>{standards.doc_labels[doc] || doc}</span>
+                  <span>{standards?.doc_labels?.[doc] || doc}</span>
                 </div>
               ))}
             </div>
@@ -262,6 +266,26 @@ export default function Audit({ API, standards }) {
                   </div>
                   {result.error && (
                     <div style={{ color: 'var(--red-600)', fontSize: 12 }}>{result.error}</div>
+                  )}
+                  {result.certification_decision && (
+                    <div style={{ fontSize: 11, color: 'var(--gray-600)', marginTop: 2 }}>
+                      Decision: <strong>{result.certification_decision}</strong>
+                      {result.conditions?.length > 0 && (
+                        <span style={{ color: 'var(--orange-600)' }}>
+                          {' '}({result.conditions.length} condition{result.conditions.length > 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {result.total_sections > 0 && (
+                    <div style={{ fontSize: 11, color: 'var(--gray-600)' }}>
+                      {result.total_sections} clauses assessed
+                    </div>
+                  )}
+                  {result.findings_summary_preview && (
+                    <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 2, fontStyle: 'italic' }}>
+                      {result.findings_summary_preview}...
+                    </div>
                   )}
                 </div>
                 {result.filename && (
