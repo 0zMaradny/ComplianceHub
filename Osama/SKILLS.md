@@ -365,8 +365,16 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 15 — AI Prompt Engineering (Merged 12-part Anatomy Framework)
 
-**Trigger:** "Write a prompt" / "Improve this prompt" / "Build me a prompt for [task]"
+**Trigger:** "Write a prompt" / "Improve this prompt" / "Build me a prompt for [task]" / "Help me prompt" / "Prompt engineering" / "How do I ask AI to" / "Structure my prompt" / "Make this prompt better" / "Optimize my prompt" / "I need a prompt for" / "Can you write a prompt" / "Prompt template" / "Help me get better results from AI" / "How should I phrase this for AI"
 **Agent:** Agent 8 (Prompt Architect)
+
+**Auto-trigger:** ANY message that involves:
+- Writing, structuring, or improving a prompt for AI
+- Asking how to phrase something for an AI tool
+- Requesting a prompt template or framework
+- Mentioning "prompt engineering" or "prompt design"
+- Asking for help getting better results from ChatGPT, Claude, Gemini, or any AI tool
+- Any request that starts with "I want AI to..." or "Can you make a prompt that..."
 
 **Framework:** Merged from Ruben Hassid (9-part) + serveai.ig → 12-part master framework
 **Always include:** ROLE + TASK + OUTPUT + PUSH. Add others as needed.
@@ -479,8 +487,21 @@ Standardized processes. Claude runs these without re-explanation. Trigger a skil
 
 ## Skill 19 — Productivity & Workflow Engine
 
-**Trigger:** "Run Productivity Prompt #[1-20]" / "Help me manage my time/tasks" / "Productivity framework"
+**Trigger:** "Run Productivity Prompt #[1-20]" / "Help me manage my time" / "Productivity framework" / "Time management" / "Task prioritization" / "Deep work" / "Focus plan" / "Schedule optimization" / "Weekly review" / "Goal planning" / "Inbox management" / "Decision framework" / "Energy optimization" / "Learning system" / "Second brain" / "Knowledge management" / "Workflow automation" / "Meeting optimization" / "Anti-procrastination" / "Content creation workflow" / "Multi-project management" / "Productivity dashboard" / "I'm overwhelmed" / "Help me focus" / "How do I prioritize" / "I need a system for" / "Help me get organized" / "I keep procrastinating" / "Manage my tasks" / "Plan my week" / "Plan my day" / "I have too many projects" / "Help me build a routine"
 **Agent:** Agent 8 (Prompt Architect) to structure it · Agent 6 (Concierge) for personal routines
+
+**Auto-trigger:** ANY message that involves:
+- Managing time, tasks, priorities, or schedules
+- Feeling overwhelmed or needing organization
+- Wanting to build systems, routines, or habits
+- Asking about productivity methods (Deep Work, Time Blocking, GTD, etc.)
+- Needing help with focus, procrastination, or energy management
+- Planning goals, milestones, or weekly reviews
+- Managing multiple projects or dependencies
+- Inbox/email management
+- Decision-making frameworks
+- Content creation workflows
+- Building a "second brain" or knowledge management system
 
 ### The 20 Frameworks
 
