@@ -41,7 +41,7 @@
 
 ### Run Servers
 - `bash run.sh` — Start backend + frontend (offline mode)
-- `bash run.sh --local-ai` — Start with local AI model (qwen-1.5b)
+- `bash run.sh --local-ai` — Start with local AI model (qwen-0.5b)
 
 ### Backend (Python / FastAPI)
 - `cd backend && python -m compileall . -q` — Check all Python syntax
@@ -58,7 +58,7 @@
 ### Local AI (llama.cpp server)
 - `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 0.5B model (fast)
 - `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080 --cache-type-k q8_0 --cache-type-v q8_0` — With KV cache optimization
-- Models: `/opt/llama-server/models/qwen-0.5b.gguf` (~469 MB, Q4_K_M) — downloaded from `Qwen/Qwen2.5-0.5B-Instruct-GGUF`
+- Models: single canonical copy at `/opt/llama-server/models/qwen-0.5b.gguf` (~469 MB, Q4_K_M); repo `models/` is a symlink to `/opt/llama-server/models/`
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
 - **Model download**: `curl -L -H "Authorization: Bearer $HF_TOKEN" -o /opt/llama-server/models/qwen-0.5b.gguf "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"`
 - **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
