@@ -51,7 +51,7 @@ MAX_JOB_AGE = 3600
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 _rate_limit_lock = threading.Lock()
 RATE_LIMIT_WINDOW = 60       # seconds
-RATE_LIMIT_MAX_REQUESTS = 500  # per window per client (high limit for testing)
+RATE_LIMIT_MAX_REQUESTS = 30  # per window per client
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
