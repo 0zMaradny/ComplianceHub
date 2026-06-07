@@ -22,7 +22,6 @@ from app.services.ai_pipeline import generate_document as ai_generate, extract_s
 from app.services.document_generator import generate_document_file
 from app.services.pdf_generator import generate_pdf_file
 from app.services.offline_generator import generate_all as offline_generate_all
-from app.api.audit import router as audit_router
 from app.services.clause_data import get_clause_data, get_annex_a_data
 from app.services import db
 
@@ -39,11 +38,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
 )
-
-app.include_router(audit_router)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -655,6 +650,7 @@ from app.services.audit_workflow import (
     advance_gate, set_gate, get_project_progress,
     create_nc, list_ncs, update_nc,
     create_capa, list_capas, update_capa,
+    create_evidence, list_evidence, update_evidence,
     get_dashboard_stats, GATES,
 )
 
@@ -800,6 +796,53 @@ def update_capa_endpoint(capa_id: str, **kwargs):
     if not capa:
         raise HTTPException(status_code=404, detail="CAPA not found")
     return capa.to_dict()
+
+
+# ── Evidence Endpoints ──
+
+@app.post("/api/projects/{project_id}/evidence")
+async def upload_evidence(
+    project_id: str,
+    clause: str = Form(""),
+    standard: str = Form(""),
+    uploaded_by: str = Form(""),
+    file: UploadFile = File(...),
+):
+    """Upload evidence file for a project."""
+    if project_id not in [p.id for p in list_projects()]:
+        raise HTTPException(status_code=404, detail="Project not found")
+    safe_name = f"{project_id}_{clause.replace('.', '_')}_{file.filename}"
+    evidence_dir = os.path.join('data', 'evidence_files')
+    os.makedirs(evidence_dir, exist_ok=True)
+    file_path = os.path.join(evidence_dir, safe_name)
+    content = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(content)
+    ev = create_evidence(project_id, clause, standard, file.filename, file_path, uploaded_by)
+    if not ev:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return {"success": True, "evidence": ev.to_dict()}
+
+
+@app.get("/api/projects/{project_id}/evidence")
+def get_evidence(project_id: str):
+    """List all evidence for a project."""
+    evidence = list_evidence(project_id)
+    return {"evidence": [e.to_dict() for e in evidence]}
+
+
+@app.put("/api/evidence/{evidence_id}")
+def review_evidence(
+    evidence_id: str,
+    status: str = Form(""),
+    reviewer_notes: str = Form(""),
+):
+    """Review evidence (accept/reject with notes)."""
+    kwargs = {k: v for k, v in locals().items() if k not in ("evidence_id", "") and v}
+    ev = update_evidence(evidence_id, **kwargs)
+    if not ev:
+        raise HTTPException(status_code=404, detail="Evidence not found")
+    return {"success": True, "evidence": ev.to_dict()}
 
 
 # ── Dashboard ──

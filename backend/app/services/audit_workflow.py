@@ -95,6 +95,29 @@ class CAPAItem:
         return asdict(self)
 
 
+@dataclass
+class Evidence:
+    id: str = ""
+    project_id: str = ""
+    clause: str = ""
+    standard: str = ""
+    file_name: str = ""
+    file_path: str = ""
+    uploaded_by: str = ""
+    status: str = "pending"
+    reviewer_notes: str = ""
+    created_at: str = ""
+
+    def __post_init__(self):
+        if not self.id:
+            self.id = uuid.uuid4().hex[:12]
+        if not self.created_at:
+            self.created_at = datetime.now().isoformat()
+
+    def to_dict(self):
+        return asdict(self)
+
+
 GATES = [
     {"gate": 1, "name": "Scope & Context",
      "description": "Define audit scope, context, and stakeholder map",
@@ -120,12 +143,14 @@ GATES = [
 _PROJECTS: dict = {}
 _NCS: dict = {}
 _CAPAS: dict = {}
+_EVIDENCE: dict = {}
 _STORE_LOCK = threading.Lock()
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 PROJECTS_FILE = os.path.join(DATA_DIR, 'projects.json')
 NCS_FILE = os.path.join(DATA_DIR, 'ncs.json')
 CAPAS_FILE = os.path.join(DATA_DIR, 'capas.json')
+EVIDENCE_FILE = os.path.join(DATA_DIR, 'evidence.json')
 
 
 def _ensure_data_dir():
@@ -156,9 +181,17 @@ def _save_capas():
             json.dump(data, f, indent=2, ensure_ascii=False)
 
 
+def _save_evidence():
+    _ensure_data_dir()
+    with _STORE_LOCK:
+        data = {k: v.to_dict() for k, v in _EVIDENCE.items()}
+        with open(EVIDENCE_FILE, 'w') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+
 def _load_all():
     _ensure_data_dir()
-    global _PROJECTS, _NCS, _CAPAS
+    global _PROJECTS, _NCS, _CAPAS, _EVIDENCE
     with _STORE_LOCK:
         if os.path.exists(PROJECTS_FILE):
             with open(PROJECTS_FILE) as f:
@@ -169,6 +202,9 @@ def _load_all():
         if os.path.exists(CAPAS_FILE):
             with open(CAPAS_FILE) as f:
                 _CAPAS = {k: CAPAItem(**v) for k, v in json.load(f).items()}
+        if os.path.exists(EVIDENCE_FILE):
+            with open(EVIDENCE_FILE) as f:
+                _EVIDENCE = {k: Evidence(**v) for k, v in json.load(f).items()}
 
 
 _load_all()
@@ -408,3 +444,48 @@ def get_dashboard_stats(client_key=None):
         "pending_capas": len([c for c in capas if c.status in ("draft", "in_progress")]),
         "recent_projects": [p.to_dict() for p in sorted(projects, key=lambda x: x.updated_at, reverse=True)[:5]],
     }
+
+
+def create_evidence(project_id, clause, standard, file_name, file_path, uploaded_by=""):
+    if project_id not in _PROJECTS:
+        return None
+    ev = Evidence(
+        project_id=project_id, clause=clause, standard=standard,
+        file_name=file_name, file_path=file_path, uploaded_by=uploaded_by,
+    )
+    with _STORE_LOCK:
+        _EVIDENCE[ev.id] = ev
+    _save_evidence()
+    return ev
+
+
+def list_evidence(project_id=None):
+    items = list(_EVIDENCE.values())
+    if project_id:
+        items = [e for e in items if e.project_id == project_id]
+    return sorted(items, key=lambda e: e.created_at, reverse=True)
+
+
+def update_evidence(evidence_id, **kwargs):
+    ev = _EVIDENCE.get(evidence_id)
+    if not ev:
+        return None
+    for key, value in kwargs.items():
+        if hasattr(ev, key):
+            setattr(ev, key, value)
+    _save_evidence()
+    return ev
+
+
+def get_gate_deliverable_status(project):
+    return project.gate_deliverables if project else {}
+
+
+def set_gate_deliverable(project_id, deliverable, status="complete"):
+    project = _PROJECTS.get(project_id)
+    if not project:
+        return None
+    project.gate_deliverables[deliverable] = status
+    project.updated_at = datetime.now().isoformat()
+    _save_projects()
+    return project
