@@ -56,11 +56,11 @@
 - `cd frontend && npm run dev` — Development server (port 5173)
 
 ### Local AI (llama.cpp server)
-- `/opt/llama-server/llama-server -m models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 0.5B model (fast)
-- `/opt/llama-server/llama-server -m models/qwen-1.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 1.5B model (better quality)
-- Models: `models/qwen-0.5b.gguf` (~469 MB, Q4_K_M), `models/qwen-1.5b.gguf` (~941 MB, Q4_K_M)
+- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 0.5B model (fast)
+- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080 --cache-type-k q8_0 --cache-type-v q8_0` — With KV cache optimization
+- Models: `/opt/llama-server/models/qwen-0.5b.gguf` (~469 MB, Q4_K_M) — downloaded from `Qwen/Qwen2.5-0.5B-Instruct-GGUF`
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
-- **Model download** (requires internet): `wget -O /opt/llama-server/models/qwen-0.5b.gguf https://huggingface.co/Qwen/Qwen2.5-0.5B-GGUF/resolve/main/qwen2.5-0.5b-q4_k_m.gguf`
+- **Model download**: `curl -L -H "Authorization: Bearer $HF_TOKEN" -o /opt/llama-server/models/qwen-0.5b.gguf "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"`
 - **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
 
 ### Code Quality
