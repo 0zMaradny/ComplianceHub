@@ -618,10 +618,10 @@ def get_checklist(framework_id: str):
 
 from app.services.audit_workflow import (
     create_project, get_project, list_projects, update_project, delete_project,
-    advance_gate, set_gate, get_gate_info, get_project_progress,
-    create_nc, get_nc, list_ncs, update_nc,
-    create_capa, get_capa, list_capas, update_capa,
-    add_evidence, get_dashboard_stats, GATES,
+    advance_gate, set_gate, get_project_progress,
+    create_nc, list_ncs, update_nc,
+    create_capa, list_capas, update_capa,
+    get_dashboard_stats, GATES,
 )
 
 

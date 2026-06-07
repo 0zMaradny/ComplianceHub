@@ -3,6 +3,7 @@ import './App.css'
 import Dashboard from './pages/Dashboard'
 import Audit from './pages/Audit'
 import Compliance from './pages/Compliance'
+import Projects from './pages/Projects'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const API = '/api'
@@ -11,6 +12,7 @@ const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'audit', label: 'Audit Generator', icon: '📄' },
   { id: 'compliance', label: 'Compliance', icon: '✓' },
+  { id: 'projects', label: 'Projects', icon: '📋' },
 ]
 
 function App() {
@@ -55,6 +57,7 @@ function App() {
           {page === 'dashboard' && <Dashboard API={API} />}
           {page === 'audit' && <Audit API={API} standards={standards} />}
           {page === 'compliance' && <Compliance API={API} />}
+          {page === 'projects' && <Projects API={API} />}
         </ErrorBoundary>
       </main>
     </div>

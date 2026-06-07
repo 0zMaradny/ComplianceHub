@@ -6,9 +6,7 @@ All data persisted as JSON files (no database dependency).
 
 import os
 import shutil
-from datetime import datetime
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
 
 from app.models import (
     AuditProject, Evidence, Nonconformity, CAPA,
