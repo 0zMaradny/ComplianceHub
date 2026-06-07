@@ -653,6 +653,12 @@ from app.services.audit_workflow import (
     create_evidence, list_evidence, update_evidence,
     get_dashboard_stats, GATES,
 )
+from app.services.ims import (
+    get_ims_mapping, get_integrated_clause_list,
+    get_shared_docs, get_unique_requirements,
+    generate_ims_gap_analysis,
+    IMS_MAPPINGS,
+)
 
 
 @app.post("/api/projects")
@@ -843,6 +849,63 @@ def review_evidence(
     if not ev:
         raise HTTPException(status_code=404, detail="Evidence not found")
     return {"success": True, "evidence": ev.to_dict()}
+
+
+# ── IMS Multi-Standard Endpoints ──
+
+@app.get("/api/ims/mapping")
+def get_ims_mapping_endpoint(standards: str = ""):
+    """Get IMS cross-standard clause mapping.
+    Example: /api/ims/mapping?standards=iso_45001,iso_14001
+    """
+    if not standards:
+        raise HTTPException(status_code=400, detail="standards parameter required (comma-separated)")
+    std_list = [s.strip() for s in standards.split(",")]
+    mapping = get_ims_mapping(std_list)
+    if not mapping:
+        return {"available_mappings": [list(k) for k in IMS_MAPPINGS.keys()], "message": "No mapping for this combination"}
+    return mapping
+
+
+@app.get("/api/ims/clauses")
+def get_ims_clauses_endpoint(standards: str = ""):
+    """Get deduplicated clause list for an IMS."""
+    if not standards:
+        raise HTTPException(status_code=400, detail="standards parameter required")
+    std_list = [s.strip() for s in standards.split(",")]
+    clauses = get_integrated_clause_list(std_list)
+    return {"standards": std_list, "clauses": clauses, "total": len(clauses)}
+
+
+@app.get("/api/ims/shared-docs")
+def get_ims_shared_docs_endpoint(standards: str = ""):
+    """Get documents that can be shared across standards."""
+    if not standards:
+        raise HTTPException(status_code=400, detail="standards parameter required")
+    std_list = [s.strip() for s in standards.split(",")]
+    docs = get_shared_docs(std_list)
+    return {"standards": std_list, "shared_documents": docs, "total": len(docs)}
+
+
+@app.get("/api/ims/unique-requirements")
+def get_ims_unique_endpoint(standards: str = ""):
+    """Get requirements unique to each standard."""
+    if not standards:
+        raise HTTPException(status_code=400, detail="standards parameter required")
+    std_list = [s.strip() for s in standards.split(",")]
+    unique = get_unique_requirements(std_list)
+    return {"standards": std_list, "unique_requirements": unique}
+
+
+@app.post("/api/ims/gap-analysis")
+def ims_gap_analysis_endpoint(standards: str = Form(""), compliance_data: str = Form("{}")):
+    """Generate IMS gap analysis. compliance_data is JSON: {clause: {status, evidence}}"""
+    if not standards:
+        raise HTTPException(status_code=400, detail="standards parameter required")
+    std_list = [s.strip() for s in standards.split(",")]
+    data = json.loads(compliance_data) if compliance_data else {}
+    result = generate_ims_gap_analysis(std_list, data)
+    return result
 
 
 # ── Dashboard ──
