@@ -8,7 +8,10 @@ from docx.enum.section import WD_ORIENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+from app.utils import sanitize_filename
 from app.config import DEFAULT_LOGO_PATH
+from app.services.client_config import get_client
+from app.services.bilingual import t, TABLE_HEADERS, COVER_LABELS, METHODOLOGY, CONFIDENTIALITY
 
 TUV_BLUE = RGBColor(0x00, 0x3D, 0x7A)
 TUV_RED = RGBColor(0xC0, 0x00, 0x00)
@@ -285,6 +288,25 @@ def add_body_text_rtl(doc, text, bold=False):
     return p
 
 
+def _resolve_client(client_key: str = None):
+    """Return (client, lang, rtl, header_color) tuple from client_key."""
+    lang = "en"
+    rtl = False
+    header_color = TUV_BLUE
+    client = None
+    if client_key:
+        client = get_client(client_key)
+        if client:
+            lang = client.language
+            rtl = client.visual.rtl
+            header_color = RGBColor(
+                int(client.visual.primary_header[1:3], 16),
+                int(client.visual.primary_header[3:5], 16),
+                int(client.visual.primary_header[5:7], 16),
+            )
+    return client, lang, rtl, header_color
+
+
 def add_cover_page_rtl(doc, title, client_name, standard, date, lead_auditor=''):
     """Add cover page with RTL support."""
     if os.path.exists(DEFAULT_LOGO_PATH):
@@ -333,20 +355,23 @@ def add_cover_page_rtl(doc, title, client_name, standard, date, lead_auditor='')
 
 # ── Missing document generators ────────────────────────────────────────────
 
-def generate_tnl(data, output_path):
+def generate_tnl(data, output_path, client_key: str = None):
     """Test/Nonconformity Log (TNL) document."""
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
     doc = Document()
-    setup_document(doc)
+    setup_document(doc, client_key=client_key)
     add_cover_page(doc, 'Test / Nonconformity Log (TNL)',
                    data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'),
-                   data.get('audit_date', 'N/A'))
+                   data.get('audit_date', 'N/A'),
+                   client_key=client_key)
 
-    add_section_heading(doc, 'Nonconformity & Observation Log')
+    add_section_heading(doc, t("nc_observation_log", lang), client_key=client_key)
 
     table = doc.add_table(rows=1, cols=8)
     table.style = 'Table Grid'
-    add_header_row(table, ['TNL #', 'Clause', 'Type', 'Description', 'Severity', 'Auditee', 'Due Date', 'Status'])
+    add_header_row(table, TABLE_HEADERS[lang]["tnl"], client_key=client_key)
     for entry in data.get('entries', []):
         etype = entry.get('type', '')
         row_color = None
@@ -363,25 +388,28 @@ def generate_tnl(data, output_path):
             entry.get('auditee', ''),
             entry.get('due_date', ''),
             entry.get('status', ''),
-        ], color=row_color)
+        ], color=row_color, client_key=client_key)
 
     summary = data.get('summary', {})
     if summary:
         doc.add_paragraph()
-        add_section_heading(doc, 'Summary')
-        add_body_text(doc, f"Total Nonconformities: {summary.get('total_nc', 0)}")
-        add_body_text(doc, f"  Major: {summary.get('major', 0)}")
-        add_body_text(doc, f"  Minor: {summary.get('minor', 0)}")
-        add_body_text(doc, f"Opportunities for Improvement: {summary.get('ofi', 0)}")
-        add_body_text(doc, f"Observations: {summary.get('observations', 0)}")
+        add_section_heading(doc, t("summary", lang), client_key=client_key)
+        add_body_text(doc, f"Total Nonconformities: {summary.get('total_nc', 0)}", client_key=client_key)
+        add_body_text(doc, f"  Major: {summary.get('major', 0)}", client_key=client_key)
+        add_body_text(doc, f"  Minor: {summary.get('minor', 0)}", client_key=client_key)
+        add_body_text(doc, f"Opportunities for Improvement: {summary.get('ofi', 0)}", client_key=client_key)
+        add_body_text(doc, f"Observations: {summary.get('observations', 0)}", client_key=client_key)
     doc.save(output_path)
     return output_path
 
 
-def generate_certificate(data, output_path):
-    """Standalone certificate document with border box and decision coloring."""
+def generate_certificate(data, output_path, client_key: str = None):
+    """Standalone certificate document — client-aware."""
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    labels = COVER_LABELS[lang]
+
     doc = Document()
-    setup_document(doc)
+    setup_document(doc, client_key=client_key)
     add_border_box(doc)
     for _ in range(3):
         doc.add_paragraph()
@@ -392,49 +420,38 @@ def generate_certificate(data, output_path):
         run.add_picture(DEFAULT_LOGO_PATH, width=Inches(2.0))
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run('CERTIFICATE')
+    run = p.add_run(labels["certified"])
     run.font.size = Pt(20)
     run.bold = True
-    run.font.color.rgb = TUV_BLUE
+    run.font.color.rgb = header_color
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run('of Audit')
+    run = p.add_run(labels["of_audit"])
     run.font.size = Pt(16)
     run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(f"Certificate No: {data.get('certificate_number', 'N/A')}")
+    run = p.add_run(f"{labels['client']}: {data.get('client_name', 'N/A')}")
     run.font.size = Pt(10)
     run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run('This is to certify that an audit was performed by')
+    run = p.add_run(labels["certified_at"])
     run.font.size = Pt(11)
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(f"{data.get('certification_body', 'TÜV AUSTRIA')}")
-    run.font.size = Pt(11)
-    run.bold = True
-    run.font.color.rgb = TUV_BLUE
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run('at the premises of:')
-    run.font.size = Pt(11)
-    doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(data.get('client_name', 'N/A'))
     run.bold = True
     run.font.size = Pt(16)
-    run.font.color.rgb = TUV_BLUE
+    run.font.color.rgb = header_color
     doc.add_paragraph()
     info_lines = [
-        f"Audit Date: {data.get('audit_date', 'N/A')}",
-        f"Standard: {data.get('standard', 'N/A')}",
-        f"Scope: {data.get('scope', 'N/A')}",
-        f"Lead Auditor: {data.get('lead_auditor', 'N/A')}",
+        f"{labels['audit_date']}: {data.get('audit_date', 'N/A')}",
+        f"{labels['standard']}: {data.get('standard', 'N/A')}",
+        f"{labels['scope']}: {data.get('scope', 'N/A')}",
+        f"{labels['lead_auditor']}: {data.get('lead_auditor', 'N/A')}",
     ]
     for line in info_lines:
         p = doc.add_paragraph()
@@ -446,11 +463,11 @@ def generate_certificate(data, output_path):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     decision = data.get('certification_decision', 'Not Certified')
-    run = p.add_run(f'Certification Decision: {decision}')
+    run = p.add_run(f'{labels["certification_decision"]}: {decision}')
     run.font.size = Pt(14)
     run.bold = True
     if decision == 'Certified':
-        run.font.color.rgb = TUV_BLUE
+        run.font.color.rgb = header_color
     elif decision == 'Conditional':
         run.font.color.rgb = RGBColor(0xCC, 0x7A, 0x00)
     else:
@@ -459,7 +476,7 @@ def generate_certificate(data, output_path):
         doc.add_paragraph()
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = p.add_run('Conditions:')
+        run = p.add_run(f'{labels["conditions"]}:')
         run.bold = True
         run.font.size = Pt(10)
         for cond in data['conditions']:
@@ -470,7 +487,7 @@ def generate_certificate(data, output_path):
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run(f"Issue Date: {data.get('issue_date', 'N/A')}     Expiry Date: {data.get('expiry_date', 'N/A')}")
+    run = p.add_run(f"{labels['issue_date']}: {data.get('issue_date', 'N/A')}     {labels['expiry_date']}: {data.get('expiry_date', 'N/A')}")
     run.font.size = Pt(9)
     run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
     doc.add_paragraph()
@@ -478,7 +495,7 @@ def generate_certificate(data, output_path):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run('_________________________')
-    run.font.color.rgb = TUV_BLUE
+    run.font.color.rgb = header_color
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(data.get('authorized_signatory', ''))
@@ -488,7 +505,7 @@ def generate_certificate(data, output_path):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run('TÜV AUSTRIA')
     run.font.size = Pt(10)
-    run.font.color.rgb = TUV_BLUE
+    run.font.color.rgb = header_color
     doc.save(output_path)
     return output_path
 
@@ -562,40 +579,44 @@ def _generate_checklist_excel(template_path, data, output_dir, safe_name):
     return out_path
 
 
-def generate_audit_plan_stage(data, output_path, stage_label):
+def generate_audit_plan_stage(data, output_path, stage_label, client_key: str = None):
+    client = get_client(client_key) if client_key else None
+    lang = client.language if client else "en"
+
     doc = Document()
-    setup_document(doc)
+    setup_document(doc, client_key=client_key)
     stage = data.get('stage', stage_label)
     add_cover_page(doc, f'Audit Plan - {stage}',
                    data.get('client_name', 'N/A'),
-                   data.get('standard', 'N/A'), data.get('audit_date', 'N/A'))
+                   data.get('standard', 'N/A'), data.get('audit_date', 'N/A'),
+                   client_key=client_key)
 
     add_toc(doc)
 
-    add_section_heading(doc, '1. Audit Objectives')
+    add_section_heading(doc, t("audit_objectives", lang), client_key=client_key)
     for obj in data.get('audit_objectives', []):
-        add_bullet(doc, obj)
+        add_bullet(doc, obj, client_key=client_key)
 
-    add_section_heading(doc, '2. Audit Scope')
-    add_body_text(doc, data.get('audit_scope', 'N/A'))
+    add_section_heading(doc, t("audit_scope", lang), client_key=client_key)
+    add_body_text(doc, data.get('audit_scope', 'N/A'), client_key=client_key)
 
-    add_section_heading(doc, '3. Audit Criteria')
+    add_section_heading(doc, t("audit_criteria", lang), client_key=client_key)
     for c in data.get('audit_criteria', []):
-        add_bullet(doc, c)
+        add_bullet(doc, c, client_key=client_key)
 
-    add_section_heading(doc, '4. Audit Team')
+    add_section_heading(doc, t("audit_team", lang), client_key=client_key)
     table = doc.add_table(rows=1, cols=3)
     table.style = 'Table Grid'
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    add_header_row(table, ['Name', 'Role', 'Audit Days'])
+    add_header_row(table, TABLE_HEADERS[lang]["audit_team"], client_key=client_key)
     for member in data.get('audit_team', []):
-        add_data_row(table, [member.get('name', ''), member.get('role', ''), str(member.get('days', ''))])
+        add_data_row(table, [member.get('name', ''), member.get('role', ''), str(member.get('days', ''))], client_key=client_key)
 
-    add_section_heading(doc, '5. Daily Schedule')
+    add_section_heading(doc, t("daily_schedule", lang), client_key=client_key)
     table = doc.add_table(rows=1, cols=7)
     table.style = 'Table Grid'
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    add_header_row(table, ['Day', 'Date', 'Time', 'Activity', 'Auditee', 'Auditor', 'Clause'])
+    add_header_row(table, TABLE_HEADERS[lang]["daily_schedule"], client_key=client_key)
     for entry in data.get('daily_schedule', []):
         add_data_row(table, [
             str(entry.get('day', '')),
@@ -605,41 +626,45 @@ def generate_audit_plan_stage(data, output_path, stage_label):
             entry.get('auditee', ''),
             entry.get('auditor', ''),
             entry.get('clause', ''),
-        ])
+        ], client_key=client_key)
 
-    add_section_heading(doc, '6. Confidentiality')
-    add_body_text(doc, data.get('confidentiality', 'All information obtained during this audit shall be treated as confidential.'))
+    add_section_heading(doc, t("confidentiality", lang), client_key=client_key)
+    add_body_text(doc, data.get('confidentiality', CONFIDENTIALITY[lang]), client_key=client_key)
 
-    add_section_heading(doc, '7. Language & Report Date')
-    add_body_text(doc, f"Language: {data.get('language', 'English')}")
-    add_body_text(doc, f"Report Due: {data.get('report_date', 'N/A')}")
+    add_section_heading(doc, t("language_report", lang), client_key=client_key)
+    add_body_text(doc, f"Language: {data.get('language', 'English')}", client_key=client_key)
+    add_body_text(doc, f"Report Due: {data.get('report_date', 'N/A')}", client_key=client_key)
 
     doc.save(output_path)
     return output_path
 
 
-def generate_audit_plan_stage_1(data, output_path):
-    return generate_audit_plan_stage(data, output_path, 'Stage 1 - Readiness Review')
+def generate_audit_plan_stage_1(data, output_path, client_key: str = None):
+    return generate_audit_plan_stage(data, output_path, 'Stage 1 - Readiness Review', client_key=client_key)
 
 
-def generate_audit_plan_stage_2(data, output_path):
-    return generate_audit_plan_stage(data, output_path, 'Stage 2 - Certification Audit')
+def generate_audit_plan_stage_2(data, output_path, client_key: str = None):
+    return generate_audit_plan_stage(data, output_path, 'Stage 2 - Certification Audit', client_key=client_key)
 
 
-def generate_participation_list(data, output_path):
+def generate_participation_list(data, output_path, client_key: str = None):
+    client = get_client(client_key) if client_key else None
+    lang = client.language if client else "en"
+
     doc = Document()
-    setup_document(doc)
-    add_cover_page(doc, 'Participation List',
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, t("attendance_record", lang),
                    data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'),
-                   data.get('audit_date', 'N/A'))
+                   data.get('audit_date', 'N/A'),
+                   client_key=client_key)
 
-    add_section_heading(doc, 'Attendance Record')
+    add_section_heading(doc, t("attendance_record", lang), client_key=client_key)
 
     table = doc.add_table(rows=1, cols=5)
     table.style = 'Table Grid'
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    add_header_row(table, ['Name', 'Company', 'Function / Department', 'Closing Meeting', 'Signature'])
+    add_header_row(table, TABLE_HEADERS[lang]["participants"], client_key=client_key)
     for p in data.get('participants', []):
         add_data_row(table, [
             p.get('name', ''),
@@ -647,41 +672,46 @@ def generate_participation_list(data, output_path):
             p.get('department', ''),
             p.get('closing_meeting', ''),
             p.get('signature', ''),
-        ])
+        ], client_key=client_key)
 
     notes = data.get('notes', '')
     if notes:
         doc.add_paragraph()
-        add_section_heading(doc, 'Notes')
-        add_body_text(doc, notes)
+        add_section_heading(doc, t("notes", lang), client_key=client_key)
+        add_body_text(doc, notes, client_key=client_key)
 
     doc.save(output_path)
     return output_path
 
 
-def generate_certificate_text(data, output_path):
+def generate_certificate_text(data, output_path, client_key: str = None):
+    client = get_client(client_key) if client_key else None
+    lang = client.language if client else "en"
+    labels = COVER_LABELS[lang]
+
     doc = Document()
-    setup_document(doc)
+    setup_document(doc, client_key=client_key)
     add_cover_page(doc, 'Certificate',
                    data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'),
-                   data.get('audit_date', 'N/A'))
+                   data.get('audit_date', 'N/A'),
+                   client_key=client_key)
 
     fields = [
-        ('Certificate Number', data.get('certificate_number', 'N/A')),
-        ('Client', data.get('client_name', 'N/A')),
-        ('Standard', data.get('standard', 'N/A')),
-        ('Audit Date', data.get('audit_date', 'N/A')),
-        ('Scope', data.get('scope', 'N/A')),
-        ('Lead Auditor', data.get('lead_auditor', 'N/A')),
-        ('Certification Body', data.get('certification_body', 'TÜV AUSTRIA')),
-        ('Certification Decision', data.get('certification_decision', 'N/A')),
-        ('Issue Date', data.get('issue_date', 'N/A')),
-        ('Expiry Date', data.get('expiry_date', 'N/A')),
-        ('Authorized Signatory', data.get('authorized_signatory', 'N/A')),
+        (labels["certification_body"], data.get('certificate_number', 'N/A')),
+        (labels["client"], data.get('client_name', 'N/A')),
+        (labels["standard"], data.get('standard', 'N/A')),
+        (labels["audit_date"], data.get('audit_date', 'N/A')),
+        (labels["scope"], data.get('scope', 'N/A')),
+        (labels["lead_auditor"], data.get('lead_auditor', 'N/A')),
+        (labels["certification_body"], data.get('certification_body', 'TÜV AUSTRIA')),
+        (labels["certification_decision"], data.get('certification_decision', 'N/A')),
+        (labels["issue_date"], data.get('issue_date', 'N/A')),
+        (labels["expiry_date"], data.get('expiry_date', 'N/A')),
+        ("Authorized Signatory", data.get('authorized_signatory', 'N/A')),
     ]
 
-    add_section_heading(doc, 'Certificate Details')
+    add_section_heading(doc, t("certificate_details", lang), client_key=client_key)
     for label, value in fields:
         p = doc.add_paragraph()
         run = p.add_run(f'{label}: ')
@@ -696,75 +726,81 @@ def generate_certificate_text(data, output_path):
     return output_path
 
 
-def generate_audit_report(data, output_path):
+def generate_audit_report(data, output_path, client_key: str = None):
+    client = get_client(client_key) if client_key else None
+    lang = client.language if client else "en"
+    standard = data.get('standard', 'the applicable standard')
+
     doc = Document()
-    setup_document(doc)
+    setup_document(doc, client_key=client_key)
     add_cover_page(doc, 'Audit Report', data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'), data.get('audit_date', 'N/A'),
-                   data.get('lead_auditor', ''))
+                   data.get('lead_auditor', ''),
+                   client_key=client_key)
 
     add_toc(doc)
 
-    add_section_heading(doc, '1. General Information')
+    add_section_heading(doc, t("general_info", lang), client_key=client_key)
     info = [
         ('Report Number', data.get('report_number', 'N/A')),
-        ('Client', data.get('client_name', 'N/A')),
-        ('Audit Date', data.get('audit_date', 'N/A')),
-        ('Standard', data.get('standard', 'N/A')),
-        ('Scope', data.get('scope', 'N/A')),
-        ('Lead Auditor', data.get('lead_auditor', 'N/A')),
+        (COVER_LABELS[lang]["client"], data.get('client_name', 'N/A')),
+        (COVER_LABELS[lang]["audit_date"], data.get('audit_date', 'N/A')),
+        (COVER_LABELS[lang]["standard"], data.get('standard', 'N/A')),
+        (COVER_LABELS[lang]["scope"], data.get('scope', 'N/A')),
+        (COVER_LABELS[lang]["lead_auditor"], data.get('lead_auditor', 'N/A')),
     ]
     for label, val in info:
-        add_body_text(doc, f'{label}: {val}', bold=False)
+        add_body_text(doc, f'{label}: {val}', bold=False, client_key=client_key)
 
-    add_section_heading(doc, '2. Audit Team')
+    add_section_heading(doc, t("audit_team", lang), client_key=client_key)
     table = doc.add_table(rows=1, cols=3)
     table.style = 'Table Grid'
-    add_header_row(table, ['Name', 'Role', 'Audit Days'])
+    add_header_row(table, TABLE_HEADERS[lang]["audit_team"], client_key=client_key)
     for member in data.get('audit_team', []):
-        add_data_row(table, [member.get('name', ''), member.get('role', ''), str(member.get('days', ''))])
+        add_data_row(table, [member.get('name', ''), member.get('role', ''), str(member.get('days', ''))], client_key=client_key)
 
-    add_section_heading(doc, '3. Executive Summary')
+    add_section_heading(doc, t("executive_summary", lang), client_key=client_key)
     exec_summary = data.get('findings_summary', '')
-    add_body_text(doc, exec_summary)
+    add_body_text(doc, exec_summary, client_key=client_key)
     if data.get('positive_findings'):
-        add_sub_heading(doc, '3.1 Key Strengths')
+        add_sub_heading(doc, t("key_strengths", lang), client_key=client_key)
         for pf in data['positive_findings']:
-            add_bullet(doc, pf)
+            add_bullet(doc, pf, client_key=client_key)
 
-    add_section_heading(doc, '4. Audit Methodology')
-    methodology = data.get('methodology', {
-        'approach': 'The audit was conducted in accordance with ISO 19011:2018 guidelines for auditing management systems. A process-based approach was employed, following the Plan-Do-Check-Act (PDCA) cycle across all relevant clauses of the applicable standard(s).',
-        'sampling': 'Audit evidence was gathered through interviews with personnel at all relevant levels, observation of processes and activities, and review of documented information including policies, procedures, records, and reports. Sampling techniques were applied in accordance with ISO 19011:2018, taking into account the complexity and risk profile of each process.',
-        'criteria': f'The audit criteria consisted of the requirements of {data.get("standard", "the applicable standard")}, the organization\'s own management system documentation, and applicable statutory and regulatory requirements.',
-        'methods': 'Methods employed included: (1) document review and records analysis, (2) observation of operational activities and work practices, (3) interviews with top management, process owners, and operational personnel, (4) verification of resources and infrastructure, and (5) traceability audits from records back to source documentation.',
-    })
-    add_sub_heading(doc, '4.1 Audit Approach')
-    add_body_text(doc, methodology.get('approach', ''))
-    add_sub_heading(doc, '4.2 Sampling Methodology')
-    add_body_text(doc, methodology.get('sampling', ''))
-    add_sub_heading(doc, '4.3 Audit Criteria')
-    add_body_text(doc, methodology.get('criteria', ''))
-    add_sub_heading(doc, '4.4 Audit Methods')
-    add_body_text(doc, methodology.get('methods', ''))
+    add_section_heading(doc, t("audit_methodology", lang), client_key=client_key)
+    default_methodology = {
+        'approach': METHODOLOGY[lang]["approach"].format(standard=standard),
+        'sampling': METHODOLOGY[lang]["sampling"].format(standard=standard),
+        'criteria': METHODOLOGY[lang]["criteria"].format(standard=standard),
+        'methods': METHODOLOGY[lang]["methods"].format(standard=standard),
+    }
+    methodology = data.get('methodology', default_methodology)
+    add_sub_heading(doc, t("approach", lang), client_key=client_key)
+    add_body_text(doc, methodology.get('approach', ''), client_key=client_key)
+    add_sub_heading(doc, t("sampling", lang), client_key=client_key)
+    add_body_text(doc, methodology.get('sampling', ''), client_key=client_key)
+    add_sub_heading(doc, t("criteria", lang), client_key=client_key)
+    add_body_text(doc, methodology.get('criteria', ''), client_key=client_key)
+    add_sub_heading(doc, t("methods", lang), client_key=client_key)
+    add_body_text(doc, methodology.get('methods', ''), client_key=client_key)
 
-    add_section_heading(doc, '5. Detailed Findings')
+    add_section_heading(doc, t("detailed_findings", lang), client_key=client_key)
 
     if data.get('positive_findings'):
-        add_sub_heading(doc, '5.1 Positive Findings')
+        add_sub_heading(doc, t("positive_findings", lang), client_key=client_key)
         for pf in data['positive_findings']:
-            add_bullet(doc, pf)
+            add_bullet(doc, pf, client_key=client_key)
 
     if data.get('opportunities_for_improvement'):
-        add_sub_heading(doc, '5.2 Opportunities for Improvement')
+        add_sub_heading(doc, t("ofi", lang), client_key=client_key)
         for ofi in data['opportunities_for_improvement']:
-            add_bullet(doc, ofi)
+            add_bullet(doc, ofi, client_key=client_key)
 
     if data.get('nonconformities'):
-        add_sub_heading(doc, '5.3 Nonconformities')
+        add_sub_heading(doc, t("nonconformities", lang), client_key=client_key)
         table = doc.add_table(rows=1, cols=4)
         table.style = 'Table Grid'
-        add_header_row(table, ['Clause', 'Severity', 'Description', 'Due Date'])
+        add_header_row(table, TABLE_HEADERS[lang]["nc_table"], client_key=client_key)
         for nc in data['nonconformities']:
             sev = nc.get('severity', '')
             row_color = TUV_RED if sev in ('Major', 'Minor') else None
@@ -773,10 +809,10 @@ def generate_audit_report(data, output_path):
                 sev,
                 nc.get('description', ''),
                 nc.get('due_date', ''),
-            ], color=row_color)
+            ], color=row_color, client_key=client_key)
 
-    add_section_heading(doc, '6. Conclusion')
-    add_body_text(doc, data.get('conclusion', ''))
+    add_section_heading(doc, t("conclusion", lang), client_key=client_key)
+    add_body_text(doc, data.get('conclusion', ''), client_key=client_key)
 
     p = doc.add_paragraph()
     run = p.add_run(f"\nReport Date: {data.get('report_date', 'N/A')}")
@@ -786,10 +822,13 @@ def generate_audit_report(data, output_path):
     return output_path
 
 
-def generate_iso_checklist(data, output_path, template_path=None):
+def generate_iso_checklist(data, output_path, template_path=None, client_key: str = None):
+    client = get_client(client_key) if client_key else None
+    lang = client.language if client else "en"
+
     if template_path and os.path.exists(template_path):
         doc = Document(template_path)
-        setup_document(doc, landscape=True)
+        setup_document(doc, landscape=True, client_key=client_key)
         sections = data.get('sections', [])
 
         for table in doc.tables:
@@ -814,18 +853,19 @@ def generate_iso_checklist(data, output_path, template_path=None):
         return output_path
 
     doc = Document()
-    setup_document(doc, landscape=True)
-    add_cover_page(doc, 'ISO Compliance Checklist',
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, t("checklist_results", lang),
                    data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'),
                    data.get('audit_date', 'N/A'),
-                   data.get('auditor', ''))
+                   data.get('auditor', ''),
+                   client_key=client_key)
 
-    add_section_heading(doc, 'Checklist Results')
+    add_section_heading(doc, t("checklist_results", lang), client_key=client_key)
 
     table = doc.add_table(rows=1, cols=6)
     table.style = 'Table Grid'
-    add_header_row(table, ['Clause', 'Requirement', 'Status', 'Evidence', 'Notes', 'Reference'])
+    add_header_row(table, TABLE_HEADERS[lang]["checklist"], client_key=client_key)
     for section in data.get('sections', []):
         status = section.get('status', '')
         checkbox = '☐'
@@ -845,11 +885,11 @@ def generate_iso_checklist(data, output_path, template_path=None):
             section.get('evidence', ''),
             section.get('notes', ''),
             section.get('reference', ''),
-        ], color=row_color)
+        ], color=row_color, client_key=client_key)
 
     doc.add_paragraph()
-    add_section_heading(doc, 'Overall Assessment')
-    add_body_text(doc, data.get('overall_assessment', ''))
+    add_section_heading(doc, t("overall_assessment", lang), client_key=client_key)
+    add_body_text(doc, data.get('overall_assessment', ''), client_key=client_key)
 
     doc.save(output_path)
     return output_path
@@ -977,55 +1017,6 @@ def _combine_evidence_notes(section):
     return evidence or notes
 
 
-def _inject_into_22301_template(table, sections):
-    """Inject into BSO_Audit_Questionaire_ISO22301 (3-col: Requirements, Evidence+Notes, A)."""
-    assessment_map = {
-        'Conformant': 1,
-        'Partially Conformant': 2,
-        'Non-Conformant': 3,
-        'Not Reviewed': '',
-    }
-    orig = {}
-    for s in sections:
-        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
-        s['evidence'] = _combine_evidence_notes(s)
-    result = _inject_into_template_by_clause(
-        table, sections, data_start_row=4,
-        col_clause=0, col_evidence=1, col_assessment=2,
-        assessment_map=assessment_map
-    )
-    for s in sections:
-        ev, nt = orig[id(s)]
-        s['evidence'] = ev
-        s['notes'] = nt
-    return result
-
-
-def _inject_into_20000_template(table, sections):
-    """Inject into AQC template (4-col, cols 1+2 merged span=2: Requirements, Evidence+Notes, A)."""
-    assessment_map = {
-        'Conformant': 1,
-        'Partially Conformant': 2,
-        'Non-Conformant': 3,
-        'Not Reviewed': '',
-    }
-    orig = {}
-    for s in sections:
-        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
-        s['evidence'] = _combine_evidence_notes(s)
-    result = _inject_into_template_by_clause(
-        table, sections, data_start_row=3,
-        col_clause=0, col_assessment=3,
-        assessment_map=assessment_map,
-        evidence_cols=[1, 2]
-    )
-    for s in sections:
-        ev, nt = orig[id(s)]
-        s['evidence'] = ev
-        s['notes'] = nt
-    return result
-
-
 # ── Generator registry ─────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -1040,11 +1031,11 @@ GENERATORS = {
 }
 
 
-def generate_document_file(doc_type, data, output_dir, template_path=None, standard_key=None):
+def generate_document_file(doc_type, data, output_dir, template_path=None, standard_key=None, client_key: str = None):
     from app.services.template_manager import get_template_path, get_checklist_is_excel
 
     os.makedirs(output_dir, exist_ok=True)
-    safe_name = data.get('client_name', 'Client').replace(' ', '_')
+    safe_name = sanitize_filename(data.get('client_name', 'Client'))
 
     effective_template = template_path if (template_path and os.path.exists(template_path)) else None
     if not effective_template and doc_type == 'ISO_Checklist':
@@ -1055,22 +1046,22 @@ def generate_document_file(doc_type, data, output_dir, template_path=None, stand
             result = _generate_checklist_excel(effective_template, data, output_dir, safe_name)
             if result and os.path.exists(result):
                 return result
-            return None
+            raise RuntimeError(f"Excel checklist generation failed for {doc_type}")
         filename = f'{doc_type}_{safe_name}.docx'
         output_path = os.path.join(output_dir, filename)
         generator = GENERATORS.get(doc_type)
         if generator:
-            result = generator(data, output_path, effective_template)
+            result = generator(data, output_path, effective_template, client_key=client_key)
             if result and os.path.exists(result):
                 return result
-        return None
+        raise RuntimeError(f"Document generation failed for {doc_type}: no generator produced output")
 
     filename = f'{doc_type}_{safe_name}.docx'
     output_path = os.path.join(output_dir, filename)
     generator = GENERATORS.get(doc_type)
     if generator:
-        result = generator(data, output_path)
+        result = generator(data, output_path, client_key=client_key)
         if result and os.path.exists(result):
             return result
-        return None
-    return None
+        raise RuntimeError(f"Document generation failed for {doc_type}: generator produced no output")
+    raise RuntimeError(f"Document generation failed: no generator registered for doc_type '{doc_type}'")

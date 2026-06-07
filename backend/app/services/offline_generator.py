@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from . import clause_data
 
 
-random.seed(42)
+# Seed is not fixed — different results each run
 
 
 STANDARD_LABEL_MAP = {

@@ -5,7 +5,8 @@ import uuid
 import shutil
 import threading
 import time
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from collections import defaultdict
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,6 +14,8 @@ from app.config import (
     UPLOAD_FOLDER, OUTPUT_FOLDER, ISO_STANDARDS,
     OUTPUT_DOCUMENTS, DOC_LABELS, STANDARD_CATEGORIES
 )
+from app.utils import sanitize_filename, validate_job_id
+from app.services.client_config import get_client, list_clients, get_doc_code, validate_client_data
 from app.services.file_parser import extract_audit_notes, extract_manday_data
 from app.services.ai_pipeline import generate_document as ai_generate, extract_shared_context
 from app.services.document_generator import generate_document_file
@@ -21,9 +24,16 @@ from app.services.offline_generator import generate_all as offline_generate_all
 
 app = FastAPI(title="ComplianceHub API", version="1.0.0")
 
+# ── CORS: configurable via env var ───────────────────────────────────────
+CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
+if CORS_ORIGINS == "*":
+    cors_origins = ["*"]
+else:
+    cors_origins = [o.strip() for o in CORS_ORIGINS.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,23 +42,73 @@ app.add_middleware(
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
+# ── Thread-safe progress store ───────────────────────────────────────────
 progress_store: dict = {}
+_progress_lock = threading.Lock()
 MAX_JOB_AGE = 3600
+
+# ── Rate limiting (simple in-memory) ─────────────────────────────────────
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+_rate_limit_lock = threading.Lock()
+RATE_LIMIT_WINDOW = 60       # seconds
+RATE_LIMIT_MAX_REQUESTS = 30  # per window per client
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
+
+def _check_rate_limit(client_id: str) -> bool:
+    """Return True if request is allowed, False if rate-limited."""
+    now = time.time()
+    with _rate_limit_lock:
+        timestamps = _rate_limit_store[client_id]
+        # Prune old entries
+        _rate_limit_store[client_id] = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW]
+        if len(_rate_limit_store[client_id]) >= RATE_LIMIT_MAX_REQUESTS:
+            return False
+        _rate_limit_store[client_id].append(now)
+        return True
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    """Apply rate limiting to all API endpoints."""
+    if request.url.path.startswith("/api/"):
+        client_id = request.client.host if request.client else "unknown"
+        if not _check_rate_limit(client_id):
+            from fastapi.responses import JSONResponse
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Rate limit exceeded. Try again later."},
+            )
+    return await call_next(request)
+
+
+def _update_progress(job_id: str, **kwargs):
+    """Thread-safe progress store update."""
+    with _progress_lock:
+        if job_id in progress_store:
+            progress_store[job_id].update(kwargs)
+
+
+def _get_progress(job_id: str) -> dict | None:
+    """Thread-safe progress store read."""
+    with _progress_lock:
+        return progress_store.get(job_id)
 
 
 def cleanup_old_jobs():
     now = time.time()
-    for jid in list(progress_store.keys()):
-        entry = progress_store.get(jid)
-        if entry and (now - entry.get('created_at', 0)) > MAX_JOB_AGE:
-            del progress_store[jid]
-            for d in [os.path.join(UPLOAD_FOLDER, jid), os.path.join(OUTPUT_FOLDER, jid)]:
-                shutil.rmtree(d, ignore_errors=True)
+    with _progress_lock:
+        for jid in list(progress_store.keys()):
+            entry = progress_store.get(jid)
+            if entry and (now - entry.get('created_at', 0)) > MAX_JOB_AGE:
+                del progress_store[jid]
+                for d in [os.path.join(UPLOAD_FOLDER, jid), os.path.join(OUTPUT_FOLDER, jid)]:
+                    shutil.rmtree(d, ignore_errors=True)
 
 
-def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data):
+def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=None):
     """Generate a DOCX file from data, return doc_info dict or None."""
-    path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key)
+    path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key, client_key=client_key)
     if not path:
         return None
     filename = os.path.basename(path)
@@ -66,7 +126,7 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
     return doc_info
 
 
-def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards):
+def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key=None):
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
     output_dir = os.path.join(OUTPUT_FOLDER, job_id)
     os.makedirs(output_dir, exist_ok=True)
@@ -79,9 +139,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
     notes_text = notes_data['text']
     manday_text = manday_data['text']
 
-    progress_store[job_id]['status'] = 'extracting_context'
-    progress_store[job_id]['progress'] = 10
-    progress_store[job_id]['current_doc'] = 'Analyzing documents...'
+    _update_progress(job_id, status='extracting_context', progress=10, current_doc='Analyzing documents...')
 
     shared_context = None
     if api_key and api_key.strip().lower() not in ('', 'local'):
@@ -95,11 +153,13 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
 
     for idx, doc_type in enumerate(OUTPUT_DOCUMENTS):
         label = DOC_LABELS.get(doc_type, doc_type)
-        progress_store[job_id]['status'] = 'generating'
-        progress_store[job_id]['current_doc'] = label
-        progress_store[job_id]['doc_progress'][doc_type] = 'generating'
+        _update_progress(job_id, status='generating', current_doc=label)
+        # Set doc_progress entry
+        with _progress_lock:
+            if job_id in progress_store:
+                progress_store[job_id]['doc_progress'][doc_type] = 'generating'
         base_progress = 20 + int((idx / total) * 70)
-        progress_store[job_id]['progress'] = base_progress
+        _update_progress(job_id, progress=base_progress)
 
         # 1) Try AI pipeline (router → local/cloud provider)
         doc_data = None
@@ -130,24 +190,30 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
 
         # 3) Generate the DOCX from whatever data we have
         if doc_data:
-            doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data)
+            # Inject client_key into doc_data so generators can use it
+            if client_key:
+                doc_data['client_key'] = client_key
+            doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=client_key)
             if doc_info:
                 if not client_name or client_name == 'Client':
                     client_name = doc_data.get('client_name', 'Client')
                 doc_info['_data'] = doc_data
                 results[doc_type] = doc_info
-                progress_store[job_id]['doc_progress'][doc_type] = 'done'
-                progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
+                with _progress_lock:
+                    if job_id in progress_store:
+                        progress_store[job_id]['doc_progress'][doc_type] = 'done'
+                _update_progress(job_id, progress=20 + int(((idx + 1) / total) * 70))
                 continue
 
         results[doc_type] = {'error': ai_error or 'Document generation failed'}
-        progress_store[job_id]['doc_progress'][doc_type] = 'error'
-        progress_store[job_id]['progress'] = 20 + int(((idx + 1) / total) * 70)
+        with _progress_lock:
+            if job_id in progress_store:
+                progress_store[job_id]['doc_progress'][doc_type] = 'error'
+        _update_progress(job_id, progress=20 + int(((idx + 1) / total) * 70))
 
-    progress_store[job_id]['progress'] = 95
-    progress_store[job_id]['current_doc'] = 'Creating package...'
+    _update_progress(job_id, progress=95, current_doc='Creating package...')
 
-    safe_name = client_name.replace(' ', '_')
+    safe_name = sanitize_filename(client_name)
     zip_name = f'TUV_Audit_Package_{safe_name}.zip'
     zip_path = os.path.join(OUTPUT_FOLDER, f'{job_id}.zip')
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -160,17 +226,12 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
 
     shutil.rmtree(job_dir, ignore_errors=True)
 
-    progress_store[job_id].update({
-        'status': 'done',
-        'progress': 100,
-        'current_doc': None,
-        'results': results,
-        'download_url': f'/api/download/{job_id}',
-        'zip_name': zip_name,
-    })
+    _update_progress(job_id, status='done', progress=100, current_doc=None,
+                     results=results, download_url=f'/api/download/{job_id}',
+                     zip_name=zip_name)
 
 
-@app.get("/api/standards")
+@app.get("/api/standards", summary="List all ISO standards", description="Returns all supported ISO standards, categories, and document types.")
 def get_standards():
     return {
         'standards': ISO_STANDARDS,
@@ -187,6 +248,7 @@ async def upload_files(
     checklist_template: UploadFile | None = File(None),
     api_key: str = Form(''),
     standards: str = Form('[]'),
+    client_key: str = Form(''),
 ):
     selected_standards = json.loads(standards)
     if not selected_standards:
@@ -204,16 +266,28 @@ async def upload_files(
     notes_ext = os.path.splitext(audit_notes.filename)[1].lower()
     notes_path = os.path.join(job_dir, f'audit_notes{notes_ext}')
     manday_path = os.path.join(job_dir, 'manday.docx')
+
+    # Read and validate file sizes
     content = await audit_notes.read()
+    if len(content) > MAX_FILE_SIZE:
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=413, detail=f'Audit notes file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
     with open(notes_path, 'wb') as f:
         f.write(content)
+
     content = await manday.read()
+    if len(content) > MAX_FILE_SIZE:
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=413, detail=f'Manday file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
     with open(manday_path, 'wb') as f:
         f.write(content)
 
     if checklist_template and checklist_template.filename:
-        template_path = os.path.join(job_dir, 'checklist_template.docx')
         content = await checklist_template.read()
+        if len(content) > MAX_FILE_SIZE:
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise HTTPException(status_code=413, detail=f'Template file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
+        template_path = os.path.join(job_dir, 'checklist_template.docx')
         with open(template_path, 'wb') as f:
             f.write(content)
 
@@ -224,23 +298,25 @@ async def upload_files(
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail=f'Failed to parse documents: {str(e)}')
 
-    progress_store[job_id] = {
-        'status': 'uploaded',
-        'progress': 5,
-        'current_doc': None,
-        'created_at': time.time(),
-        'doc_progress': {},
-        'results': None,
-        'error': None,
-        'download_url': None,
-        'zip_name': 'TUV_Audit_Package.zip',
-    }
+    with _progress_lock:
+        progress_store[job_id] = {
+            'status': 'uploaded',
+            'progress': 5,
+            'current_doc': None,
+            'created_at': time.time(),
+            'doc_progress': {},
+            'results': None,
+            'error': None,
+            'download_url': None,
+            'zip_name': 'TUV_Audit_Package.zip',
+            'client_key': client_key or None,
+        }
 
     if api_key:
         standards_full = [ISO_STANDARDS.get(s, s) for s in selected_standards]
         t = threading.Thread(
             target=generate_background,
-            args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards),
+            args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None),
             daemon=True,
         )
         t.start()
@@ -264,6 +340,7 @@ async def generate_docs(
     job_id: str = Form(...),
     api_key: str = Form(''),
     standards: str = Form('[]'),
+    client_key: str = Form(''),
 ):
     selected_standards = json.loads(standards)
 
@@ -283,21 +360,23 @@ async def generate_docs(
     manday_data = extract_manday_data(manday_path)
     standards_full = [ISO_STANDARDS.get(s, s) for s in selected_standards]
 
-    progress_store[job_id] = {
-        'status': 'uploaded',
-        'progress': 5,
-        'current_doc': None,
-        'created_at': time.time(),
-        'doc_progress': {},
-        'results': None,
-        'error': None,
-        'download_url': None,
-        'zip_name': 'TUV_Audit_Package.zip',
-    }
+    with _progress_lock:
+        progress_store[job_id] = {
+            'status': 'uploaded',
+            'progress': 5,
+            'current_doc': None,
+            'created_at': time.time(),
+            'doc_progress': {},
+            'results': None,
+            'error': None,
+            'download_url': None,
+            'zip_name': 'TUV_Audit_Package.zip',
+            'client_key': client_key or None,
+        }
 
     t = threading.Thread(
         target=generate_background,
-        args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards),
+        args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None),
         daemon=True,
     )
     t.start()
@@ -312,7 +391,7 @@ async def generate_docs(
 
 @app.get("/api/status/{job_id}")
 def get_status(job_id: str):
-    entry = progress_store.get(job_id)
+    entry = _get_progress(job_id)
     if not entry:
         raise HTTPException(status_code=404, detail='Job not found')
 
@@ -350,7 +429,9 @@ def get_status(job_id: str):
 
 @app.get("/api/download/{job_id}")
 def download(job_id: str):
-    entry = progress_store.get(job_id)
+    if not validate_job_id(job_id):
+        raise HTTPException(status_code=400, detail='Invalid job ID')
+    entry = _get_progress(job_id)
     zip_path = os.path.join(OUTPUT_FOLDER, f'{job_id}.zip')
     if os.path.exists(zip_path):
         zip_name = entry.get('zip_name', 'TUV_Audit_Package.zip') if entry else 'TUV_Audit_Package.zip'
@@ -360,6 +441,8 @@ def download(job_id: str):
 
 @app.get("/api/download_doc/{job_id}/{doc_type}")
 def download_doc(job_id: str, doc_type: str):
+    if not validate_job_id(job_id):
+        raise HTTPException(status_code=400, detail='Invalid job ID')
     if doc_type not in OUTPUT_DOCUMENTS:
         raise HTTPException(status_code=400, detail='Invalid document type')
 
@@ -381,6 +464,94 @@ def download_doc(job_id: str, doc_type: str):
                 filename=fname,
             )
     raise HTTPException(status_code=404, detail='Document not found')
+
+
+# --- Excel generation endpoint ---
+
+@app.post("/api/generate_excel")
+def generate_excel_endpoint(
+    client_key: str = Form(''),
+    doc_type: str = Form('risk_register'),
+):
+    """Generate an Excel document (risk_register, bia, enms, dashboard)."""
+    from app.services.excel_generator import generate_excel
+
+    if not client_key:
+        raise HTTPException(status_code=400, detail='client_key is required')
+
+    client = get_client(client_key)
+    if not client:
+        raise HTTPException(status_code=404, detail=f'Client not found: {client_key}')
+
+    output_dir = os.path.join(OUTPUT_FOLDER, 'excel')
+    try:
+        path = generate_excel(client_key, doc_type, output_dir)
+        filename = os.path.basename(path)
+        return FileResponse(
+            path,
+            filename=filename,
+            media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Excel generation failed: {str(e)}')
+
+
+# --- Client management endpoints ---
+
+@app.get("/api/clients")
+def get_clients():
+    """Return all active clients with their configuration."""
+    return {'clients': list_clients()}
+
+
+@app.get("/api/clients/{client_key}")
+def get_client_detail(client_key: str):
+    """Return full configuration for a specific client."""
+    client = get_client(client_key)
+    if not client:
+        raise HTTPException(status_code=404, detail=f'Client not found: {client_key}')
+    return {
+        'key': client.key,
+        'name': client.name,
+        'name_ar': client.name_ar,
+        'doc_code_prefix': client.doc_code_prefix,
+        'language': client.language,
+        'standards': client.standards,
+        'formulas': {
+            'latent_risk': client.formulas.latent_risk,
+            'residual_risk': client.formulas.residual_risk,
+            'rating_method': client.formulas.rating_method,
+            'treatment_lookup': client.formulas.treatment_lookup,
+        },
+        'visual': {
+            'primary_header': client.visual.primary_header,
+            'accent': client.visual.accent,
+            'secondary': client.visual.secondary,
+            'rtl': client.visual.rtl,
+        },
+        'description': client.description,
+    }
+
+
+@app.post("/api/clients/{client_key}/validate")
+def validate_client_doc(client_key: str, data: dict):
+    """Validate document data against client configuration."""
+    errors = validate_client_data(client_key, data)
+    return {'valid': len(errors) == 0, 'errors': errors}
+
+
+@app.get("/api/clients/{client_key}/doc_code")
+def generate_doc_code(client_key: str, doc_type: str = "DOC", sequence: int = 1):
+    """Generate a document code for a client."""
+    client = get_client(client_key)
+    if not client:
+        raise HTTPException(status_code=404, detail=f'Client not found: {client_key}')
+    return {
+        'doc_code': get_doc_code(client_key, doc_type, sequence),
+        'prefix': client.doc_code_prefix,
+    }
 
 
 # --- Compliance-specific endpoints ---

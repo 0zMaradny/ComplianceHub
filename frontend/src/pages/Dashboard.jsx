@@ -2,11 +2,19 @@ import { useState, useEffect } from 'react'
 
 export default function Dashboard({ API }) {
   const [frameworks, setFrameworks] = useState(null)
+  const [standards, setStandards] = useState(null)
 
   useEffect(() => {
     fetch(`${API}/compliance/frameworks`)
       .then(r => r.json())
       .then(data => setFrameworks(data.frameworks))
+      .catch(() => {})
+  }, [API])
+
+  useEffect(() => {
+    fetch(`${API}/standards`)
+      .then(r => r.json())
+      .then(data => setStandards(data))
       .catch(() => {})
   }, [API])
 
@@ -33,11 +41,11 @@ export default function Dashboard({ API }) {
         </div>
         <div className="stat-card">
           <h3>Audit Documents</h3>
-          <div className="stat-number">6</div>
+          <div className="stat-number">{standards?.documents ? standards.documents.length : '—'}</div>
         </div>
         <div className="stat-card">
           <h3>ISO Standards</h3>
-          <div className="stat-number">11</div>
+          <div className="stat-number">{standards?.standards ? Object.keys(standards.standards).length : '—'}</div>
         </div>
       </div>
 
@@ -58,22 +66,13 @@ export default function Dashboard({ API }) {
       <div className="card">
         <h3>Supported ISO Standards</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 8 }}>
-          {['ISO 9001:2015 — Quality Management',
-            'ISO 14001:2015 — Environmental Management',
-            'ISO 45001:2018 — Occupational Health & Safety',
-            'ISO 27001:2022 — Information Security',
-            'ISO 22301:2019 — Business Continuity',
-            'ISO 37301:2021 — Compliance Management',
-            'ISO 31000:2018 — Risk Management',
-            'ISO 50001:2018 — Energy Management',
-            'ISO 20000:2018 — Service Management',
-            'ISO 42001:2023 — AI Management',
-            'ISO 30401:2018 — Knowledge Management',
-          ].map(s => (
+          {standards?.standards ? Object.values(standards.standards).map(s => (
             <div key={s} className="checkbox-item" style={{ cursor: 'default' }}>
               <span>📋</span> {s}
             </div>
-          ))}
+          )) : (
+            <div style={{ color: 'var(--gray-500)' }}>Loading standards...</div>
+          )}
         </div>
       </div>
     </div>

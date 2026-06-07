@@ -3,6 +3,7 @@ import './App.css'
 import Dashboard from './pages/Dashboard'
 import Audit from './pages/Audit'
 import Compliance from './pages/Compliance'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const API = '/api'
 
@@ -50,9 +51,11 @@ function App() {
         </nav>
       </aside>
       <main className="main-content">
-        {page === 'dashboard' && <Dashboard API={API} />}
-        {page === 'audit' && <Audit API={API} standards={standards} />}
-        {page === 'compliance' && <Compliance API={API} />}
+        <ErrorBoundary>
+          {page === 'dashboard' && <Dashboard API={API} />}
+          {page === 'audit' && <Audit API={API} standards={standards} />}
+          {page === 'compliance' && <Compliance API={API} />}
+        </ErrorBoundary>
       </main>
     </div>
   )

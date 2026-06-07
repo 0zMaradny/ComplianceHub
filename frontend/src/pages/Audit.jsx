@@ -8,7 +8,19 @@ export default function Audit({ API, standards }) {
   const [jobId, setJobId] = useState(null)
   const [progress, setProgress] = useState(null)
   const [results, setResults] = useState(null)
+  const [clients, setClients] = useState([])
+  const [selectedClient, setSelectedClient] = useState('')
+  const [excelType, setExcelType] = useState('risk_register')
+  const [excelGenerating, setExcelGenerating] = useState(false)
   const pollRef = useRef(null)
+
+  // Fetch clients on mount
+  useEffect(() => {
+    fetch(`${API}/clients`)
+      .then(r => r.json())
+      .then(data => setClients(data.clients || []))
+      .catch(() => {})
+  }, [API])
 
   const handleFileSelect = (field, file) => {
     setFiles(prev => ({ ...prev, [field]: file }))
@@ -30,6 +42,7 @@ export default function Audit({ API, standards }) {
     if (files.template) form.append('checklist_template', files.template)
     form.append('api_key', apiKey)
     form.append('standards', JSON.stringify(selectedStandards))
+    if (selectedClient) form.append('client_key', selectedClient)
 
     try {
       const res = await fetch(`${API}/upload`, { method: 'POST', body: form })
@@ -53,6 +66,7 @@ export default function Audit({ API, standards }) {
     form.append('job_id', jobId)
     form.append('api_key', apiKey)
     form.append('standards', JSON.stringify(selectedStandards))
+    if (selectedClient) form.append('client_key', selectedClient)
 
     try {
       const res = await fetch(`${API}/generate`, { method: 'POST', body: form })
@@ -92,6 +106,7 @@ export default function Audit({ API, standards }) {
     setJobId(null)
     setProgress(null)
     setResults(null)
+    setSelectedClient('')
     if (pollRef.current) clearInterval(pollRef.current)
   }
 
@@ -109,6 +124,78 @@ export default function Audit({ API, standards }) {
       {step === 'upload' && (
         <div className="card">
           <h3>Upload Audit Files</h3>
+
+          {/* Client Selector */}
+          <div className="form-group">
+            <label>Client *</label>
+            <select
+              value={selectedClient}
+              onChange={e => setSelectedClient(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)', fontSize: 14 }}
+            >
+              <option value="">-- Select Client --</option>
+              {clients.map(c => (
+                <option key={c.key} value={c.key}>
+                  {c.name} {c.language === 'ar' ? '🇸🇦' : '🇬🇧'}
+                </option>
+              ))}
+            </select>
+            {selectedClient && (
+              <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
+                Doc prefix: {clients.find(c => c.key === selectedClient)?.doc_code_prefix}
+                {clients.find(c => c.key === selectedClient)?.language === 'ar' && ' | Arabic/RTL output'}
+              </div>
+            )}
+          </div>
+
+          {/* Excel Quick Generate */}
+          <div className="form-group" style={{ background: 'var(--gray-50)', padding: 12, borderRadius: 8 }}>
+            <label style={{ fontWeight: 600 }}>📊 Quick Excel Export</label>
+            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+              <select
+                value={excelType}
+                onChange={e => setExcelType(e.target.value)}
+                style={{ flex: 1, minWidth: 150, padding: '6px 10px', borderRadius: 4, border: '1px solid var(--gray-300)' }}
+              >
+                <option value="risk_register">Risk Register</option>
+                <option value="bia">BIA Assessment</option>
+                <option value="enms">EnMS Register</option>
+                <option value="dashboard">KPI Dashboard</option>
+              </select>
+              <button
+                className="btn btn-secondary"
+                onClick={async () => {
+                  if (!selectedClient) { alert('Please select a client first'); return; }
+                  setExcelGenerating(true)
+                  try {
+                    const res = await fetch(`${API}/generate_excel`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                      body: `client_key=${selectedClient}&doc_type=${excelType}`
+                    })
+                    if (res.ok) {
+                      const blob = await res.blob()
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `${excelType}_${selectedClient}.xlsx`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                    } else {
+                      const err = await res.json()
+                      alert('Excel generation failed: ' + (err.detail || 'Unknown error'))
+                    }
+                  } catch (e) {
+                    alert('Excel generation failed: ' + e.message)
+                  }
+                  setExcelGenerating(false)
+                }}
+                disabled={excelGenerating}
+              >
+                {excelGenerating ? '⏳ Generating...' : '📥 Download Excel'}
+              </button>
+            </div>
+          </div>
 
           <div className="form-group">
             <label>Audit Notes (.docx or .txt) *</label>
