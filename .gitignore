@@ -50,3 +50,4 @@ Thumbs.db
 *.key
 backend/data/
 backend/app/data/
+backend/app/data/
