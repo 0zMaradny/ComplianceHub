@@ -66,7 +66,7 @@ def set_landscape(doc):
     sect.page_width, sect.page_height = sect.page_height, sect.page_width
 
 
-def setup_document(doc, landscape=False):
+def setup_document(doc, landscape=False, client_key=None):
     if landscape:
         set_landscape(doc)
     sect = doc.sections[0]
@@ -91,7 +91,7 @@ def setup_document(doc, landscape=False):
     add_page_number(doc)
 
 
-def add_header_row(table, headers):
+def add_header_row(table, headers, client_key=None):
     row = table.rows[0]
     for i, h in enumerate(headers):
         cell = row.cells[i]
@@ -104,7 +104,7 @@ def add_header_row(table, headers):
         set_cell_shading(cell, '003D7A')
 
 
-def add_data_row(table, data, bold=False, color=None):
+def add_data_row(table, data, bold=False, color=None, client_key=None):
     row = table.add_row()
     for i, val in enumerate(data):
         cell = row.cells[i]
@@ -120,7 +120,17 @@ def add_data_row(table, data, bold=False, color=None):
     return row
 
 
-def add_cover_page(doc, title, client_name, standard, date, lead_auditor=''):
+def add_cover_page(doc, title, client_name, standard, date, lead_auditor='', client_key=None):
+    # Resolve client for colors and language
+    header_color = TUV_BLUE
+    labels = COVER_LABELS.get("en", {})
+    if client_key:
+        c = get_client(client_key)
+        if c:
+            header_color = c.visual.primary_header
+            lang = c.language
+            labels = COVER_LABELS.get(lang, COVER_LABELS["en"])
+
     if os.path.exists(DEFAULT_LOGO_PATH):
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -135,7 +145,9 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor=''):
     run = p.add_run(title)
     run.font.size = Pt(24)
     run.bold = True
-    run.font.color.rgb = TUV_BLUE
+    run.font.color.rgb = RGBColor(
+        int(header_color[1:3], 16), int(header_color[3:5], 16), int(header_color[5:7], 16)
+    )
 
     doc.add_paragraph()
 
@@ -148,12 +160,12 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor=''):
     doc.add_paragraph()
 
     info_items = [
-        ('Client', client_name),
-        ('Standard', standard),
-        ('Date', date),
+        (labels.get("client", "Client"), client_name),
+        (labels.get("standard", "Standard"), standard),
+        (labels.get("date", "Date"), date),
     ]
     if lead_auditor:
-        info_items.append(('Lead Auditor', lead_auditor))
+        info_items.append((labels.get("lead_auditor", "Lead Auditor"), lead_auditor))
 
     for label, value in info_items:
         p = doc.add_paragraph()
@@ -161,7 +173,9 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor=''):
         run = p.add_run(f'{label}: ')
         run.font.size = Pt(11)
         run.bold = True
-        run.font.color.rgb = TUV_BLUE
+        run.font.color.rgb = RGBColor(
+            int(header_color[1:3], 16), int(header_color[3:5], 16), int(header_color[5:7], 16)
+        )
         run = p.add_run(value)
         run.font.size = Pt(11)
 
@@ -181,7 +195,7 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor=''):
     doc.add_page_break()
 
 
-def add_toc(doc):
+def add_toc(doc, client_key=None):
     p = doc.add_paragraph()
     run = p.add_run('Table of Contents')
     run.font.size = Pt(16)
@@ -207,7 +221,7 @@ def add_toc(doc):
     doc.add_paragraph()
 
 
-def add_section_heading(doc, text):
+def add_section_heading(doc, text, client_key=None):
     p = doc.add_paragraph()
     run = p.add_run(text)
     run.font.size = Pt(14)
@@ -218,7 +232,7 @@ def add_section_heading(doc, text):
     return p
 
 
-def add_sub_heading(doc, text):
+def add_sub_heading(doc, text, client_key=None):
     p = doc.add_paragraph()
     run = p.add_run(text)
     run.font.size = Pt(11)
@@ -227,7 +241,7 @@ def add_sub_heading(doc, text):
     return p
 
 
-def add_body_text(doc, text, bold=False):
+def add_body_text(doc, text, bold=False, client_key=None):
     p = doc.add_paragraph()
     run = p.add_run(text)
     run.font.size = Pt(10)
@@ -236,7 +250,7 @@ def add_body_text(doc, text, bold=False):
     return p
 
 
-def add_bullet(doc, text):
+def add_bullet(doc, text, client_key=None):
     p = doc.add_paragraph(style='List Bullet')
     p.clear()
     run = p.add_run(text)
@@ -244,7 +258,7 @@ def add_bullet(doc, text):
     return p
 
 
-def add_border_box(doc):
+def add_border_box(doc, client_key=None):
     sect = doc.sections[0]
     sect.left_margin = Cm(1.5)
     sect.right_margin = Cm(1.5)
@@ -277,7 +291,7 @@ def set_rtl_paragraph(paragraph):
     pPr.append(bidi)
 
 
-def add_body_text_rtl(doc, text, bold=False):
+def add_body_text_rtl(doc, text, bold=False, client_key=None):
     """Add RTL body text (for Arabic)."""
     p = doc.add_paragraph()
     set_rtl_paragraph(p)
@@ -361,7 +375,7 @@ def generate_tnl(data, output_path, client_key: str = None):
 
     doc = Document()
     setup_document(doc, client_key=client_key)
-    add_cover_page(doc, 'Test / Nonconformity Log (TNL)',
+    add_cover_page(doc, f'{TABLE_HEADERS[lang]["tnl"][0]} / TNL',
                    data.get('client_name', 'N/A'),
                    data.get('standard', 'N/A'),
                    data.get('audit_date', 'N/A'),

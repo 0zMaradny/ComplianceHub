@@ -86,7 +86,7 @@ def extract_shared_context(api_key, notes_text, manday_text):
     return router_extract('extract_shared_context', prompt, api_key=api_key)
 
 
-def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=None):
+def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None):
     standards_str = ', '.join(standards)
     family_context = _build_family_context(standards)
 
@@ -97,6 +97,30 @@ def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=N
         ctx_str += '\n'
     if family_context:
         ctx_str += '\n== Standard Family Context ==\n' + family_context + '\n'
+
+    # ── Client context injection ──────────────────────────────────────────
+    if client_key:
+        from .client_config import get_client
+        client = get_client(client_key)
+        if client:
+            lang_note = ''
+            if client.language == 'ar':
+                lang_note = '\nIMPORTANT: This client requires Arabic (RTL) output. Use formal Modern Standard Arabic (MSA) for all text fields. ISO clause references and Risk IDs must remain in English.'
+            elif client.language == 'bidi':
+                lang_note = '\nIMPORTANT: This client requires bilingual output (Arabic primary, English secondary).'
+
+            formula_note = ''
+            if client.formulas.latent_risk or client.formulas.rating_method:
+                formula_note = f'\nRisk Formulas for this client:\n- Latent Risk: {client.formulas.latent_risk or "N/A"}\n- Residual Risk: {client.formulas.residual_risk or "N/A"}\n- Rating Method: {client.formulas.rating_method or "N/A"}\n- Treatment Lookup: {client.formulas.treatment_lookup or "N/A"}\nApply these formulas in all risk-related content.'
+
+            ctx_str += f'''
+== Client Context ==
+Client: {client.name}
+Language: {client.language} ({'Arabic/RTL' if client.visual.rtl else 'English/LTR'})
+Doc Code Prefix: {client.doc_code_prefix}
+Active Standards: {', '.join(client.standards)}
+{lang_note}{formula_note}
+'''
 
     prompts = {
         'Audit_Plan_Stage_1': f"""You are preparing a Stage 1 Audit Plan (readiness review) for a TÜV AUSTRIA certification audit. The output must be COMPLETE and ready to issue — no edits needed.
@@ -300,6 +324,6 @@ Return JSON with:
     return prompts.get(doc_type, prompts['Audit_Report'])
 
 
-def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None):
-    prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context)
+def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None):
+    prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key)
     return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key)

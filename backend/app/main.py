@@ -51,7 +51,7 @@ MAX_JOB_AGE = 3600
 _rate_limit_store: dict[str, list[float]] = defaultdict(list)
 _rate_limit_lock = threading.Lock()
 RATE_LIMIT_WINDOW = 60       # seconds
-RATE_LIMIT_MAX_REQUESTS = 30  # per window per client
+RATE_LIMIT_MAX_REQUESTS = 500  # per window per client (high limit for testing)
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
@@ -168,7 +168,8 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             try:
                 ai_result = ai_generate(
                     api_key, notes_text, manday_text,
-                    standards_full, doc_type, shared_context
+                    standards_full, doc_type, shared_context,
+                    client_key=client_key
                 )
                 if 'error' not in ai_result:
                     doc_data = ai_result
