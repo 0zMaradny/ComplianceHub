@@ -5,9 +5,10 @@ import uuid
 import shutil
 import threading
 import time
+import asyncio
 from collections import defaultdict
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import (
@@ -16,12 +17,14 @@ from app.config import (
 )
 from app.utils import sanitize_filename, validate_job_id
 from app.services.client_config import get_client, list_clients, get_doc_code, validate_client_data
-from app.services.file_parser import extract_audit_notes, extract_manday_data
+from app.services.file_parser import extract_audit_notes, extract_manday_data, extract_manday_tables
 from app.services.ai_pipeline import generate_document as ai_generate, extract_shared_context
 from app.services.document_generator import generate_document_file
-from app.services.pdf_converter import convert_to_pdf
+from app.services.pdf_generator import generate_pdf_file
 from app.services.offline_generator import generate_all as offline_generate_all
 from app.api.audit import router as audit_router
+from app.services.clause_data import get_clause_data, get_annex_a_data
+from app.services import db
 
 app = FastAPI(title="ComplianceHub API", version="2.0.0")
 
@@ -110,15 +113,19 @@ def cleanup_old_jobs():
 
 
 def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=None):
-    """Generate a DOCX file from data, return doc_info dict or None."""
+    """Generate DOCX + PDF files from data, return doc_info dict or None."""
     path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key, client_key=client_key)
     if not path:
         return None
     filename = os.path.basename(path)
     doc_info = {'path': path, 'filename': filename}
-    pdf_path = convert_to_pdf(path)
-    if pdf_path:
-        doc_info['pdf_path'] = pdf_path
+    try:
+        pdf_info = generate_pdf_file(doc_type, doc_data, output_dir)
+        if pdf_info and os.path.exists(pdf_info.get('path', '')):
+            doc_info['pdf_path'] = pdf_info['path']
+            doc_info['pdf_filename'] = pdf_info.get('filename', os.path.basename(pdf_info['path']))
+    except Exception:
+        pass
     for k in ('certification_decision', 'conditions', 'findings_summary',
               'conclusion', 'methodology', 'sections', 'summary',
               'client_name', 'audit_date', 'standard', 'scope', 'lead_auditor',
@@ -129,7 +136,7 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
     return doc_info
 
 
-def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key=None):
+def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key=None, manday_config=None):
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
     output_dir = os.path.join(OUTPUT_FOLDER, job_id)
     os.makedirs(output_dir, exist_ok=True)
@@ -149,6 +156,8 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
         shared_context = extract_shared_context(api_key, notes_text, manday_text)
         if 'error' in shared_context:
             shared_context = None
+
+    manday_info = manday_config if manday_config else None
 
     results = {}
     total = len(OUTPUT_DOCUMENTS)
@@ -172,7 +181,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
                 ai_result = ai_generate(
                     api_key, notes_text, manday_text,
                     standards_full, doc_type, shared_context,
-                    client_key=client_key
+                    client_key=client_key, manday_info=manday_info
                 )
                 if 'error' not in ai_result:
                     doc_data = ai_result
@@ -225,7 +234,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             if 'path' in result and os.path.exists(result['path']):
                 zf.write(result['path'], result.get('filename', os.path.basename(result['path'])))
             if 'pdf_path' in result and os.path.exists(result['pdf_path']):
-                pdf_filename = result.get('filename', os.path.basename(result['path'])).rsplit('.', 1)[0] + '.pdf'
+                pdf_filename = result.get('pdf_filename') or (result.get('filename', os.path.basename(result['path'])).rsplit('.', 1)[0] + '.pdf')
                 zf.write(result['pdf_path'], pdf_filename)
 
     shutil.rmtree(job_dir, ignore_errors=True)
@@ -253,6 +262,7 @@ async def upload_files(
     api_key: str = Form(''),
     standards: str = Form('[]'),
     client_key: str = Form(''),
+    manday_config: str = Form('null'),
 ):
     selected_standards = json.loads(standards)
     if not selected_standards:
@@ -302,6 +312,14 @@ async def upload_files(
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail=f'Failed to parse documents: {str(e)}')
 
+    mc = json.loads(manday_config) if manday_config not in ('null', 'None', '') else None
+
+    manday_extracted = {}
+    try:
+        manday_extracted = extract_manday_tables(manday_path)
+    except Exception:
+        pass
+
     with _progress_lock:
         progress_store[job_id] = {
             'status': 'uploaded',
@@ -316,11 +334,25 @@ async def upload_files(
             'client_key': client_key or None,
         }
 
+    db.set_job(
+        job_id=job_id,
+        status='uploaded',
+        progress=5,
+        current_doc=None,
+        created_at=time.time(),
+        doc_progress='{}',
+        results=None,
+        error=None,
+        download_url=None,
+        zip_name='TUV_Audit_Package.zip',
+        standards=json.dumps(selected_standards),
+    )
+
     if api_key:
         standards_full = [ISO_STANDARDS.get(s, s) for s in selected_standards]
         t = threading.Thread(
             target=generate_background,
-            args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None),
+            args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None, mc),
             daemon=True,
         )
         t.start()
@@ -329,6 +361,7 @@ async def upload_files(
             'job_id': job_id,
             'async': True,
             'status_url': f'/api/status/{job_id}',
+            'manday_extracted': manday_extracted,
         }
 
     return {
@@ -336,6 +369,7 @@ async def upload_files(
         'job_id': job_id,
         'api_key_required': True,
         'message': 'Files uploaded. Configure API key and click Generate.',
+        'manday_extracted': manday_extracted,
     }
 
 
@@ -774,6 +808,182 @@ def update_capa_endpoint(capa_id: str, **kwargs):
 def get_dashboard(client_key: str = ""):
     stats = get_dashboard_stats(client_key=client_key or None)
     return stats
+
+
+@app.get("/api/jobs")
+def list_jobs(limit: int = 20):
+    """List recent audit generation jobs with basic metadata for the History page."""
+    return {'jobs': db.list_jobs(limit=limit)}
+
+
+@app.get("/api/stats")
+def get_stats():
+    """Return aggregated analytics from all audit generation jobs for the Dashboard."""
+    return db.get_stats()
+
+
+@app.get("/api/progress/{job_id}")
+async def stream_progress(job_id: str):
+    """SSE endpoint for real-time job progress updates."""
+    async def event_stream():
+        last_status = None
+        last_progress = -1
+        while True:
+            job = db.get_job(job_id)
+            entry = _get_progress(job_id)
+
+            if not entry and not job:
+                yield 'event: error\ndata: {"error": "job_not_found"}\n\n'
+                break
+
+            status = (entry or job).get('status', 'unknown')
+            progress = (entry or job).get('progress', 0)
+            current_doc = (entry or job).get('current_doc', '')
+
+            if status != last_status or progress != last_progress:
+                data = json.dumps({
+                    'status': status,
+                    'progress': progress,
+                    'current_doc': current_doc,
+                })
+                yield f'data: {data}\n\n'
+                last_status = status
+                last_progress = progress
+
+            if status in ('done', 'error'):
+                if status == 'done':
+                    results = None
+                    if entry and entry.get('results'):
+                        results = entry['results']
+                    yield f'event: complete\ndata: {json.dumps({"results": results, "download_url": (entry or {}).get("download_url", "")})}\n\n'
+                break
+
+            await asyncio.sleep(1.5)
+
+    return StreamingResponse(event_stream(), media_type='text/event-stream')
+
+
+@app.get("/api/compliance/standards/{standard_id}/clauses")
+def get_standard_clauses(standard_id: str):
+    """Return flattened clause data for a given standard for compliance checklist."""
+    try:
+        raw = get_clause_data(standard_id)
+        annex = get_annex_a_data(standard_id)
+        items = []
+        seen = set()
+
+        # Framework standards (ISO 31000, ISO 10002): {title, sections: {id: {...}}}
+        if isinstance(raw, dict) and isinstance(raw.get('sections'), dict):
+            for sid, section in raw['sections'].items():
+                items.append({
+                    'id': sid,
+                    'title': section.get('title', ''),
+                    'description': section.get('evidence', ''),
+                    'sub_items': list(section.get('sub_sections', {}).values()) if isinstance(section.get('sub_sections'), dict) else [],
+                })
+        else:
+            for key, c in (raw if isinstance(raw, dict) else {}).items():
+                num = c.get('clause', c.get('id', key))
+                if num in seen:
+                    continue
+                seen.add(num)
+                items.append({
+                    'id': num,
+                    'title': c.get('title', ''),
+                    'description': c.get('description', c.get('text', '')),
+                })
+
+        return {
+            'standard_id': standard_id,
+            'clauses': items,
+            'annex_a': annex or {},
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f'Standard not found: {str(e)}')
+
+
+# ── Template Management ────────────────────────────────────────────────────
+
+from app.services.template_manager import get_checklist_is_excel
+from app.services.template_manager import TEMPLATE_MAP as DOC_TEMPLATES
+from app.services.template_manager import CHECKLIST_TEMPLATES, TEMPLATES_DIR
+
+
+@app.get("/api/templates")
+def list_templates():
+    """List all available templates with their document type mappings."""
+    doc_templates = []
+    for doc_type, fname in DOC_TEMPLATES.items():
+        path = os.path.join(TEMPLATES_DIR, fname)
+        doc_templates.append({
+            'doc_type': doc_type,
+            'filename': fname,
+            'path': path,
+            'exists': os.path.exists(path),
+            'type': 'document',
+        })
+
+    checklist_templates = []
+    for std_key, fname in CHECKLIST_TEMPLATES.items():
+        path = os.path.join(TEMPLATES_DIR, fname)
+        is_excel = get_checklist_is_excel(std_key)
+        checklist_templates.append({
+            'standard_key': std_key,
+            'filename': fname,
+            'path': path,
+            'exists': os.path.exists(path),
+            'is_excel': is_excel,
+            'type': 'checklist',
+        })
+
+    all_files = []
+    if os.path.exists(TEMPLATES_DIR):
+        for f in sorted(os.listdir(TEMPLATES_DIR)):
+            fpath = os.path.join(TEMPLATES_DIR, f)
+            if os.path.isfile(fpath):
+                all_files.append(f)
+
+    unused = [f for f in all_files if f not in list(DOC_TEMPLATES.values()) + list(CHECKLIST_TEMPLATES.values())]
+
+    return {
+        'document_templates': doc_templates,
+        'checklist_templates': checklist_templates,
+        'unused_files': unused,
+        'template_dir': TEMPLATES_DIR,
+        'count': {
+            'document': len(doc_templates),
+            'checklist': len(checklist_templates),
+            'unused': len(unused),
+        },
+    }
+
+
+@app.post("/api/templates/upload")
+async def upload_template(file: UploadFile = File(...)):
+    """Upload a new template file to the templates directory."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail='No filename provided')
+    fname = sanitize_filename(file.filename)
+    if not (fname.endswith('.docx') or fname.endswith('.xlsx') or fname.endswith('.doc')):
+        raise HTTPException(status_code=400, detail='Only .docx, .xlsx, and .doc files are allowed')
+    dest = os.path.join(TEMPLATES_DIR, fname)
+    if os.path.exists(dest):
+        raise HTTPException(status_code=409, detail=f'Template "{fname}" already exists')
+    content = await file.read()
+    with open(dest, 'wb') as f:
+        f.write(content)
+    return {'success': True, 'filename': fname, 'size': len(content)}
+
+
+@app.delete("/api/templates/{filename:path}")
+def delete_template(filename: str):
+    """Delete a template file from the templates directory."""
+    fname = sanitize_filename(filename)
+    path = os.path.join(TEMPLATES_DIR, fname)
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail=f'Template "{fname}" not found')
+    os.remove(path)
+    return {'success': True, 'filename': fname}
 
 
 @app.on_event("startup")

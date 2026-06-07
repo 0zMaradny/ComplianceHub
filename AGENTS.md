@@ -31,7 +31,11 @@
 
 - **`app/services/clause_data.py`**: Data-driven clause database. Contains `HLS_CORE` (shared Clauses 1-3, 4-7, 9-10), `CLAUSE_8` (per-standard variants with sub-sub-clauses), `ANNEX_A_27001` (4 grouped themes), `ANNEX_A_42001` (9 control objectives), `PIMS_27701` (stand-alone privacy clauses), `FRAMEWORK_31000` and `FRAMEWORK_10002` (framework sections), `SUPPORTING_STANDARDS_EVIDENCE` (cross-references). Helper functions: `get_clause_data()`, `get_annex_a_data()`, `flatten_clauses()`, `get_evidence_for_clause()`.
 - **`app/services/offline_generator.py`**: Uses `clause_data` module to generate dynamic standard-specific checklists and evidence. No hardcoded ISO 9001 sections — all standards get proper clause coverage.
-- **`app/services/ai_pipeline.py`**: Injects standard family context (main + supporting standards) and Annex A structure into all AI prompts. Includes few-shot evidence examples for all doc types.
+- **`app/services/ai_pipeline.py`**: Injects standard family context (main + supporting standards) and Annex A structure into all AI prompts. Includes few-shot evidence examples for all doc types. Accepts `manday_info` — injects `{manday_summary}` block (audit type, total days, per-standard breakdown, team, IMS reduction) before raw manday text in every prompt.
+- **`app/services/manday_calculator.py`**: IAF MD 5 reference tables for all 13 standards, audit type multipliers (initial=1.0, surv=1/3, recert=2/3, transfer=2/3), IAF MD 11 IMS reduction matrix (15 per-pair reductions, max 20%), `compute_mandays()`, `detect_audit_type()`, `compute_ims_reduction()`, `compute_audit_team()`, `lookup_base_mandays()`.
+- **`app/services/template_manager.py`**: Maps doc types to TÜV template files. `CHECKLIST_TEMPLATES` covers 8 standards (iso_9001, 14001, 45001, 50001, 20000, 22301, 27001 via Excel); remaining 5 standards generate from scratch.
+- **`frontend/src/components/MandayForm.jsx`**: Collapsible form — audit type dropdown, employee/site inputs, per-standard risk/complexity table, IMS reduction %, real-time calculation preview (total, per-standard, team). Auto-fills from `mandayExtracted`.
+- **`generate_document_file`** in `document_generator.py`: `safe_name` capped to 60 chars with regex sanitization to prevent 500+ char filenames. Merged-cell tables handled gracefully in `set_col_widths` and `_inject_into_template_table`.
 
 ## Commands
 
@@ -56,6 +60,8 @@
 - `/opt/llama-server/llama-server -m models/qwen-1.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 1.5B model (better quality)
 - Models: `models/qwen-0.5b.gguf` (~469 MB, Q4_K_M), `models/qwen-1.5b.gguf` (~941 MB, Q4_K_M)
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
+- **Model download** (requires internet): `wget -O /opt/llama-server/models/qwen-0.5b.gguf https://huggingface.co/Qwen/Qwen2.5-0.5B-GGUF/resolve/main/qwen2.5-0.5b-q4_k_m.gguf`
+- **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
 
 ### Code Quality
 - `cd backend && python -m pyflakes app/` — Check for unused imports, undefined vars, bugs (should return **zero**)
@@ -69,6 +75,36 @@
   - Default model: `meta-llama/Meta-Llama-3-8B-Instruct` (fast, good quality)
   - Override via `HF_MODEL` env var in `.env`
   - Token provided (`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`) works with Llama-3-8B and Llama-3.2-1B
+
+### Docker Deployment
+- `docker compose build` — Build backend + frontend images
+- `docker compose up -d` — Start services (backend:8000, frontend:80)
+- `docker compose down` — Stop services
+- Backend API: `http://localhost:8000/api/standards`
+- Frontend UI: `http://localhost/`
+- Backend `.env` is mounted read-only from `backend/.env`
+- Upload volume persists across restarts via `uploads` named volume
+
+### Tests
+- `cd backend && python -m pytest tests/ -v` — Run 96 unit tests
+- `cd backend && python -m pytest tests/ --coverage` — With coverage report
+- Test files: `tests/test_manday_calculator.py` (55 tests), `tests/test_offline_generator.py` (25 tests), `tests/test_template_manager.py` (16 tests)
+
+### End-to-End Test
+- Start: `bash run.sh` (or backend + frontend separately)
+- Upload: `curl -X POST http://localhost:8000/api/upload -F "audit_notes=@file.docx" -F "manday=@file.docx" -F 'standards=["iso_9001"]' -F "api_key="`
+- Generate: `curl -X POST http://localhost:8000/api/generate -F "job_id=JOBID" -F 'standards=["iso_9001"]' -F "api_key=" -F 'manday_config={"audit_type":"initial","employee_count":50}'`
+- Status: `curl http://localhost:8000/api/status/JOBID`
+- Download: `curl -o package.zip http://localhost:8000/api/download/JOBID`
+
+### Checklist Template Coverage
+- 8 standards with template injection: iso_9001, iso_14001, iso_45001, iso_50001, iso_20000, iso_22301, iso_27001 (Excel), iso_45001/50001 (shared combined template)
+- 5 standards from scratch: iso_37301, iso_42001, iso_30401, iso_27701, iso_31000, iso_10002
+- **iso_22301 fix**: table with merged cells (`no 'tc' element`) — graceful fallback to from-scratch generation
+
+### Thread Safety
+- `generate_background` wrapper catches all `Exception`, logs traceback, sets `status=error` in progress_store
+- Server restart: `fuser -k 8000/tcp` to release bound port
 
 ### Git
 - Git auto-pushes every commit on `main` via `.git/hooks/post-commit`

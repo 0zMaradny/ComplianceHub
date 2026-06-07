@@ -55,7 +55,11 @@ def set_col_widths(table, widths_pct, available_inches=6.5):
     available = Inches(available_inches)
     table.autofit = False
     for row in table.rows:
-        for i, cell in enumerate(row.cells):
+        try:
+            cells = row.cells
+        except Exception:
+            continue
+        for i, cell in enumerate(cells):
             if i < len(widths_pct):
                 cell.width = int(available * widths_pct[i] / 100)
 
@@ -1049,7 +1053,7 @@ def generate_document_file(doc_type, data, output_dir, template_path=None, stand
     from app.services.template_manager import get_template_path, get_checklist_is_excel
 
     os.makedirs(output_dir, exist_ok=True)
-    safe_name = sanitize_filename(data.get('client_name', 'Client'))
+    safe_name = sanitize_filename(data.get('client_name', 'Client'))[:60]
 
     effective_template = template_path if (template_path and os.path.exists(template_path)) else None
     if not effective_template and doc_type == 'ISO_Checklist':

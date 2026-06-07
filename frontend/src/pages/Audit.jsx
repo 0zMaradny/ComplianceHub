@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import MandayForm from '../components/MandayForm'
 
 export default function Audit({ API, standards }) {
   const [step, setStep] = useState('upload')
@@ -8,33 +9,32 @@ export default function Audit({ API, standards }) {
   const [jobId, setJobId] = useState(null)
   const [progress, setProgress] = useState(null)
   const [results, setResults] = useState(null)
-  const [clients, setClients] = useState([])
-  const [selectedClient, setSelectedClient] = useState('')
-  const [excelType, setExcelType] = useState('risk_register')
-  const [excelGenerating, setExcelGenerating] = useState(false)
+  const [mandayExtracted, setMandayExtracted] = useState(null)
+  const [mandayConfig, setMandayConfig] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [elapsed, setElapsed] = useState(0)
+  const [preview, setPreview] = useState(null)
   const pollRef = useRef(null)
-
-  // Fetch clients on mount
-  useEffect(() => {
-    fetch(`${API}/clients`)
-      .then(r => r.json())
-      .then(data => setClients(data.clients || []))
-      .catch(() => {})
-  }, [API])
+  const elapsedRef = useRef(null)
 
   const handleFileSelect = (field, file) => {
     setFiles(prev => ({ ...prev, [field]: file }))
+    setError(null)
   }
 
   const toggleStandard = (id) => {
     setSelectedStandards(prev =>
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     )
+    setError(null)
   }
 
   const handleUpload = async () => {
     if (!files.audit_notes || !files.manday) return
     if (selectedStandards.length === 0) return
+    setLoading(true)
+    setError(null)
 
     const form = new FormData()
     form.append('audit_notes', files.audit_notes)
@@ -42,60 +42,104 @@ export default function Audit({ API, standards }) {
     if (files.template) form.append('checklist_template', files.template)
     form.append('api_key', apiKey)
     form.append('standards', JSON.stringify(selectedStandards))
-    if (selectedClient) form.append('client_key', selectedClient)
+    if (mandayConfig) {
+      form.append('manday_config', JSON.stringify(mandayConfig))
+    }
 
     try {
       const res = await fetch(`${API}/upload`, { method: 'POST', body: form })
       const data = await res.json()
-      if (data.error) { alert(data.error); return }
+      if (data.error) { setError(data.error); setLoading(false); return }
 
       setJobId(data.job_id)
+      if (data.manday_extracted) {
+        setMandayExtracted(data.manday_extracted)
+      }
       if (data.async) {
         setStep('generating')
+        setElapsed(0)
+        elapsedRef.current = setInterval(() => setElapsed(prev => prev + 1), 1000)
         startPolling(data.job_id)
       } else {
         setStep('apikey')
       }
     } catch (e) {
-      alert('Upload failed: ' + e.message)
+      setError('Upload failed: ' + e.message)
     }
+    setLoading(false)
   }
 
   const handleGenerate = async () => {
+    setLoading(true)
+    setError(null)
     const form = new FormData()
     form.append('job_id', jobId)
     form.append('api_key', apiKey)
     form.append('standards', JSON.stringify(selectedStandards))
-    if (selectedClient) form.append('client_key', selectedClient)
+    if (mandayConfig) {
+      form.append('manday_config', JSON.stringify(mandayConfig))
+    }
 
     try {
       const res = await fetch(`${API}/generate`, { method: 'POST', body: form })
       const data = await res.json()
-      if (data.error) { alert(data.error); return }
+      if (data.error) { setError(data.error); setLoading(false); return }
       setStep('generating')
+      setElapsed(0)
+      elapsedRef.current = setInterval(() => setElapsed(prev => prev + 1), 1000)
       startPolling(data.job_id)
     } catch (e) {
-      alert('Generation failed: ' + e.message)
+      setError('Generation failed: ' + e.message)
     }
+    setLoading(false)
   }
 
   const startPolling = (jid) => {
-    pollRef.current = setInterval(async () => {
+    const evtSource = new EventSource(`${API}/progress/${jid}`)
+    evtSource.onmessage = (e) => {
       try {
-        const res = await fetch(`${API}/status/${jid}`)
-        const data = await res.json()
+        const data = JSON.parse(e.data)
         setProgress(data)
-        if (data.status === 'done' || data.error) {
-          clearInterval(pollRef.current)
-          if (data.results) setResults(data.results)
-          if (data.status === 'done') setStep('done')
-        }
-      } catch (e) { console.error('Poll error:', e) }
-    }, 1500)
+      } catch (_) { void _ }
+    }
+    evtSource.addEventListener('complete', (e) => {
+      try {
+        const data = JSON.parse(e.data)
+        if (data.results) setResults(data.results)
+        setStep('done')
+        clearInterval(elapsedRef.current)
+      } catch (_) { void _ }
+      evtSource.close()
+    })
+    evtSource.onerror = () => {
+      // Fall back to polling if SSE fails
+      evtSource.close()
+      pollRef.current = setInterval(async () => {
+        try {
+          const res = await fetch(`${API}/status/${jid}`)
+          const data = await res.json()
+          setProgress(data)
+          if (data.status === 'done' || data.error) {
+            clearInterval(pollRef.current)
+            if (elapsedRef.current) clearInterval(elapsedRef.current)
+            if (data.results) setResults(data.results)
+            if (data.status === 'done') setStep('done')
+            if (data.error) setError(data.error)
+          }
+        } catch (e) { console.error('Poll error:', e) }
+      }, 1500)
+    }
+    pollRef.current = { close: () => evtSource.close() }
   }
 
   useEffect(() => {
-    return () => { if (pollRef.current) clearInterval(pollRef.current) }
+    return () => {
+      if (pollRef.current) {
+        if (typeof pollRef.current.close === 'function') pollRef.current.close()
+        else clearInterval(pollRef.current)
+      }
+      if (elapsedRef.current) clearInterval(elapsedRef.current)
+    }
   }, [])
 
   const handleReset = () => {
@@ -106,8 +150,16 @@ export default function Audit({ API, standards }) {
     setJobId(null)
     setProgress(null)
     setResults(null)
-    setSelectedClient('')
-    if (pollRef.current) clearInterval(pollRef.current)
+    setMandayExtracted(null)
+    setMandayConfig(null)
+    setError(null)
+    setLoading(false)
+    setElapsed(0)
+    if (pollRef.current) {
+      if (typeof pollRef.current.close === 'function') pollRef.current.close()
+      else clearInterval(pollRef.current)
+    }
+    if (elapsedRef.current) clearInterval(elapsedRef.current)
   }
 
   if (!standards) {
@@ -125,77 +177,7 @@ export default function Audit({ API, standards }) {
         <div className="card">
           <h3>Upload Audit Files</h3>
 
-          {/* Client Selector */}
-          <div className="form-group">
-            <label>Client *</label>
-            <select
-              value={selectedClient}
-              onChange={e => setSelectedClient(e.target.value)}
-              style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)', fontSize: 14 }}
-            >
-              <option value="">-- Select Client --</option>
-              {clients.map(c => (
-                <option key={c.key} value={c.key}>
-                  {c.name} {c.language === 'ar' ? '🇸🇦' : '🇬🇧'}
-                </option>
-              ))}
-            </select>
-            {selectedClient && (
-              <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
-                Doc prefix: {clients.find(c => c.key === selectedClient)?.doc_code_prefix}
-                {clients.find(c => c.key === selectedClient)?.language === 'ar' && ' | Arabic/RTL output'}
-              </div>
-            )}
-          </div>
-
-          {/* Excel Quick Generate */}
-          <div className="form-group" style={{ background: 'var(--gray-50)', padding: 12, borderRadius: 8 }}>
-            <label style={{ fontWeight: 600 }}>📊 Quick Excel Export</label>
-            <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-              <select
-                value={excelType}
-                onChange={e => setExcelType(e.target.value)}
-                style={{ flex: 1, minWidth: 150, padding: '6px 10px', borderRadius: 4, border: '1px solid var(--gray-300)' }}
-              >
-                <option value="risk_register">Risk Register</option>
-                <option value="bia">BIA Assessment</option>
-                <option value="enms">EnMS Register</option>
-                <option value="dashboard">KPI Dashboard</option>
-              </select>
-              <button
-                className="btn btn-secondary"
-                onClick={async () => {
-                  if (!selectedClient) { alert('Please select a client first'); return; }
-                  setExcelGenerating(true)
-                  try {
-                    const res = await fetch(`${API}/generate_excel`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                      body: `client_key=${selectedClient}&doc_type=${excelType}`
-                    })
-                    if (res.ok) {
-                      const blob = await res.blob()
-                      const url = URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `${excelType}_${selectedClient}.xlsx`
-                      a.click()
-                      URL.revokeObjectURL(url)
-                    } else {
-                      const err = await res.json()
-                      alert('Excel generation failed: ' + (err.detail || 'Unknown error'))
-                    }
-                  } catch (e) {
-                    alert('Excel generation failed: ' + e.message)
-                  }
-                  setExcelGenerating(false)
-                }}
-                disabled={excelGenerating}
-              >
-                {excelGenerating ? '⏳ Generating...' : '📥 Download Excel'}
-              </button>
-            </div>
-          </div>
+          {error && <div className="error-banner">{error}</div>}
 
           <div className="form-group">
             <label>Audit Notes (.docx or .txt) *</label>
@@ -205,6 +187,7 @@ export default function Audit({ API, standards }) {
               accept=".docx,.txt"
               onChange={e => handleFileSelect('audit_notes', e.target.files[0])}
             />
+            {files.audit_notes && <span className="file-name">{files.audit_notes.name}</span>}
           </div>
 
           <div className="form-group">
@@ -215,7 +198,15 @@ export default function Audit({ API, standards }) {
               accept=".docx"
               onChange={e => handleFileSelect('manday', e.target.files[0])}
             />
+            {files.manday && <span className="file-name">{files.manday.name}</span>}
           </div>
+
+          <MandayForm
+            standards={standards.standards}
+            selectedStandards={selectedStandards}
+            mandayExtracted={mandayExtracted}
+            onMandayConfigChange={setMandayConfig}
+          />
 
           <div className="form-group">
             <label>Checklist Template (optional, .docx)</label>
@@ -225,6 +216,7 @@ export default function Audit({ API, standards }) {
               accept=".docx"
               onChange={e => handleFileSelect('template', e.target.files[0])}
             />
+            {files.template && <span className="file-name">{files.template.name}</span>}
           </div>
 
           <div className="form-group">
@@ -245,6 +237,11 @@ export default function Audit({ API, standards }) {
                 </div>
               ))}
             </div>
+            {selectedStandards.length === 0 && (
+              <span style={{ fontSize: 12, color: 'var(--red-600)', marginTop: 4, display: 'block' }}>
+                Select at least one standard
+              </span>
+            )}
           </div>
 
           <div className="form-group">
@@ -265,9 +262,9 @@ export default function Audit({ API, standards }) {
           <button
             className="btn btn-primary"
             onClick={handleUpload}
-            disabled={!files.audit_notes || !files.manday || selectedStandards.length === 0}
+            disabled={loading || !files.audit_notes || !files.manday || selectedStandards.length === 0}
           >
-            Upload & Generate
+            {loading ? 'Uploading...' : 'Upload & Generate'}
           </button>
         </div>
       )}
@@ -304,7 +301,10 @@ export default function Audit({ API, standards }) {
       {step === 'generating' && progress && (
         <div className="card">
           <h3>Generating Documents</h3>
-          <div className="progress-bar">
+          <p style={{ fontSize: 13, color: 'var(--gray-500)', marginBottom: 8 }}>
+            {Math.floor(elapsed / 60)}m {elapsed % 60}s elapsed
+          </p>
+          <div className={`progress-bar ${progress.progress < 100 ? 'progress-bar-active' : ''}`}>
             <div className="progress-fill" style={{ width: `${progress.progress || 0}%` }} />
           </div>
           <p style={{ marginBottom: 12, color: 'var(--gray-600)', fontSize: 14 }}>
@@ -324,6 +324,7 @@ export default function Audit({ API, standards }) {
               ))}
             </div>
           )}
+          {error && <div className="error-banner" style={{ marginTop: 12 }}>{error}</div>}
         </div>
       )}
 
@@ -376,13 +377,31 @@ export default function Audit({ API, standards }) {
                   )}
                 </div>
                 {result.filename && (
-                  <a
-                    href={`${API}/download_doc/${jobId}/${docType}`}
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: 12 }}
-                  >
-                    Download
-                  </a>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '6px 12px', fontSize: 12 }}
+                      onClick={() => setPreview({ docType, label: standards.doc_labels[docType] || docType, result })}
+                    >
+                      Preview
+                    </button>
+                    <a
+                      href={`${API}/download_doc/${jobId}/${docType}`}
+                      className="btn btn-secondary"
+                      style={{ padding: '6px 12px', fontSize: 12 }}
+                    >
+                      DOCX
+                    </a>
+                    {result.pdf_filename && (
+                      <a
+                        href={`${API}/download_doc/${jobId}/${docType}/pdf`}
+                        className="btn btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: 12 }}
+                      >
+                        PDF
+                      </a>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -391,6 +410,103 @@ export default function Audit({ API, standards }) {
           <button className="btn btn-secondary" onClick={handleReset} style={{ marginTop: 20 }}>
             Generate New Documents
           </button>
+        </div>
+      )}
+
+      {preview && (
+        <div className="modal-overlay" onClick={() => setPreview(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{preview.label}</h3>
+              <button className="modal-close" onClick={() => setPreview(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {preview.result.client_name && (
+                <div className="field">
+                  <div className="field-label">Client</div>
+                  <div className="field-value">{preview.result.client_name}</div>
+                </div>
+              )}
+              {preview.result.standard && (
+                <div className="field">
+                  <div className="field-label">Standard</div>
+                  <div className="field-value">{preview.result.standard}</div>
+                </div>
+              )}
+              {preview.result.audit_date && (
+                <div className="field">
+                  <div className="field-label">Audit Date</div>
+                  <div className="field-value">{preview.result.audit_date}</div>
+                </div>
+              )}
+              {preview.result.lead_auditor && (
+                <div className="field">
+                  <div className="field-label">Lead Auditor</div>
+                  <div className="field-value">{preview.result.lead_auditor}</div>
+                </div>
+              )}
+              {preview.result.certification_decision && (
+                <div className="field">
+                  <div className="field-label">Decision</div>
+                  <div className="field-value">
+                    <span className={`status-badge ${preview.result.certification_decision === 'Certified' ? 'done' : 'error'}`}>
+                      {preview.result.certification_decision}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {preview.result.audit_type && (
+                <div className="field">
+                  <div className="field-label">Audit Type</div>
+                  <div className="field-value">{preview.result.audit_type}</div>
+                </div>
+              )}
+              {preview.result.total_mandays && (
+                <div className="field">
+                  <div className="field-label">Total Mandays</div>
+                  <div className="field-value">{preview.result.total_mandays}</div>
+                </div>
+              )}
+              {preview.result.employee_count && (
+                <div className="field">
+                  <div className="field-label">Employees</div>
+                  <div className="field-value">{preview.result.employee_count}</div>
+                </div>
+              )}
+              {preview.result.findings_summary_preview && (
+                <div className="field">
+                  <div className="field-label">Findings Summary</div>
+                  <div className="field-value">{preview.result.findings_summary_preview}</div>
+                </div>
+              )}
+              {preview.result.conditions?.length > 0 && (
+                <div className="field">
+                  <div className="field-label">Conditions ({preview.result.conditions.length})</div>
+                  <div className="field-value">
+                    {preview.result.conditions.map((c, i) => (
+                      <div key={i}>• {c}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {preview.result.total_sections > 0 && (
+                <div className="field">
+                  <div className="field-label">Sections Assessed</div>
+                  <div className="field-value">{preview.result.total_sections}</div>
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <a href={`${API}/download_doc/${jobId}/${preview.docType}`} className="btn btn-primary" style={{ fontSize: 13, padding: '8px 16px' }}>
+                Download DOCX
+              </a>
+              {preview.result.pdf_filename && (
+                <a href={`${API}/download_doc/${jobId}/${preview.docType}/pdf`} className="btn btn-secondary" style={{ fontSize: 13, padding: '8px 16px' }}>
+                  Download PDF
+                </a>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

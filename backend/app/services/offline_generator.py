@@ -63,12 +63,12 @@ def _key_for_standard(standard_label: str) -> str:
 
 
 def _extract_client(text: str) -> str:
-    for pat in [r'Client\s*:\s*(.+)', r'Company\s*:\s*(.+)', r'(?:Firma|Kunde)\s*:\s*(.+)']:
+    for pat in [r'Client\s*:\s*(.+)', r'Company\s*:\s*(.+)', r'(?:Firma|Kunde)\s*:\s*(.+)',
+                r'Customer\s*:\s*(.+)', r'Organization\s*:\s*(.+)']:
         m = re.search(pat, text, re.I)
         if m:
             return m.group(1).strip()
-    m = re.search(r'(?:Client|Company|Organization)[:\s]+(.+)', text, re.I)
-    return m.group(1).strip() if m else 'Client'
+    return 'Client'
 
 
 def _extract_standard(text: str) -> str:
@@ -320,17 +320,28 @@ def _generate_methodology(standard_label: str) -> dict:
     }
 
 
-def generate_shared_context(notes_text: str, manday_text: str) -> dict:
+def generate_shared_context(notes_text: str, manday_text: str, manday_info: dict | None = None) -> dict:
     combined = notes_text + '\n' + manday_text
-    team = _extract_team(combined)
-    if not team and 'John' in combined:
-        team = [{'name': 'John Smith', 'role': 'Lead Auditor', 'days': 4}]
+
+    if manday_info:
+        total_days = manday_info.get('total_mandays', 6)
+        team_list = manday_info.get('team_composition', [])
+        team = [
+            {'name': f'{t["role"]} #{i+1}', 'role': t['role'], 'days': t['days']}
+            for i, t in enumerate(team_list)
+            for _ in range(t.get('count', 1))
+        ]
+    else:
+        team = _extract_team(combined)
+        if not team and 'John' in combined:
+            team = [{'name': 'John Smith', 'role': 'Lead Auditor', 'days': 4}]
+        total_days = _extract_total_days(combined)
+
     std_label = _extract_standard(combined)
     std_key = _key_for_standard(std_label)
     client = _extract_client(combined)
     date = _extract_date(combined)
     auditor = _extract_auditor(combined)
-    total_days = _extract_total_days(combined)
     family = FAMILY_LABEL_MAP.get(std_key, 'Management System')
 
     return {
@@ -637,8 +648,8 @@ OFFLINE_GENERATORS = {
 }
 
 
-def generate_all(notes_text: str, manday_text: str, standards_full: list[str], selected_standards: list[str]) -> dict[str, dict]:
-    shared = generate_shared_context(notes_text, manday_text)
+def generate_all(notes_text: str, manday_text: str, standards_full: list[str], selected_standards: list[str], manday_info: dict | None = None) -> dict[str, dict]:
+    shared = generate_shared_context(notes_text, manday_text, manday_info)
     standard_label = shared.get('standard', standards_full[0] if standards_full else 'ISO 9001:2015')
     shared['standard'] = standard_label
 

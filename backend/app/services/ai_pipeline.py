@@ -86,7 +86,36 @@ def extract_shared_context(api_key, notes_text, manday_text):
     return router_extract('extract_shared_context', prompt, api_key=api_key)
 
 
-def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None):
+def _build_manday_summary(manday_info: dict | None) -> str:
+    if not manday_info:
+        return ''
+    lines = ['\n== Computed Manday Summary ==']
+    if manday_info.get('audit_type'):
+        lines.append(f"Audit Type: {manday_info['audit_type']}")
+    if manday_info.get('total_mandays'):
+        lines.append(f"Total Mandays: {manday_info['total_mandays']}")
+    if manday_info.get('mandays_per_standard'):
+        lines.append('Per Standard:')
+        for std, days in manday_info['mandays_per_standard'].items():
+            lines.append(f'  - {std}: {days} days')
+    if manday_info.get('audit_team'):
+        lines.append('Audit Team:')
+        for m in manday_info['audit_team']:
+            lines.append(f'  - {m.get("name", "?")} ({m.get("role", "?")}): {m.get("days", "?")} days')
+    if manday_info.get('ims_reduction'):
+        lines.append(f"IMS Reduction Applied: {manday_info['ims_reduction']}")
+    if manday_info.get('employee_count'):
+        lines.append(f"Employee Count: {manday_info['employee_count']}")
+    if manday_info.get('site_count'):
+        lines.append(f"Site Count: {manday_info['site_count']}")
+    lines.append('')
+    return '\n'.join(lines)
+
+
+def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None, manday_info=None):
+    standards_str = ', '.join(standards)
+    family_context = _build_family_context(standards)
+    manday_text_full = _build_manday_summary(manday_info) + '\n' + manday_text if manday_info else manday_text
     standards_str = ', '.join(standards)
     family_context = _build_family_context(standards)
 
@@ -132,7 +161,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return a JSON object with these exact fields:
 - client_name: string
@@ -157,7 +186,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return a JSON object with these exact fields:
 - client_name: string
@@ -182,7 +211,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with:
 - client_name: string
@@ -200,7 +229,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with these exact fields:
 - client_name: string
@@ -227,7 +256,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with:
 - client_name: string
@@ -254,7 +283,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with:
 - client_name: string
@@ -278,7 +307,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with:
 - client_name: string
@@ -305,7 +334,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
+{manday_text_full}
 
 Return JSON with:
 - client_name: string
@@ -324,6 +353,6 @@ Return JSON with:
     return prompts.get(doc_type, prompts['Audit_Report'])
 
 
-def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None):
-    prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key)
+def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None, manday_info=None):
+    prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key, manday_info=manday_info)
     return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key)

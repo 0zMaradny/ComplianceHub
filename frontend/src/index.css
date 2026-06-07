@@ -26,14 +26,57 @@
   --red-600: #dc2626;
   --amber-50: #fffbeb;
   --amber-600: #d97706;
+  --blue-50: #eff6ff;
+  --blue-600: #2563eb;
   --sidebar-width: 260px;
+  --bg-body: var(--gray-50);
+  --bg-card: #ffffff;
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-500);
+  --border-color: var(--gray-200);
+  --input-bg: #ffffff;
+  --input-border: var(--gray-300);
+  --sidebar-text: rgba(255,255,255,0.75);
+}
+
+[data-theme="dark"] {
+  --primary: #4a8bc2;
+  --primary-dark: #3570a0;
+  --primary-light: #1a2a3a;
+  --gray-50: #1a1a2e;
+  --gray-100: #16213e;
+  --gray-200: #1e2a4a;
+  --gray-300: #2a3a5c;
+  --gray-400: #6b7fa0;
+  --gray-500: #8fa3c4;
+  --gray-600: #b0c4de;
+  --gray-700: #c8d8ea;
+  --gray-800: #dce8f5;
+  --gray-900: #eef4fb;
+  --bg-body: #0f1923;
+  --bg-card: #16213e;
+  --text-primary: #eef4fb;
+  --text-secondary: #8fa3c4;
+  --border-color: #1e2a4a;
+  --input-bg: #1a2a3a;
+  --input-border: #2a3a5c;
+  --green-50: #0a2e1a;
+  --green-600: #4ade80;
+  --red-50: #2e0a0a;
+  --red-600: #f87171;
+  --amber-50: #2e2a0a;
+  --amber-600: #fbbf24;
+  --blue-50: #0a1e2e;
+  --blue-600: #60a5fa;
+  --sidebar-text: rgba(255,255,255,0.6);
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: var(--gray-900);
-  background: var(--gray-50);
+  color: var(--text-primary);
+  background: var(--bg-body);
   line-height: 1.5;
+  transition: background 0.3s, color 0.3s;
 }
 
 button {
