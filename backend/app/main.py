@@ -6,10 +6,13 @@ import shutil
 import threading
 import time
 import asyncio
+import logging
 from collections import defaultdict
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+logger = logging.getLogger(__name__)
 
 from app.config import (
     UPLOAD_FOLDER, OUTPUT_FOLDER, ISO_STANDARDS,
@@ -27,6 +30,12 @@ from app.services import db
 
 app = FastAPI(title="ComplianceHub API", version="2.0.0")
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+
 # ── CORS: configurable via env var ───────────────────────────────────────
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
 if CORS_ORIGINS == "*":
@@ -37,11 +46,25 @@ else:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_credentials=True,
+    allow_credentials=cors_origins != ["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+
+# ── Health check ──────────────────────────────────────────────────────────
+
+@app.get("/api/health")
+def health():
+    return {
+        "status": "ok",
+        "version": "2.0.0",
+        "timestamp": time.time(),
+    }
+
 
 # ── Thread-safe progress store ───────────────────────────────────────────
 progress_store: dict = {}
@@ -119,8 +142,8 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
         if pdf_info and os.path.exists(pdf_info.get('path', '')):
             doc_info['pdf_path'] = pdf_info['path']
             doc_info['pdf_filename'] = pdf_info.get('filename', os.path.basename(pdf_info['path']))
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("PDF generation failed for %s: %s", doc_type, e)
     for k in ('certification_decision', 'conditions', 'findings_summary',
               'conclusion', 'methodology', 'sections', 'summary',
               'client_name', 'audit_date', 'standard', 'scope', 'lead_auditor',
@@ -312,8 +335,8 @@ async def upload_files(
     manday_extracted = {}
     try:
         manday_extracted = extract_manday_tables(manday_path)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Manday table extraction failed: %s", e)
 
     with _progress_lock:
         progress_store[job_id] = {
@@ -817,8 +840,8 @@ async def upload_evidence(
     """Upload evidence file for a project."""
     if project_id not in [p.id for p in list_projects()]:
         raise HTTPException(status_code=404, detail="Project not found")
-    safe_name = f"{project_id}_{clause.replace('.', '_')}_{file.filename}"
-    evidence_dir = os.path.join('data', 'evidence_files')
+    safe_name = sanitize_filename(f"{project_id}_{clause.replace('.', '_')}_{file.filename}")
+    evidence_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'evidence_files')
     os.makedirs(evidence_dir, exist_ok=True)
     file_path = os.path.join(evidence_dir, safe_name)
     content = await file.read()

@@ -51,6 +51,9 @@ for t in REQUIRED_FIELDS:
     print(f'  Debugger schema: {t} ({len(REQUIRED_FIELDS[t])} fields)')
 "
 
+    - name: Run tests
+      run: python -m pytest tests/ -v --tb=short
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
