@@ -21,8 +21,9 @@ from app.services.ai_pipeline import generate_document as ai_generate, extract_s
 from app.services.document_generator import generate_document_file
 from app.services.pdf_converter import convert_to_pdf
 from app.services.offline_generator import generate_all as offline_generate_all
+from app.api.audit import router as audit_router
 
-app = FastAPI(title="ComplianceHub API", version="1.0.0")
+app = FastAPI(title="ComplianceHub API", version="2.0.0")
 
 # ── CORS: configurable via env var ───────────────────────────────────────
 CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
@@ -38,6 +39,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(audit_router)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -609,6 +612,168 @@ def get_checklist(framework_id: str):
             for p in framework['pillars']
         ],
     }
+
+
+# ── Audit Workflow Endpoints ──
+
+from app.services.audit_workflow import (
+    create_project, get_project, list_projects, update_project, delete_project,
+    advance_gate, set_gate, get_gate_info, get_project_progress,
+    create_nc, get_nc, list_ncs, update_nc,
+    create_capa, get_capa, list_capas, update_capa,
+    add_evidence, get_dashboard_stats, GATES,
+)
+
+
+@app.post("/api/projects")
+def create_audit_project(
+    client_key: str = Form(""),
+    title: str = Form(""),
+    standards: str = Form("[]"),
+    target_date: str = Form(""),
+    lead_auditor: str = Form(""),
+    notes: str = Form(""),
+):
+    if not client_key or not title:
+        raise HTTPException(status_code=400, detail="client_key and title are required")
+    stds = json.loads(standards) if standards else []
+    project = create_project(client_key, title, stds, target_date, lead_auditor, notes)
+    return {"success": True, "project": project.to_dict()}
+
+
+@app.get("/api/projects")
+def list_audit_projects(client_key: str = "", status: str = ""):
+    projects = list_projects(
+        client_key=client_key or None,
+        status=status or None,
+    )
+    return {"projects": [p.to_dict() for p in projects]}
+
+
+@app.get("/api/projects/{project_id}")
+def get_audit_project(project_id: str):
+    project = get_project(project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project.to_dict()
+
+
+@app.get("/api/projects/{project_id}/progress")
+def get_audit_progress(project_id: str):
+    progress = get_project_progress(project_id)
+    if not progress:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return progress
+
+
+@app.put("/api/projects/{project_id}")
+def update_audit_project(project_id: str, **kwargs):
+    project = update_project(project_id, **kwargs)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project.to_dict()
+
+
+@app.delete("/api/projects/{project_id}")
+def delete_audit_project(project_id: str):
+    if delete_project(project_id):
+        return {"success": True}
+    raise HTTPException(status_code=404, detail="Project not found")
+
+
+@app.post("/api/projects/{project_id}/advance")
+def advance_project_gate(project_id: str):
+    project = advance_gate(project_id)
+    if not project:
+        raise HTTPException(status_code=400, detail="Cannot advance gate")
+    return {"success": True, "project": project.to_dict()}
+
+
+@app.post("/api/projects/{project_id}/gate/{gate_num}")
+def set_project_gate(project_id: str, gate_num: int):
+    project = set_gate(project_id, gate_num)
+    if not project:
+        raise HTTPException(status_code=400, detail="Invalid gate or project")
+    return {"success": True, "project": project.to_dict()}
+
+
+@app.get("/api/gates")
+def get_all_gates():
+    return {"gates": GATES}
+
+
+# ── NC Endpoints ──
+
+@app.post("/api/projects/{project_id}/ncs")
+def create_nc_endpoint(
+    project_id: str,
+    clause: str = Form(""),
+    severity: str = Form("Minor"),
+    description: str = Form(""),
+    evidence: str = Form(""),
+    auditee: str = Form(""),
+    due_date: str = Form(""),
+):
+    nc = create_nc(project_id, clause, severity, description, evidence, auditee, due_date)
+    if not nc:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return nc.to_dict()
+
+
+@app.get("/api/projects/{project_id}/ncs")
+def list_ncs_endpoint(project_id: str, status: str = ""):
+    ncs = list_ncs(project_id=project_id, status=status or None)
+    return {"ncs": [n.to_dict() for n in ncs]}
+
+
+@app.put("/api/ncs/{nc_id}")
+def update_nc_endpoint(nc_id: str, **kwargs):
+    nc = update_nc(nc_id, **kwargs)
+    if not nc:
+        raise HTTPException(status_code=404, detail="NC not found")
+    return nc.to_dict()
+
+
+# ── CAPA Endpoints ──
+
+@app.post("/api/projects/{project_id}/capas")
+def create_capa_endpoint(
+    project_id: str,
+    nc_id: str = Form(""),
+    root_cause: str = Form(""),
+    containment: str = Form(""),
+    corrective_action: str = Form(""),
+    preventive_action: str = Form(""),
+    owner: str = Form(""),
+    due_date: str = Form(""),
+):
+    capa = create_capa(project_id, nc_id, root_cause, containment,
+                       corrective_action, preventive_action, owner, due_date)
+    if not capa:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return capa.to_dict()
+
+
+@app.get("/api/projects/{project_id}/capas")
+def list_capas_endpoint(project_id: str, status: str = ""):
+    capas = list_capas(project_id=project_id, status=status or None)
+    return {"capas": [c.to_dict() for c in capas]}
+
+
+@app.put("/api/capas/{capa_id}")
+def update_capa_endpoint(capa_id: str, **kwargs):
+    capa = update_capa(capa_id, **kwargs)
+    if not capa:
+        raise HTTPException(status_code=404, detail="CAPA not found")
+    return capa.to_dict()
+
+
+# ── Dashboard ──
+
+@app.get("/api/dashboard")
+def get_dashboard(client_key: str = ""):
+    stats = get_dashboard_stats(client_key=client_key or None)
+    return stats
 
 
 @app.on_event("startup")
