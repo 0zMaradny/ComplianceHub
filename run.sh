@@ -39,15 +39,15 @@ echo -e "  Done"
 # ── Step 2 (optional): Start local AI server ──────────────────────────────
 LOCAL_AI_PID=""
 if [ "$START_LOCAL" = true ]; then
-  if [ -f "$MODEL_DIR/qwen-1.5b.gguf" ]; then
-    echo -e "${YELLOW}[2/4] Starting local AI model on port $LOCAL_AI_PORT ...${NC}"
-    MODEL="$MODEL_DIR/qwen-1.5b.gguf"
-  elif [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
+  if [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
     echo -e "${YELLOW}[2/4] Starting local AI model on port $LOCAL_AI_PORT ...${NC}"
     MODEL="$MODEL_DIR/qwen-0.5b.gguf"
+  elif [ -f "$MODEL_DIR/qwen-1.5b.gguf" ]; then
+    echo -e "${YELLOW}[2/4] Starting local AI model on port $LOCAL_AI_PORT ...${NC}"
+    MODEL="$MODEL_DIR/qwen-1.5b.gguf"
   else
     echo -e "  ${YELLOW}No model found in $MODEL_DIR. Skipping local AI.${NC}"
-    echo -e "  ${YELLOW}Download one: curl -L -o $MODEL_DIR/qwen-1.5b.gguf <url>${NC}"
+    echo -e "  ${YELLOW}Download: curl -L -H \"Authorization: Bearer \$HF_TOKEN\" -o \$MODEL_DIR/qwen-0.5b.gguf <url>${NC}"
   fi
 
   if [ -n "$MODEL" ]; then

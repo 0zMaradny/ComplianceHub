@@ -19,7 +19,7 @@ backend/uploads/
 backend/output/
 
 # Local AI models (multi-GB, downloaded separately)
-models/
+models
 
 # Node
 frontend/node_modules/
@@ -50,4 +50,4 @@ Thumbs.db
 *.key
 backend/data/
 backend/app/data/
-backend/app/data/
+backend/compliancehub.db
