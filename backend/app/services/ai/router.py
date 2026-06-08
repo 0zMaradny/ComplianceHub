@@ -27,78 +27,58 @@ _CACHE_TTL = 3600
 # Provider names must match create_provider() keys: gemini, openai, claude, ollama.
 
 TASK_ROUTING = {
-    'extract_shared_context': ['gemini', 'openai', 'claude', 'hf', 'local'],
-    'Audit_Plan_Stage_1': ['openai', 'claude', 'gemini', 'hf', 'local'],
-    'Audit_Plan_Stage_2': ['openai', 'claude', 'gemini', 'hf', 'local'],
-    'Participation_List': ['openai', 'gemini', 'claude', 'hf', 'local'],
-    'Audit_Report': ['claude', 'openai', 'gemini', 'hf', 'local'],
-    'ISO_Checklist': ['gemini', 'openai', 'claude', 'hf', 'local'],
-    'Certificate_Text': ['claude', 'openai', 'gemini', 'hf', 'local'],
-    'Certificate': ['claude', 'openai', 'gemini', 'hf', 'local'],
-    'TNL': ['openai', 'claude', 'gemini', 'hf', 'local'],
+    'extract_shared_context': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'Audit_Plan_Stage_1': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'Audit_Plan_Stage_2': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'Participation_List': ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    'Audit_Report': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'ISO_Checklist': ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    'Certificate_Text': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'Certificate': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
+    'TNL': ['fusion', 'openai', 'gpt_oss_120b', 'local'],
 }
 
 # ── Client-Specific Provider Overrides ──────────────────────────────────────
 # Override the default chain for specific client + doc_type combinations.
 # Key: (client_key, doc_type) -> provider chain
-# If not found, falls back to TASK_ROUTING[doc_type]
 
 CLIENT_ROUTING = {
-    # MSD-MOI: Arabic BCM content — Claude handles Arabic best
-    ('msd_moi', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    ('msd_moi', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    ('msd_moi', 'TNL'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    # UACC: English EnMS — Gemini is faster for technical content
-    ('uacc', 'ISO_Checklist'): ['gemini', 'openai', 'claude', 'hf', 'local'],
-    ('uacc', 'Audit_Plan_Stage_1'): ['gemini', 'openai', 'claude', 'hf', 'local'],
-    # SAGCO: IMS dual-standard — Claude for complex integrated content
-    ('sagco', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    ('sagco', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    # Al-Ahsa: Arabic ISMS — Claude for Arabic ISMS content
-    ('al_ahsa', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
-    ('al_ahsa', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    # MSD-MOI: Arabic BCM content — GPT-OSS handles structured output well
+    ('msd_moi', 'Audit_Report'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    ('msd_moi', 'Certificate_Text'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    ('msd_moi', 'TNL'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    # UACC: English EnMS — Fusion for technical content
+    ('uacc', 'ISO_Checklist'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    ('uacc', 'Audit_Plan_Stage_1'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    # SAGCO: IMS dual-standard — Fusion for complex integrated content
+    ('sagco', 'Audit_Report'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    ('sagco', 'Certificate_Text'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    # Al-Ahsa: Arabic ISMS — Fusion for Arabic ISMS content
+    ('al_ahsa', 'Audit_Report'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
+    ('al_ahsa', 'Certificate_Text'): ['fusion', 'gpt_oss_120b', 'openai', 'local'],
 }
 
 
 def set_api_key(provider_name: str, api_key: str):
     """Set the correct env var for the given provider.
-    Only sets if api_key is non-empty (avoids overwriting .env values).
-    Validates api_key pattern matches the provider to avoid overwriting
-    with garbage like 'hf' or 'gemini' that was meant as override."""
+    Only sets if api_key is non-empty."""
     env_map = {
-        'gemini': 'GEMINI_API_KEY',
         'openai': 'OPENAI_API_KEY',
-        'claude': 'CLAUDE_API_KEY',
-        'hf': 'HF_API_KEY',
     }
     var = env_map.get(provider_name)
     if not var or not api_key:
-        return
-    valid_prefixes = {
-        'gemini': 'AIza',
-        'openai': 'sk-',
-        'claude': 'sk-ant-',
-        'hf': 'hf_',
-    }
-    prefix = valid_prefixes.get(provider_name)
-    if prefix and not api_key.startswith(prefix):
-        if api_key == 'hf':
-            return
-        return
-    if api_key.startswith('hf_') or api_key == 'hf':
-        os.environ['HF_API_KEY'] = api_key if api_key != 'hf' else os.environ.get('HF_API_KEY', '')
         return
     os.environ[var] = api_key
 
 
 KEY_PROVIDER_ENV = {
-    'hf': 'HF_API_KEY',
+    # Only OpenRouter key is required for the free-tier providers
+    # (fusion, auto, gpt_oss_120b all route through OpenRouter)
 }
 
 
 def resolve_chain(task_type: str, override_provider: str | None = None, api_key: str = '', client_key: str = '') -> list[str]:
     """Return ordered provider chain for a task type.
-    Checks both passed api_key and environment variables for available providers.
     Uses client-specific routing when available."""
     if override_provider:
         chain = [override_provider]
@@ -114,18 +94,14 @@ def resolve_chain(task_type: str, override_provider: str | None = None, api_key:
             return list(client_chain)
 
     # ── Standard routing ────────────────────────────────────────────────
-    if api_key:
-        if api_key == 'hf' or api_key.startswith('hf_'):
-            chain = ['hf']
-        else:
-            chain = list(TASK_ROUTING.get(task_type, ['gemini', 'openai']))
-    else:
-        chain = []
+    chain = list(TASK_ROUTING.get(task_type, ['fusion', 'gpt_oss_120b', 'local']))
 
-    for provider_name, env_var in KEY_PROVIDER_ENV.items():
-        if os.environ.get(env_var, '').strip():
-            if provider_name not in chain:
-                chain.append(provider_name)
+    # If OpenAI key is available, use it; otherwise filter to OpenRouter-based providers
+    if not os.environ.get('OPENAI_API_KEY', '').strip():
+        # No OpenAI key — use OpenRouter free models + local
+        chain = [p for p in chain if p in ('fusion', 'gpt_oss_120b', 'auto', 'local')]
+    else:
+        chain = [p for p in chain if p in ('fusion', 'openai', 'gpt_oss_120b', 'auto', 'local')]
 
     if 'local' not in chain:
         chain.append('local')
