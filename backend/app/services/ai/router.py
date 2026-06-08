@@ -111,12 +111,7 @@ def resolve_chain(task_type: str, override_provider: str | None = None, api_key:
     if client_key:
         client_chain = CLIENT_ROUTING.get((client_key, task_type))
         if client_chain:
-            chain = []
-            for provider_name in client_chain:
-                if _is_provider_available(provider_name, api_key):
-                    chain.append(provider_name)
-            if chain:
-                return chain
+            return list(client_chain)
 
     # ── Standard routing ────────────────────────────────────────────────
     if api_key:
