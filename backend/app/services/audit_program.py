@@ -50,6 +50,7 @@ class ClauseChecklistItem:
     clause_title: str = ""
     status: str = "pending"
     evidence_required: str = ""
+    evidence_suggestions: list = field(default_factory=list)  # Pre-filled evidence suggestions from standard
     evidence_found: str = ""
     auditor_notes: str = ""
     auditee: str = ""
@@ -362,7 +363,8 @@ def build_checklist_for_program(program_id):
                 standard=std,
                 clause_ref=ci['id'],
                 clause_title=ci.get('title', ''),
-                evidence_required=ci.get('evidence', ''),
+                evidence_required=ci.get('evidence_text', ''),
+                evidence_suggestions=ci.get('evidence', []),
             )
             with _STORE_LOCK:
                 _CHECKLISTS[item.id] = item

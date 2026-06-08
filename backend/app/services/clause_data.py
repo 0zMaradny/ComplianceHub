@@ -1243,8 +1243,10 @@ def get_evidence_for_clause(clause_dict: dict, clause_id: str) -> list:
 
 def get_all_clause_items(standard_key: str) -> list:
     """Return a flat list of all clause items for a standard.
-    Each item: {id, title, evidence, source} where source is 'hls' or 'annex_a'.
-    Includes HLS clauses 1-10 + Clause 8 variant + Annex A controls if applicable.
+    Each item: {id, title, evidence: list, evidence_text: str, source}
+    where source is 'hls' or 'annex_a'.
+    evidence is a list of individual evidence suggestions.
+    evidence_text is the joined version for backward compatibility.
     """
     items = []
     seen = set()
@@ -1258,17 +1260,19 @@ def get_all_clause_items(standard_key: str) -> list:
                 key = f"{prefix}{cid}"
                 if key not in seen:
                     seen.add(key)
-                    items.append({"id": key, "title": info, "evidence": "", "source": "hls"})
+                    items.append({"id": key, "title": info, "evidence": [], "evidence_text": "", "source": "hls"})
                 continue
             if not isinstance(info, dict):
                 continue
             title = info.get("title", "")
-            evidence_list = info.get("evidence", [])
-            evidence_str = "; ".join(evidence_list[:2]) if evidence_list else ""
+            evidence_list = info.get("evidence", []) or []
+            if isinstance(evidence_list, str):
+                evidence_list = [evidence_list]
+            evidence_text = "; ".join(evidence_list[:3]) if evidence_list else ""
             key = f"{prefix}{cid}"
             if key not in seen:
                 seen.add(key)
-                items.append({"id": key, "title": title, "evidence": evidence_str, "source": "hls"})
+                items.append({"id": key, "title": title, "evidence": evidence_list, "evidence_text": evidence_text, "source": "hls"})
             sub = info.get("sub_clauses", {})
             if sub:
                 _flatten(sub, prefix=f"{key}.")
@@ -1282,14 +1286,17 @@ def get_all_clause_items(standard_key: str) -> list:
                 for ctrl_id, ctrl_info in controls.items():
                     if isinstance(ctrl_info, dict):
                         title = ctrl_info.get("title", ctrl_id)
-                        evidence_list = ctrl_info.get("evidence", ctrl_info.get("description", ""))
-                        if isinstance(evidence_list, list):
-                            evidence_str = "; ".join(evidence_list[:2])
+                        ev = ctrl_info.get("evidence", ctrl_info.get("description", ""))
+                        if isinstance(ev, list):
+                            evidence_list = ev
+                            evidence_text = "; ".join(ev[:3])
                         else:
-                            evidence_str = str(evidence_list)
+                            evidence_list = [str(ev)] if ev else []
+                            evidence_text = str(ev)
                     else:
                         title = str(ctrl_info)
-                        evidence_str = ""
-                    items.append({"id": ctrl_id, "title": title, "evidence": evidence_str, "source": "annex_a"})
+                        evidence_list = []
+                        evidence_text = ""
+                    items.append({"id": ctrl_id, "title": title, "evidence": evidence_list, "evidence_text": evidence_text, "source": "annex_a"})
 
     return items
