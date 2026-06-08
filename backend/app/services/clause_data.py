@@ -1,6 +1,8 @@
 """Clause database and helper functions for all supported ISO standards.
 Provides HLS core clauses, standard-specific Clause 8 variants,
 Annex A grouped controls, and framework section structures."""
+import random
+from datetime import datetime, timedelta
 
 HLS_CORE = {
     '1': {
@@ -1300,3 +1302,43 @@ def get_all_clause_items(standard_key: str) -> list:
                     items.append({"id": ctrl_id, "title": title, "evidence": evidence_list, "evidence_text": evidence_text, "source": "annex_a"})
 
     return items
+
+
+def get_gap_checklist_data(standard_key: str) -> list:
+    """Build a complete gap analysis checklist from clause data.
+    Returns list of {clause, title, requirement, status, gap_description,
+    recommended_action, priority, target_date} for all clauses including Annex A."""
+    today = datetime.now()
+    items = get_all_clause_items(standard_key)
+    statuses = ['Conformant', 'Partially Conformant', 'Non-Conformant', 'Not Reviewed']
+    weights = [0.05, 0.15, 0.05, 0.75]
+    results = []
+    for item in items:
+        status = random.choices(statuses, weights=weights, k=1)[0]
+        gap = ''
+        action = ''
+        priority = 'Medium'
+        if status == 'Non-Conformant':
+            gap = f'No sufficient evidence found for {item["title"]} ({item["id"]}). Current implementation does not meet the standard requirement.'
+            action = f'Develop and implement a process addressing the requirements of {item["id"]}. Document procedures, assign responsibilities, and provide training as needed.'
+            priority = 'High'
+        elif status == 'Partially Conformant':
+            gap = f'Partial implementation observed for {item["title"]} ({item["id"]}). Some elements are in place but gaps remain in completeness or effectiveness.'
+            action = f'Review current implementation against full requirements of {item["id"]}. Address identified gaps through corrective actions with assigned owners and target dates.'
+            priority = 'High'
+        elif status == 'Not Reviewed':
+            gap = 'Not yet assessed during this gap analysis.'
+            action = f'Schedule assessment for {item["id"]}. Review current practices against standard requirements and document compliance status.'
+            priority = 'Medium'
+        target = (today + timedelta(days=random.randint(30, 180))).strftime('%d/%m/%Y')
+        results.append({
+            'clause': item['id'],
+            'title': item['title'],
+            'requirement': f'{item["id"]}: {item["title"]}' if item['title'] else item['id'],
+            'status': status,
+            'gap_description': gap,
+            'recommended_action': action,
+            'priority': priority,
+            'target_date': target,
+        })
+    return results

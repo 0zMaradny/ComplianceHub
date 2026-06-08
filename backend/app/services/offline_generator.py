@@ -636,6 +636,257 @@ def generate_certificate(data: dict) -> dict:
     }
 
 
+def generate_management_review_minutes(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 9001:2015')
+    standard_key = data.get('standard_key', 'iso_9001')
+    family = FAMILY_LABEL_MAP.get(standard_key, 'Management System')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+    team = data.get('audit_team', [])
+    lead = data.get('lead_auditor', 'Lead Auditor')
+
+    attendees = []
+    for m in team:
+        attendees.append({'name': m.get('name', ''), 'role': m.get('role', ''), 'department': m.get('role', '')})
+    attendees += [
+        {'name': 'Quality Management Representative', 'role': 'QMR', 'department': 'Quality Management'},
+        {'name': 'Operations Director', 'role': 'Director', 'department': 'Operations'},
+    ]
+
+    review_date = date
+    today_dt = datetime.strptime(review_date, '%d/%m/%Y') if '/' in review_date else TODAY
+    next_review = (today_dt.replace(year=today_dt.year + 1)).strftime('%d/%m/%Y')
+
+    return {
+        'client_name': client,
+        'review_date': review_date,
+        'standard': standard_label,
+        'chairperson': lead,
+        'attendees': attendees,
+        'agenda_items': [
+            {'item': 'Review of previous management review action items and status', 'presented_by': 'Quality Manager', 'discussion': 'Reviewed status of all open action items from previous management review. Majority are closed with verified effectiveness.'},
+            {'item': f'Customer feedback and satisfaction analysis for {family}', 'presented_by': 'Operations Director', 'discussion': 'Customer satisfaction index remains stable at 87%. Key feedback themes include response time and service quality. No systemic issues identified.'},
+            {'item': f'Audit results — internal and external audits for {standard_label}', 'presented_by': 'Quality Manager', 'discussion': 'Internal audit completed with 3 minor NCs and 5 OFIs. External audit readiness assessed as adequate. All audit findings are being addressed through the corrective action process.'},
+            {'item': 'Process performance and product/service conformity', 'presented_by': 'Department Managers', 'discussion': 'Overall process performance KPIs are within targets. Nonconforming output rate reduced by 12% compared to previous period.'},
+            {'item': f'Status of nonconformities and corrective actions for {standard_label}', 'presented_by': 'Quality Manager', 'discussion': 'All open NCs have corrective action plans. Trend analysis shows reduction in repeat NCs, indicating effective root cause analysis.'},
+            {'item': f'Risk and opportunity review for {family}', 'presented_by': 'Operations Director', 'discussion': 'Risk register reviewed and updated. One new risk identified related to supply chain. Mitigation plan developed and assigned.'},
+            {'item': 'Resource adequacy and infrastructure planning', 'presented_by': 'HR Manager', 'discussion': 'Resource requirements assessed for upcoming period. Training budget approved. Infrastructure upgrades planned for Q3.'},
+        ],
+        'decisions': [
+            {'decision': 'Continue with current quality policy and objectives — no changes required', 'rationale': 'Current policy remains appropriate for organizational context and strategic direction', 'owner': 'CEO'},
+            {'decision': 'Approve CAPEX for monitoring equipment upgrade', 'rationale': 'Existing equipment approaching end of calibration validity. Upgrade will improve measurement accuracy.', 'owner': 'Operations Director'},
+            {'decision': 'Conduct additional supplier audit for top 3 critical suppliers', 'rationale': 'Supply chain risk identified. On-site audit will verify supplier capability and quality system effectiveness.', 'owner': 'Quality Manager'},
+        ],
+        'action_items': [
+            {'action': 'Complete CAPEX approval and initiate equipment procurement', 'owner': 'Operations Director', 'due_date': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y'), 'status': 'Open'},
+            {'action': 'Schedule and conduct supplier audits for top 3 critical suppliers', 'owner': 'Quality Manager', 'due_date': (today_dt + timedelta(days=60)).strftime('%d/%m/%Y'), 'status': 'Open'},
+            {'action': 'Update risk register with new supply chain risk and mitigation plan', 'owner': 'Risk Manager', 'due_date': (today_dt + timedelta(days=14)).strftime('%d/%m/%Y'), 'status': 'Open'},
+            {'action': 'Distribute updated quality policy to all departments with acknowledgement', 'owner': 'HR Manager', 'due_date': (today_dt + timedelta(days=21)).strftime('%d/%m/%Y'), 'status': 'In Progress'},
+            {'action': 'Update training plan to include new equipment operation training', 'owner': 'HR Manager', 'due_date': (today_dt + timedelta(days=45)).strftime('%d/%m/%Y'), 'status': 'Open'},
+        ],
+        'review_inputs': (
+            f'The management review considered comprehensive inputs across all relevant {family} processes. '
+            f'Customer satisfaction data indicates stable performance with an index of 87%. '
+            f'Audit results from the most recent internal audit identified 3 minor nonconformities and 5 opportunities for improvement, '
+            f'all of which are being addressed through established corrective action processes. '
+            f'Process performance metrics show that key process indicators are meeting their defined targets, '
+            f'with nonconforming output reduced by 12% compared to the previous review period. '
+            f'The status of nonconformities and corrective actions indicates effective handling of identified issues, '
+            f'with trend analysis showing a reduction in repeat nonconformities. '
+            f'Risk and opportunity management remains effective with regular review and updating of the risk register.'
+        ),
+        'review_outputs': (
+            'Based on the review of inputs, the management system is assessed as effective and achieving its intended outcomes. '
+            'The following decisions and actions have been established: approval of CAPEX for monitoring equipment upgrade, '
+            'supplier audits for critical external providers, and continuation of the current quality policy and objectives. '
+            'Resource needs have been identified and will be addressed through the approved budget allocation. '
+            'Opportunities for improvement include enhancing the root cause analysis methodology and strengthening supplier evaluation processes. '
+            'The management system continues to be appropriate, adequate, and effective for the organization\'s context and strategic direction.'
+        ),
+        'next_review_date': next_review,
+        'report_date': review_date,
+    }
+
+
+def generate_corrective_action_report(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 9001:2015')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    issues = generate_tnl(data)
+    entries = issues.get('entries', [])
+    nc_entry = entries[0] if entries else {
+        'clause': '10.1',
+        'severity': 'Minor',
+        'tnl_number': 'TNL-001',
+    }
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    severity = nc_entry.get('severity', 'Minor')
+    clause = nc_entry.get('clause', '10.1')
+
+    return {
+        'client_name': client,
+        'car_number': f'TUV-CAR-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
+        'standard': standard_label,
+        'audit_date': date,
+        'nc_reference': nc_entry.get('tnl_number', 'TNL-001'),
+        'clause': clause,
+        'severity': severity,
+        'problem_description': (
+            f'During the audit conducted on {date} at {client}, a nonconformity was identified '
+            f'against {standard_label} Clause {clause}. '
+            f'The organization has not fully implemented the requirements of this clause, '
+            f'as evidenced by incomplete documentation and insufficient evidence of process effectiveness. '
+            f'This finding was communicated to management during the closing meeting.'
+        ),
+        'root_cause': (
+            'Root cause analysis was conducted using the 5 Whys methodology. '
+            'The primary root cause was identified as inadequate training and awareness of personnel '
+            'regarding the specific requirements of this clause. '
+            'Secondary contributing factors include insufficient supervisory oversight '
+            'and lack of clear documented procedures. '
+            'No systemic issues were identified that would indicate a broader management system failure.'
+        ),
+        'containment_actions': [
+            {'action': 'Immediate containment: Implement short-term controls to address the identified gap and prevent recurrence before the next operation cycle', 'owner': 'Quality Manager', 'due_date': (today_dt + timedelta(days=7)).strftime('%d/%m/%Y')},
+            {'action': 'Notify all relevant personnel of the finding and required immediate actions', 'owner': 'Department Manager', 'due_date': (today_dt + timedelta(days=2)).strftime('%d/%m/%Y')},
+        ],
+        'corrective_actions': [
+            {'action': 'Revise and update documented procedures for Clause ' + clause + ' to ensure full alignment with standard requirements', 'owner': 'Quality Manager', 'due_date': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y')},
+            {'action': 'Conduct targeted training for all affected personnel on the revised procedures', 'owner': 'HR Manager', 'due_date': (today_dt + timedelta(days=45)).strftime('%d/%m/%Y')},
+            {'action': 'Implement monitoring mechanism to verify ongoing compliance with the updated procedures', 'owner': 'Quality Manager', 'due_date': (today_dt + timedelta(days=60)).strftime('%d/%m/%Y')},
+        ],
+        'preventive_actions': [
+            {'action': 'Review training programme to ensure all relevant clauses are adequately covered in initial and refresher training', 'owner': 'HR Manager', 'due_date': (today_dt + timedelta(days=60)).strftime('%d/%m/%Y')},
+            {'action': 'Include verification of this clause in the next scheduled internal audit to confirm effectiveness of implemented actions', 'owner': 'Internal Audit Manager', 'due_date': (today_dt + timedelta(days=90)).strftime('%d/%m/%Y')},
+        ],
+        'verification_method': 'Follow-up on-site verification during next surveillance audit. Review of updated documentation, training records, and process performance data.',
+        'status': 'Open',
+        'reviewed_by': data.get('lead_auditor', 'Lead Auditor'),
+        'closure_date': (today_dt + timedelta(days=90)).strftime('%d/%m/%Y'),
+    }
+
+
+def generate_gap_analysis_report(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 9001:2015')
+    standard_key = data.get('standard_key', 'iso_9001')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    sections = clause_data.get_gap_checklist_data(standard_key)
+
+    total = len(sections)
+    c_count = sum(1 for s in sections if s['status'] == 'Conformant')
+    pc_count = sum(1 for s in sections if s['status'] == 'Partially Conformant')
+    nc_count = sum(1 for s in sections if s['status'] == 'Non-Conformant')
+    nr_count = sum(1 for s in sections if s['status'] == 'Not Reviewed')
+
+    if total > 0:
+        readiness_pct = int((c_count + pc_count * 0.5) / total * 100)
+    else:
+        readiness_pct = 0
+
+    overall = (
+        f'The gap analysis of {client} against {standard_label} assessed {total} clauses and requirements. '
+        f'Of these, {c_count} are conformant, {pc_count} are partially conformant, '
+        f'{nc_count} are non-conformant, and {nr_count} were not reviewed. '
+        f'The overall readiness level is estimated at {readiness_pct}%. '
+        f'The organization has established foundational management system elements including documented policies, '
+        f'defined responsibilities, and basic operational controls. '
+        f'Key areas requiring attention include fully implementing the requirements for identified partially conformant '
+        f'and non-conformant clauses, developing documented procedures where gaps exist, '
+        f'and ensuring that evidence of implementation is maintained. '
+        f'A structured action plan with assigned responsibilities and target dates should be developed '
+        f'to address the identified gaps prior to the Stage 1 certification audit.'
+    )
+
+    return {
+        'client_name': client,
+        'assessment_date': date,
+        'standard': standard_label,
+        'assessor': data.get('lead_auditor', 'Lead Auditor'),
+        'methodology': (
+            'The gap analysis was conducted through review of available documentation, '
+            'interviews with key personnel, and assessment of current practices against the requirements '
+            f'of {standard_label}. Each clause was evaluated for conformance and assigned a status '
+            'based on the level of implementation and evidence available. '
+            'Recommendations are provided for addressing identified gaps.'
+        ),
+        'sections': sections,
+        'summary': {
+            'total_clauses': total,
+            'conformant': c_count,
+            'partially_conformant': pc_count,
+            'non_conformant': nc_count,
+            'not_reviewed': nr_count,
+            'overall_readiness': f'{readiness_pct}%',
+        },
+        'overall_assessment': overall,
+    }
+
+
+def generate_statement_of_applicability(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 9001:2015')
+    standard_key = data.get('standard_key', 'iso_9001')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    annex = clause_data.get_annex_a_data(standard_key)
+    controls_list = []
+
+    if annex and isinstance(annex, dict):
+        for theme_key, theme_val in annex.items():
+            if isinstance(theme_val, dict):
+                for ctrl_key, ctrl_val in theme_val.items():
+                    if ctrl_key == 'title':
+                        continue
+                    if isinstance(ctrl_val, dict):
+                        ctrl_title = ctrl_val.get('title', ctrl_key)
+                    else:
+                        ctrl_title = str(ctrl_val)
+                    applicable = random.choice(['Applicable', 'Applicable', 'Applicable', 'Not Applicable'])
+                    justification = (
+                        f'Based on the information security risk assessment and the organization\'s context, '
+                        f'this control is {applicable.lower()} for the scope of the ISMS. '
+                        f'The risk treatment plan identifies this control as '
+                        f'{"necessary" if applicable == "Applicable" else "not required"} '
+                        f'to address identified risks to an acceptable level.'
+                    )
+                    impl_status = random.choice(['Implemented', 'Implemented', 'In Progress', 'Planned', 'Not Implemented'])
+                    controls_list.append({
+                        'control_ref': ctrl_key,
+                        'control_title': ctrl_title,
+                        'applicability': applicable,
+                        'justification': justification,
+                        'selected_control': ctrl_title,
+                        'implementation_status': impl_status,
+                        'responsible': 'Information Security Manager',
+                    })
+
+    total = len(controls_list)
+    applicable = sum(1 for c in controls_list if c['applicability'] == 'Applicable')
+    na = total - applicable
+    implemented = sum(1 for c in controls_list if c['implementation_status'] == 'Implemented')
+    not_implemented = sum(1 for c in controls_list if c['implementation_status'] in ('Not Implemented', 'Planned'))
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'based_on_risk_assessment': f'Information security risk assessment conducted as part of the ISMS implementation for {standard_label}. Risk assessment methodology follows ISO 27005:2022 guidelines.',
+        'controls': controls_list,
+        'summary': {
+            'total_controls': total,
+            'applicable': applicable,
+            'not_applicable': na,
+            'implemented': implemented,
+            'not_implemented': not_implemented,
+        },
+    }
+
+
 OFFLINE_GENERATORS = {
     'Audit_Plan_Stage_1': lambda d: generate_audit_plan_stage(d, 'Stage 1 - Readiness Review'),
     'Audit_Plan_Stage_2': lambda d: generate_audit_plan_stage(d, 'Stage 2 - Certification Audit'),
@@ -645,6 +896,10 @@ OFFLINE_GENERATORS = {
     'Certificate_Text': generate_certificate_text,
     'TNL': generate_tnl,
     'Certificate': generate_certificate,
+    'Management_Review_Minutes': generate_management_review_minutes,
+    'Corrective_Action_Report': generate_corrective_action_report,
+    'Gap_Analysis_Report': generate_gap_analysis_report,
+    'Statement_of_Applicability': generate_statement_of_applicability,
 }
 
 

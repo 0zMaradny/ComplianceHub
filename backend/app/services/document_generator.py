@@ -1045,6 +1045,258 @@ def _combine_evidence_notes(section):
     return evidence or notes
 
 
+# ── Management Review Minutes (ISO 9.3) ─────────────────────────────────────
+
+def generate_management_review_minutes(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Management Review Minutes',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('review_date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Review Information', client_key=client_key)
+    info = [
+        ('Chairperson', data.get('chairperson', 'N/A')),
+        ('Review Date', data.get('review_date', 'N/A')),
+        ('Next Review Date', data.get('next_review_date', 'N/A')),
+    ]
+    for label, val in info:
+        add_body_text(doc, f'{label}: {val}', client_key=client_key)
+
+    add_section_heading(doc, 'Attendees', client_key=client_key)
+    table = doc.add_table(rows=1, cols=3)
+    table.style = 'Table Grid'
+    add_header_row(table, ['Name', 'Role', 'Department'], client_key=client_key)
+    for att in data.get('attendees', []):
+        add_data_row(table, [att.get('name', ''), att.get('role', ''), att.get('department', '')], client_key=client_key)
+
+    add_section_heading(doc, 'Agenda and Discussion', client_key=client_key)
+    table = doc.add_table(rows=1, cols=3)
+    table.style = 'Table Grid'
+    add_header_row(table, ['Agenda Item', 'Presented By', 'Discussion Summary'], client_key=client_key)
+    for item in data.get('agenda_items', []):
+        add_data_row(table, [item.get('item', ''), item.get('presented_by', ''), item.get('discussion', '')], client_key=client_key)
+
+    decisions = data.get('decisions', [])
+    if decisions:
+        add_section_heading(doc, 'Decisions', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Decision', 'Rationale', 'Owner'], client_key=client_key)
+        for dec in decisions:
+            add_data_row(table, [dec.get('decision', ''), dec.get('rationale', ''), dec.get('owner', '')], client_key=client_key)
+
+    actions = data.get('action_items', [])
+    if actions:
+        add_section_heading(doc, 'Action Items', client_key=client_key)
+        table = doc.add_table(rows=1, cols=4)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date', 'Status'], client_key=client_key)
+        for act in actions:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', ''), act.get('status', '')], client_key=client_key)
+
+    add_section_heading(doc, 'Review Inputs', client_key=client_key)
+    add_body_text(doc, data.get('review_inputs', ''), client_key=client_key)
+
+    add_section_heading(doc, 'Review Outputs', client_key=client_key)
+    add_body_text(doc, data.get('review_outputs', ''), client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Corrective Action Report (ISO 10.1) ─────────────────────────────────────
+
+def generate_corrective_action_report(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Corrective Action Report',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('audit_date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Nonconformity Information', client_key=client_key)
+    fields = [
+        ('CAR Number', data.get('car_number', 'N/A')),
+        ('NC Reference', data.get('nc_reference', 'N/A')),
+        ('ISO Clause', data.get('clause', 'N/A')),
+        ('Severity', data.get('severity', 'N/A')),
+        ('Status', data.get('status', 'Open')),
+    ]
+    for label, val in fields:
+        add_body_text(doc, f'{label}: {val}', client_key=client_key)
+
+    add_section_heading(doc, 'Problem Description', client_key=client_key)
+    add_body_text(doc, data.get('problem_description', ''), client_key=client_key)
+
+    add_section_heading(doc, 'Root Cause Analysis', client_key=client_key)
+    add_body_text(doc, data.get('root_cause', ''), client_key=client_key)
+
+    ca = data.get('containment_actions', [])
+    if ca:
+        add_section_heading(doc, 'Containment Actions', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date'], client_key=client_key)
+        for act in ca:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', '')], client_key=client_key)
+
+    corr = data.get('corrective_actions', [])
+    if corr:
+        add_section_heading(doc, 'Corrective Actions', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date'], client_key=client_key)
+        for act in corr:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', '')], client_key=client_key)
+
+    prev = data.get('preventive_actions', [])
+    if prev:
+        add_section_heading(doc, 'Preventive Actions', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date'], client_key=client_key)
+        for act in prev:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', '')], client_key=client_key)
+
+    add_section_heading(doc, 'Verification', client_key=client_key)
+    add_body_text(doc, f'Method: {data.get("verification_method", "")}', client_key=client_key)
+    add_body_text(doc, f'Reviewed By: {data.get("reviewed_by", "")}', client_key=client_key)
+    add_body_text(doc, f'Target Closure: {data.get("closure_date", "")}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Gap Analysis Report (Pre-Audit) ─────────────────────────────────────────
+
+def generate_gap_analysis_report(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Gap Analysis Report',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('assessment_date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Assessment Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    add_section_heading(doc, 'Clause-by-Clause Gap Assessment', client_key=client_key)
+    table = doc.add_table(rows=1, cols=7)
+    table.style = 'Table Grid'
+    add_header_row(table, ['Clause', 'Title', 'Requirement', 'Status', 'Gap Description', 'Recommended Action', 'Priority'], client_key=client_key)
+    set_col_widths(table, [8, 12, 20, 12, 20, 20, 8], available_inches=9.5)
+
+    for section in data.get('sections', []):
+        status = section.get('status', '')
+        row_color = None
+        if status == 'Non-Conformant':
+            row_color = TUV_RED
+        elif status == 'Partially Conformant':
+            row_color = RGBColor(0xCC, 0x7A, 0x00)
+        elif status == 'Conformant':
+            row_color = RGBColor(0x00, 0x80, 0x00)
+        add_data_row(table, [
+            section.get('clause', ''),
+            section.get('title', ''),
+            section.get('requirement', ''),
+            status,
+            section.get('gap_description', ''),
+            section.get('recommended_action', ''),
+            section.get('priority', ''),
+        ], color=row_color, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Clauses Assessed: {summary.get('total_clauses', 0)}", client_key=client_key)
+        add_body_text(doc, f"Conformant: {summary.get('conformant', 0)}", client_key=client_key)
+        add_body_text(doc, f"Partially Conformant: {summary.get('partially_conformant', 0)}", client_key=client_key)
+        add_body_text(doc, f"Non-Conformant: {summary.get('non_conformant', 0)}", client_key=client_key)
+        add_body_text(doc, f"Not Reviewed: {summary.get('not_reviewed', 0)}", client_key=client_key)
+        add_body_text(doc, f"Overall Readiness: {summary.get('overall_readiness', 'N/A')}", client_key=client_key)
+
+    overall = data.get('overall_assessment', '')
+    if overall:
+        add_section_heading(doc, 'Overall Assessment', client_key=client_key)
+        add_body_text(doc, overall, client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Statement of Applicability (Annex A — ISO 27001 / 42001) ────────────────
+
+def generate_statement_of_applicability(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Statement of Applicability (SoA)',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Risk Assessment Reference', client_key=client_key)
+    add_body_text(doc, data.get('based_on_risk_assessment', ''), client_key=client_key)
+
+    controls = data.get('controls', [])
+    if controls:
+        add_section_heading(doc, 'Annex A Controls', client_key=client_key)
+        table = doc.add_table(rows=1, cols=6)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Control Ref', 'Control Title', 'Applicability', 'Justification', 'Implementation Status', 'Responsible'], client_key=client_key)
+        set_col_widths(table, [8, 15, 10, 35, 15, 12], available_inches=9.5)
+
+        for ctrl in controls:
+            status = ctrl.get('implementation_status', '')
+            row_color = None
+            if status == 'Not Implemented':
+                row_color = TUV_RED
+            elif status == 'Planned':
+                row_color = RGBColor(0xCC, 0x7A, 0x00)
+            elif status == 'Implemented':
+                row_color = RGBColor(0x00, 0x80, 0x00)
+
+            applic = ctrl.get('applicability', '')
+            if applic == 'Not Applicable':
+                row_color = RGBColor(0x66, 0x66, 0x66)
+
+            add_data_row(table, [
+                ctrl.get('control_ref', ''),
+                ctrl.get('control_title', ''),
+                applic,
+                ctrl.get('justification', ''),
+                status,
+                ctrl.get('responsible', ''),
+            ], color=row_color, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Controls: {summary.get('total_controls', 0)}", client_key=client_key)
+        add_body_text(doc, f"Applicable: {summary.get('applicable', 0)}", client_key=client_key)
+        add_body_text(doc, f"Not Applicable: {summary.get('not_applicable', 0)}", client_key=client_key)
+        add_body_text(doc, f"Implemented: {summary.get('implemented', 0)}", client_key=client_key)
+        add_body_text(doc, f"Not Implemented: {summary.get('not_implemented', 0)}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
 # ── Generator registry ─────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -1056,6 +1308,10 @@ GENERATORS = {
     'Certificate_Text': generate_certificate_text,
     'TNL': generate_tnl,
     'Certificate': generate_certificate,
+    'Management_Review_Minutes': generate_management_review_minutes,
+    'Corrective_Action_Report': generate_corrective_action_report,
+    'Gap_Analysis_Report': generate_gap_analysis_report,
+    'Statement_of_Applicability': generate_statement_of_applicability,
 }
 
 

@@ -12,6 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +171,11 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
               'conclusion', 'methodology', 'sections', 'summary',
               'client_name', 'audit_date', 'standard', 'scope', 'lead_auditor',
               'report_number', 'certificate_number', 'nonconformities',
-              'positive_findings', 'opportunities_for_improvement'):
+              'positive_findings', 'opportunities_for_improvement',
+              'controls', 'action_items', 'agenda_items', 'decisions',
+              'root_cause', 'overall_assessment', 'status',
+              'review_date', 'next_review_date', 'car_number', 'nc_reference',
+              'severity', 'recommended_action', 'priority'):
         if k in doc_data:
             doc_info[k] = doc_data[k]
     return doc_info
@@ -540,6 +545,21 @@ def get_status(job_id: str):
                 cleaned['conditions'] = data.get('conditions', [])
             elif doc_type == 'ISO_Checklist':
                 cleaned['total_sections'] = len(data.get('sections', []))
+            elif doc_type == 'Management_Review_Minutes':
+                cleaned['action_items'] = len(data.get('action_items', []))
+                cleaned['agenda_items'] = len(data.get('agenda_items', []))
+                cleaned['next_review_date'] = data.get('next_review_date', '')
+            elif doc_type == 'Corrective_Action_Report':
+                cleaned['car_number'] = data.get('car_number', '')
+                cleaned['nc_reference'] = data.get('nc_reference', '')
+                cleaned['status'] = data.get('status', '')
+                cleaned['severity'] = data.get('severity', '')
+            elif doc_type == 'Gap_Analysis_Report':
+                cleaned['total_sections'] = len(data.get('sections', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Statement_of_Applicability':
+                cleaned['total_controls'] = len(data.get('controls', []))
+                cleaned['summary'] = data.get('summary', {})
             cleaned_results[doc_type] = cleaned
 
     return {
@@ -1569,3 +1589,13 @@ def list_daily_summaries_endpoint(program_id: str):
 @app.on_event("startup")
 async def startup():
     cleanup_old_jobs()
+
+
+# ── Serve frontend static files (for Railway single-container deployment) ──
+frontend_dir = os.environ.get("FRONTEND_STATIC_DIR", "")
+if frontend_dir and os.path.isdir(frontend_dir):
+    try:
+        app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+        logger.info("Frontend static files mounted from %s", frontend_dir)
+    except Exception as e:
+        logger.warning("Could not mount frontend: %s", e)

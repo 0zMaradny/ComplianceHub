@@ -173,7 +173,7 @@ class TestDocumentGenerators:
             generate_audit_report, generate_iso_checklist,
             GENERATORS
         )
-        assert len(GENERATORS) == 8
+        assert len(GENERATORS) == 12
 
     def test_all_generators_have_client_key(self):
         import inspect

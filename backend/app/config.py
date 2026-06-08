@@ -93,6 +93,10 @@ OUTPUT_DOCUMENTS = [
     'Certificate_Text',
     'TNL',
     'Certificate',
+    'Management_Review_Minutes',
+    'Corrective_Action_Report',
+    'Gap_Analysis_Report',
+    'Statement_of_Applicability',
 ]
 
 DOC_LABELS = {
@@ -104,6 +108,10 @@ DOC_LABELS = {
     'Certificate_Text': 'Certificate Text',
     'TNL': 'Test / Nonconformity Log',
     'Certificate': 'Certificate',
+    'Management_Review_Minutes': 'Management Review Minutes',
+    'Corrective_Action_Report': 'Corrective Action Report',
+    'Gap_Analysis_Report': 'Gap Analysis Report',
+    'Statement_of_Applicability': 'Statement of Applicability (SoA)',
 }
 
 DEFAULT_LOGO_PATH = os.path.join(BASE_DIR, 'static', 'tuv_logo.png')

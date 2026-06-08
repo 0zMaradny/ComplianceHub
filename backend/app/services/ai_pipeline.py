@@ -349,6 +349,100 @@ Return JSON with:
 - expiry_date: string
 - authorized_signatory: string
 - conditions: list of strings (condition texts if certification decision is "Conditional", empty list otherwise)""",
+
+        'Management_Review_Minutes': f"""Generate Management Review Minutes for a TÜV AUSTRIA certification client. The review covers Clause 9.3 of the ISO standard. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with these exact fields:
+- client_name: string
+- review_date: string (DD/MM/YYYY)
+- standard: string (full name with year)
+- chairperson: string
+- attendees: list of {{name, role, department}} — include 6-10 participants
+- agenda_items: list of {{item, presented_by, discussion}} — 5-7 items covering: previous actions, customer feedback, audit results, process performance, NC status, risk review, resource adequacy
+- decisions: list of {{decision, rationale, owner}} — 2-4 management decisions
+- action_items: list of {{action, owner, due_date, status}} — 3-5 action items with realistic due dates
+- review_inputs: string — 2-3 FULL PARAGRAPHS covering review inputs
+- review_outputs: string — 2-3 FULL PARAGRAPHS covering resource decisions, improvement opportunities, policy changes
+- next_review_date: string (12 months from review date)
+- report_date: string (same as review_date)""",
+
+        'Corrective_Action_Report': f"""Generate a Corrective Action Report (CAR) for a TÜV AUSTRIA certification audit. Covers Clause 10.1 of the ISO standard. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- car_number: string (format: "TUV-CAR-YYYY-NNN")
+- standard: string
+- audit_date: string (DD/MM/YYYY)
+- nc_reference: string (TNL number)
+- clause: string (ISO clause reference)
+- severity: string ("Major" / "Minor")
+- problem_description: string — detailed description of the nonconformity (2-3 sentences)
+- root_cause: string — root cause analysis using 5 Whys or similar methodology (2-3 sentences)
+- containment_actions: list of {{action, owner, due_date}} — 2 immediate containment actions
+- corrective_actions: list of {{action, owner, due_date}} — 3 corrective actions with responsible persons
+- preventive_actions: list of {{action, owner, due_date}} — 2 preventive actions to prevent recurrence
+- verification_method: string — how effectiveness will be verified
+- status: string ("Open" / "In Progress" / "Closed" / "Verified")
+- reviewed_by: string
+- closure_date: string (DD/MM/YYYY, typically 90 days from audit)""",
+
+        'Gap_Analysis_Report': f"""Generate a Gap Analysis Report for a pre-certification assessment. Evaluates the organization's current state against ISO standard requirements. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- assessment_date: string (DD/MM/YYYY)
+- standard: string
+- assessor: string
+- methodology: string — description of gap analysis methodology (2-3 sentences)
+- sections: list of {{clause, title, requirement, status: "Conformant"/"Partially Conformant"/"Non-Conformant"/"Not Reviewed", gap_description: string (2 sentences), recommended_action: string, priority: "High"/"Medium"/"Low", target_date: string}} — include 20-40 sections covering ALL relevant clauses
+- summary: {{total_clauses: int, conformant: int, partially_conformant: int, non_conformant: int, not_reviewed: int, overall_readiness: string}}
+- overall_assessment: string — 2-3 FULL PARAGRAPHS with readiness recommendation""",
+
+        'Statement_of_Applicability': f"""Generate a Statement of Applicability (SoA) for ISO 27001:2022 certification. The SoA documents which Annex A controls are applicable and the justification. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- based_on_risk_assessment: string — reference to risk assessment (1 sentence)
+- controls: list of {{control_ref: string (e.g. "A.5.1"), control_title: string, applicability: "Applicable"/"Not Applicable", justification: string (2 sentences with risk context), selected_control: string, implementation_status: "Planned"/"In Progress"/"Implemented"/"Not Implemented", responsible: string}} — include ALL Annex A controls grouped by theme (A.5 Organizational: 37 controls, A.6 People: 8 controls, A.7 Physical: 14 controls, A.8 Technological: 34 controls)
+- summary: {{total_controls: int, applicable: int, not_applicable: int, implemented: int, not_implemented: int}}""",
     }
     return prompts.get(doc_type, prompts['Audit_Report'])
 

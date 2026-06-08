@@ -157,6 +157,112 @@ DOCUMENT_CONTRACTS = {
         'authorized_signatory': 'str',
         'conditions': ['str — conditions of certification (empty if none)'],
     },
+
+    # ── Management Review Minutes (ISO Clause 9.3) ─────────────────────────
+    'Management_Review_Minutes': {
+        'client_name': 'str',
+        'review_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'chairperson': 'str',
+        'attendees': [
+            {'name': 'str', 'role': 'str', 'department': 'str'},
+        ],
+        'agenda_items': [
+            {'item': 'str', 'presented_by': 'str', 'discussion': 'str'},
+        ],
+        'decisions': [
+            {'decision': 'str', 'rationale': 'str', 'owner': 'str'},
+        ],
+        'action_items': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str', 'status': 'str'},
+        ],
+        'review_inputs': 'str — 2-3 paragraphs: performance data, audit results, feedback, NC status, risk review',
+        'review_outputs': 'str — 2-3 paragraphs: resource needs, improvement opportunities, policy/objective changes',
+        'next_review_date': 'str DD/MM/YYYY — typically 12 months from review_date',
+        'report_date': 'str DD/MM/YYYY',
+    },
+
+    # ── Corrective Action Report (ISO Clause 10.1) ────────────────────────
+    'Corrective_Action_Report': {
+        'client_name': 'str',
+        'car_number': 'str — format TUV-CAR-YYYY-NNN',
+        'standard': 'str',
+        'audit_date': 'str DD/MM/YYYY',
+        'nc_reference': 'str — TNL reference number',
+        'clause': 'str — ISO clause reference',
+        'severity': 'str — Major/Minor',
+        'problem_description': 'str — detailed NC description',
+        'root_cause': 'str — root cause analysis (5 Whys, fishbone, etc.)',
+        'containment_actions': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str'},
+        ],
+        'corrective_actions': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str'},
+        ],
+        'preventive_actions': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str'},
+        ],
+        'verification_method': 'str — follow-up audit, document review, on-site verification',
+        'status': 'str — Open/In Progress/Closed/Verified',
+        'reviewed_by': 'str',
+        'closure_date': 'str DD/MM/YYYY',
+    },
+
+    # ── Gap Analysis Report (Pre-Audit Assessment) ────────────────────────
+    'Gap_Analysis_Report': {
+        'client_name': 'str',
+        'assessment_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'assessor': 'str',
+        'methodology': 'str — gap assessment methodology description',
+        'sections': [
+            {
+                'clause': 'str — e.g. 4.1',
+                'title': 'str — clause title',
+                'requirement': 'str — full clause requirement text',
+                'status': 'str — Conformant/Partially Conformant/Non-Conformant/Not Reviewed',
+                'gap_description': 'str — description of identified gap',
+                'recommended_action': 'str — action to close the gap',
+                'priority': 'str — High/Medium/Low',
+                'target_date': 'str DD/MM/YYYY',
+            },
+        ],
+        'summary': {
+            'total_clauses': 'int',
+            'conformant': 'int',
+            'partially_conformant': 'int',
+            'non_conformant': 'int',
+            'not_reviewed': 'int',
+            'overall_readiness': 'str — percentage or readiness level',
+        },
+        'overall_assessment': 'str — 2-3 paragraphs summarizing gap findings and readiness recommendation',
+    },
+
+    # ── Statement of Applicability (ISO 27001 / Annex A) ──────────────────
+    'Statement_of_Applicability': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'based_on_risk_assessment': 'str — reference to risk assessment report or methodology',
+        'controls': [
+            {
+                'control_ref': 'str — e.g. A.5.1',
+                'control_title': 'str — control title from Annex A',
+                'applicability': 'str — Applicable/Not Applicable',
+                'justification': 'str — rationale for applicability decision including risk context',
+                'selected_control': 'str — control description from ISO 27002 or equivalent',
+                'implementation_status': 'str — Planned/In Progress/Implemented/Not Implemented',
+                'responsible': 'str — responsible person or role',
+            },
+        ],
+        'summary': {
+            'total_controls': 'int',
+            'applicable': 'int',
+            'not_applicable': 'int',
+            'implemented': 'int',
+            'not_implemented': 'int',
+        },
+    },
 }
 
 
