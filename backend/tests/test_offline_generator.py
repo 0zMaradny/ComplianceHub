@@ -174,7 +174,7 @@ class TestGenerateFunctions:
 class TestGenerateAll:
     def test_generate_all_creates_all_docs(self):
         results = generate_all(SAMPLE_NOTES, SAMPLE_MANDAY, ['ISO 9001:2015'], ['iso_9001'])
-        assert len(results) == 17
+        assert len(results) == 22
         assert 'Audit_Plan_Stage_1' in results
         assert 'Audit_Plan_Stage_2' in results
         assert 'Audit_Report' in results
@@ -186,7 +186,7 @@ class TestGenerateAll:
             {'role': 'Lead Auditor', 'count': 1, 'days': 4.0},
         ]}
         results = generate_all(SAMPLE_NOTES, SAMPLE_MANDAY, ['ISO 9001:2015'], ['iso_9001'], manday_info)
-        assert len(results) == 17
+        assert len(results) == 22
         for doc_type, doc_data in results.items():
             if 'error' in doc_data:
                 continue
@@ -201,6 +201,6 @@ class TestGenerateAll:
     def test_generate_all_all_standards(self):
         for std_key, std_label in STANDARD_LABEL_MAP.items():
             results = generate_all(SAMPLE_NOTES, SAMPLE_MANDAY, [std_label], [std_key])
-            assert len(results) == 17
+            assert len(results) == 22
             errors = [k for k, v in results.items() if 'error' in v]
             assert not errors, f'{std_key} errors: {errors}'

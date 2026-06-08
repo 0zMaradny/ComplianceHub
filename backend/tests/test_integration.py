@@ -6,7 +6,6 @@ Covers all 4 clients, all 8 document types, Excel export, and bilingual output.
 
 import os
 import sys
-import json
 import tempfile
 import pytest
 
@@ -166,14 +165,8 @@ class TestExcelExport:
 
 class TestDocumentGenerators:
     def test_all_generators_import(self):
-        from app.services.document_generator import (
-            generate_tnl, generate_certificate, generate_audit_plan_stage,
-            generate_audit_plan_stage_1, generate_audit_plan_stage_2,
-            generate_participation_list, generate_certificate_text,
-            generate_audit_report, generate_iso_checklist,
-            GENERATORS
-        )
-        assert len(GENERATORS) == 17
+        from app.services.document_generator import GENERATORS
+        assert len(GENERATORS) == 22
 
     def test_all_generators_have_client_key(self):
         import inspect
@@ -394,7 +387,7 @@ class TestOfflineGenerator:
             "Lead Auditor: John Doe\nTotal Mandays: 5",
             ["ISO 27001:2022"], ["iso_27001"]
         )
-        assert len(results) >= 17
+        assert len(results) >= 22
         for doc_type, data in results.items():
             assert "error" not in data or data.get("client_name") is not None
 

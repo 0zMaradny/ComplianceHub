@@ -1244,6 +1244,358 @@ def generate_internal_audit_program(data: dict) -> dict:
     }
 
 
+def generate_environmental_aspect_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 14001:2015')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    aspects = [
+        {'id': 'EAR-001', 'activity': 'Production operations — CNC machining', 'aspect': 'Emissions of metal particulates and cutting fluid mist', 'impact': 'Local air quality degradation, potential respiratory health impacts', 'type': 'Negative', 'sig': 'High',
+         'controls': 'Local exhaust ventilation (LEV) system with HEPA filtration. Monthly maintenance checks. PPE requirements for operators.',
+         'legal': 'Air Quality Management Regulations, Occupational Safety and Health Act, Local environmental permits', 'eval': 'High significance due to potential health impacts and regulatory requirements. LEV effectiveness verified quarterly.'},
+        {'id': 'EAR-002', 'activity': 'Chemical storage — hazardous materials', 'aspect': 'Risk of chemical spill to ground/water', 'impact': 'Soil and groundwater contamination, ecological damage', 'type': 'Negative', 'sig': 'Critical',
+         'controls': 'Secondary containment for all hazardous chemicals. Spill kits available. Impermeable flooring. Monthly inspection schedule.',
+         'legal': 'Environmental Protection Act, Hazardous Waste Regulations, Water Resources Act', 'eval': 'Critical — potential for significant environmental damage and severe regulatory penalties. Existing controls adequate but require strict adherence.'},
+        {'id': 'EAR-003', 'activity': 'Waste management — packaging waste', 'aspect': 'Generation of cardboard, plastic, and metal waste', 'impact': 'Landfill consumption, resource depletion, potential littering', 'type': 'Negative', 'sig': 'Medium',
+         'controls': 'Segregation at source. Recycling contract with licensed waste carrier. Monthly waste data tracking. Reduction target: 15% year-on-year.',
+         'legal': 'Waste Management Regulations, Producer Responsibility Obligations, Packaging Waste Regulations', 'eval': 'Medium — waste volumes are managed but improvement opportunities exist. Recycling rate currently 72%. Target: 85%.'},
+        {'id': 'EAR-004', 'activity': 'Office operations — energy consumption', 'aspect': 'Electricity and natural gas consumption', 'impact': 'Greenhouse gas emissions, climate change contribution, resource depletion', 'type': 'Negative', 'sig': 'High',
+         'controls': 'LED lighting throughout. BMS for HVAC scheduling. Motion sensors in low-traffic areas. Renewable energy tariff (40% certified).',
+         'legal': 'Energy Efficiency Directive, Climate Change Act, Carbon Reporting Regulations', 'eval': 'High — significant carbon footprint. Energy reduction target: 10% over 12 months. Solar feasibility study in progress.'},
+        {'id': 'EAR-005', 'activity': 'Wastewater treatment — industrial effluent', 'aspect': 'Discharge of process wastewater with potential contaminants', 'impact': 'Water pollution, aquatic ecosystem damage, regulatory non-compliance', 'type': 'Negative', 'sig': 'High',
+         'controls': 'On-site pre-treatment plant. pH neutralization. Oil/water separation. Quarterly effluent testing by accredited lab.',
+         'legal': 'Water Industry Act, Trade Effluent Regulations, Environmental Permitting Regulations', 'eval': 'High — discharge consent limits are strictly monitored. Compliance record: 100% over past 24 months.'},
+        {'id': 'EAR-006', 'activity': 'Landscaping and grounds maintenance', 'aspect': 'Water consumption for irrigation', 'impact': 'Water resource depletion, local water scarcity impact', 'type': 'Negative', 'sig': 'Low',
+         'controls': 'Drip irrigation system. Rainwater harvesting for irrigation (30% of needs). Drought-resistant planting strategy.',
+         'legal': 'Water Abstraction License (if applicable), Local water conservation bylaws', 'eval': 'Low — consumption is minimal relative to operations. Rainwater harvesting reduces mains water demand.'},
+    ]
+
+    levels = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+    for a in aspects:
+        s = a['sig']
+        if s in levels:
+            levels[s] += 1
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'methodology': (
+            f'Environmental aspects were identified for {client} using a structured methodology covering '
+            f'normal, abnormal, and emergency operating conditions. Each aspect was evaluated for '
+            f'significance based on environmental impact severity, regulatory requirements, '
+            f'stakeholder concerns, and business risk. Both direct and indirect aspects were considered.'
+        ),
+        'aspects': [
+            {
+                'aspect_id': a['id'], 'activity': a['activity'], 'aspect': a['aspect'],
+                'environmental_impact': a['impact'], 'impact_type': a['type'],
+                'significance': a['sig'], 'control_measures': a['controls'],
+                'legal_requirement': a['legal'], 'evaluation': a['eval'],
+            }
+            for a in aspects
+        ],
+        'summary': {
+            'total_aspects': len(aspects),
+            'critical': levels['Critical'],
+            'high': levels['High'],
+            'medium': levels['Medium'],
+            'low': levels['Low'],
+        },
+    }
+
+
+def generate_hazard_identification_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 45001:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    hazards = [
+        {'id': 'HIR-001', 'activity': 'CNC machining operations', 'hazard': 'Rotating machinery — entanglement, cutting fluid exposure, noise >85dB',
+         'risk': 'Operators at risk of serious hand/arm injury from rotating parts. Noise-induced hearing loss with prolonged exposure.',
+         'controls': 'Machine guarding, two-hand operation controls, emergency stop within reach. Noise monitoring quarterly. Hearing protection zone. Health surveillance for noise.',
+         'level': 'High',
+         'additional': 'Install light curtains on all CNC machines. Implement proximity detection systems. Upgrade to low-noise cutting tools where feasible.',
+         'hoc': 'Engineering'},
+        {'id': 'HIR-002', 'activity': 'Manual lifting and material handling', 'hazard': 'Manual handling of loads up to 25kg — ergonomic strain',
+         'risk': 'Warehouse and production staff at risk of musculoskeletal disorders, back injuries, repetitive strain injuries.',
+         'controls': 'Mechanical lifting aids (hoists, pallet jacks, forklifts). Manual handling training. Team lifting for loads >15kg. Task rotation.',
+         'level': 'Medium',
+         'additional': 'Conduct ergonomic assessment of all manual handling tasks. Introduce powered pallet jacks. Implement job rotation schedule.',
+         'hoc': 'Administrative'},
+        {'id': 'HIR-003', 'activity': 'Chemical handling — degreasing agents', 'hazard': 'Exposure to hazardous chemicals (toluene, acetone, isopropyl alcohol) — inhalation, skin contact, fire risk',
+         'risk': 'Operators at risk of dermatitis, respiratory irritation, chemical burns. Fire/explosion risk from flammable solvents.',
+         'controls': 'Local exhaust ventilation. Chemical-resistant gloves and aprons. Safety eyewear. Fire extinguishers in area. Flammable storage cabinet. SDS available.',
+         'level': 'Critical',
+         'additional': 'Replace solvent-based degreasers with aqueous alternatives. Install continuous gas monitoring. Upgrade to explosion-proof electrics.',
+         'hoc': 'Elimination'},
+        {'id': 'HIR-004', 'activity': 'Electrical maintenance — live panel work', 'hazard': 'Electrical shock/arc flash — working on or near live electrical equipment',
+         'risk': 'Maintenance electricians at risk of fatal electrical shock, arc flash burns, and falls from shock reaction.',
+         'controls': 'Permit-to-work system. Lock-out/tag-out (LOTO) procedures. Arc flash PPE. Insulated tools. Quarterly competency verification.',
+         'level': 'Critical',
+         'additional': 'Install remote racking devices for switchgear. Implement IR scanning program. Upgrade arc flash ratings on panels >400V.',
+         'hoc': 'Engineering'},
+        {'id': 'HIR-005', 'activity': 'Warehouse operations — forklift traffic', 'hazard': 'Forklift-pedestrian collision, loads falling from height, overturning',
+         'risk': 'Warehouse staff and visitors at risk of crush injuries, fractures, and fatal injuries from forklift incidents.',
+         'controls': 'Separated pedestrian walkways marked with yellow lines. Speed limiters on forklifts (8 km/h). Forklift pre-use checks. Operator certification. Reversing alarms.',
+         'level': 'High',
+         'additional': 'Install proximity sensors and auto-braking systems. Implement traffic management plan with one-way systems where feasible.',
+         'hoc': 'Engineering'},
+        {'id': 'HIR-006', 'activity': 'Office work — DSE', 'hazard': 'Display screen equipment — prolonged sitting, poor posture, glare',
+         'risk': 'Office staff at risk of upper limb disorders, back/neck pain, eye strain, headaches.',
+         'controls': 'Adjustable chairs and desks. Anti-glare screens. DSE self-assessment. Eye test vouchers every 2 years. Break reminder software.',
+         'level': 'Low',
+         'additional': 'Introduce sit-stand desks. Implement micro-break prompts at 55-min intervals. Conduct annual DSE workstation audits.',
+         'hoc': 'Administrative'},
+    ]
+
+    levels = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+    for h in hazards:
+        lv = h['level']
+        if lv in levels:
+            levels[lv] += 1
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'methodology': (
+            f'Hazard identification was conducted for {client} using a systematic approach covering all '
+            f'work areas, activities, and personnel. Risk assessment methodology follows the hierarchy of '
+            f'control: elimination, substitution, engineering controls, administrative controls, and PPE. '
+            f'Both routine and non-routine activities were included.'
+        ),
+        'hazards': [
+            {
+                'hazard_id': h['id'], 'activity': h['activity'], 'hazard': h['hazard'],
+                'associated_risk': h['risk'], 'existing_controls': h['controls'],
+                'risk_level': h['level'], 'additional_controls': h['additional'],
+                'hierarchy_of_control': h['hoc'],
+            }
+            for h in hazards
+        ],
+        'summary': {
+            'total_hazards': len(hazards),
+            'critical': levels['Critical'],
+            'high': levels['High'],
+            'medium': levels['Medium'],
+            'low': levels['Low'],
+        },
+    }
+
+
+def generate_energy_review(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 50001:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    sources = [
+        {'source': 'Grid Electricity', 'consumption': '2,450,000 kWh', 'cost': '$318,500', 'trend': 'Stable',
+         'notes': '40% from certified renewable sources. Peak demand: 420 kW. Power factor: 0.95.'},
+        {'source': 'Natural Gas', 'consumption': '850,000 kWh (30,000 therms)', 'cost': '$42,500', 'trend': 'Decreasing',
+         'notes': 'Used for space heating and process drying. Boiler efficiency: 88%. Annual service maintained.'},
+        {'source': 'Diesel (Generator Backup)', 'consumption': '2,500 liters', 'cost': '$5,250', 'trend': 'Stable',
+         'notes': 'Emergency backup only. Monthly test runs (30 min). Annual fuel quality check.'},
+        {'source': 'Solar PV (On-site Generation)', 'consumption': '85,000 kWh generated', 'cost': '-$12,750 (savings)', 'trend': 'Stable',
+         'notes': '120 kWp rooftop installation. Feed-in tariff: $0.08/kWh. Generation metered separately.'},
+        {'source': 'Propane (Forklift Fleet)', 'consumption': '8,500 kg', 'cost': '$14,875', 'trend': 'Increasing',
+         'notes': 'Fleet of 12 propane forklifts. Transition to electric under evaluation. Charging infrastructure cost: $45K estimated.'},
+    ]
+
+    seus = [
+        {'id': 'SEU-001', 'equipment': 'HVAC System — Main Production Hall', 'source': 'Electricity + Natural Gas',
+         'consumption': '680,000 kWh/yr electricity + 420,000 kWh/yr gas', 'variables': 'Outside air temperature, production hours, occupancy levels',
+         'enpi': 'kWh/m²/HDD (normalized) — target: 85. Current: 92',
+         'baseline': '2025 average: 95 kWh/m²/HDD (12-month rolling)',
+         'current': '3% above baseline — damper maintenance overdue. Adjust schedule for non-production days.'},
+        {'id': 'SEU-002', 'equipment': 'Compressed Air System', 'source': 'Electricity',
+         'consumption': '320,000 kWh/yr (13% of total electricity)', 'variables': 'Production volume, number of shifts, leakage rate',
+         'enpi': 'kWh/m³ compressed air — target: 0.12. Current: 0.15',
+         'baseline': '2025 average: 0.16 kWh/m³',
+         'current': '6% improvement vs baseline. Leak detection program ongoing — 12% leakage rate identified.'},
+        {'id': 'SEU-003', 'equipment': 'CNC Machining Center (5 units)', 'source': 'Electricity',
+         'consumption': '410,000 kWh/yr', 'variables': 'Production batch size, material type, spindle utilization',
+         'enpi': 'kWh/part produced — target: 4.5. Current: 5.2',
+         'baseline': '2025 average: 5.8 kWh/part',
+         'current': '10% improvement vs baseline achieved through programming optimization. Additional 5% target through spindle speed optimization.'},
+        {'id': 'SEU-004', 'equipment': 'Process Drying Oven', 'source': 'Natural Gas',
+         'consumption': '280,000 kWh/yr gas', 'variables': 'Production throughput, moisture content of input material, ambient conditions',
+         'enpi': 'kWh/kg material dried — target: 0.35. Current: 0.42',
+         'baseline': '2025 average: 0.44 kWh/kg',
+         'current': '5% from target. Heat recovery feasibility study recommended — estimated 15% reduction potential.'},
+    ]
+
+    total_cost = '$368,375'
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'review_period': 'January 2026 – December 2026',
+        'methodology': (
+            f'The energy review for {client} was conducted following ISO 50006 guidelines. '
+            f'Energy consumption data was collected from utility bills, submetering systems, and equipment-level monitoring. '
+            f'Significant Energy Uses (SEUs) were identified based on consumption magnitude and improvement potential. '
+            f'Energy Baselines (EnB) were established using 2025 as the reference year. '
+            f'Energy Performance Indicators (EnPI) were defined for each SEU with appropriate normalizing factors.'
+        ),
+        'energy_sources': [
+            {'source': s['source'], 'consumption': s['consumption'], 'cost': s['cost'], 'trend': s['trend'], 'notes': s['notes']}
+            for s in sources
+        ],
+        'significant_uses': [
+            {
+                'use_id': seu['id'], 'equipment': seu['equipment'], 'energy_source': seu['source'],
+                'consumption': seu['consumption'], 'variables': seu['variables'], 'enpi': seu['enpi'],
+                'baseline': seu['baseline'], 'current_performance': seu['current'],
+            }
+            for seu in seus
+        ],
+        'summary': {
+            'total_energy_sources': len(sources),
+            'total_seus': len(seus),
+            'total_energy_cost': total_cost,
+        },
+    }
+
+
+def generate_compliance_obligations_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 37301:2021')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    obligations = [
+        {'id': 'COR-001', 'type': 'Legal', 'source': 'Occupational Safety and Health Act (OSHA)', 'req': 'Employer shall provide a workplace free from recognized hazards. Maintain injury/illness records. Display OSHA poster.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'Safety program documentation available. OSHA 300 logs maintained. Posters displayed in all common areas. Annual training records on file.',
+         'due': 'Ongoing', 'resp': 'Safety Manager'},
+        {'id': 'COR-002', 'type': 'Legal', 'source': 'Environmental Protection Act — Waste Management', 'req': 'Duty of care for waste. Complete waste transfer notes. Register as waste carrier if transporting own waste.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'Waste transfer notes maintained for all waste streams. Licensed waste carrier contract in place. Waste hierarchy applied.',
+         'due': 'Ongoing', 'resp': 'Environmental Manager'},
+        {'id': 'COR-003', 'type': 'Regulatory', 'source': 'ISO 14001:2015 Clause 6.1.3', 'req': 'Determine compliance obligations related to environmental aspects. Maintain register of obligations.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'Compliance obligations register maintained and updated quarterly. Legal register reviewed by external counsel annually.',
+         'due': 'Ongoing', 'resp': 'Quality Manager'},
+        {'id': 'COR-004', 'type': 'Regulatory', 'source': 'ISO 45001:2018 Clause 6.1.3', 'req': 'Determine legal requirements and other requirements related to OH&S management system.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'OH&S legal register maintained. Requirements communicated to relevant personnel. Updates tracked through subscription service.',
+         'due': 'Ongoing', 'resp': 'Safety Manager'},
+        {'id': 'COR-005', 'type': 'Legal', 'source': 'General Data Protection Regulation (GDPR)', 'req': 'Process personal data lawfully, fairly, and transparently. Maintain ROPA. Report breaches within 72 hours.',
+         'app': 'Partial', 'status': 'Partially Compliant', 'evidence': 'ROPA documented. Privacy notices updated. Breach notification procedure in draft. DPO appointed. Consent records need improvement.',
+         'due': '30/09/2026', 'resp': 'Data Protection Officer'},
+        {'id': 'COR-006', 'type': 'Contractual', 'source': 'Customer contracts — confidentiality clauses', 'req': 'Maintain confidentiality of customer proprietary information. Limit access to need-to-know basis. Implement appropriate security measures.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'NDAs in place with all employees. Data classification policy implemented. Access controls audited quarterly. No breaches reported.',
+         'due': 'Ongoing', 'resp': 'Legal Counsel'},
+        {'id': 'COR-007', 'type': 'Regulatory', 'source': 'ISO 50001:2018 Clause 6.3', 'req': 'Conduct energy review. Establish EnB and EnPI. Update at defined intervals.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'Energy review completed per ISO 50006. EnB established for 2025. EnPI tracking in place. Review scheduled for next management review.',
+         'due': 'Ongoing', 'resp': 'Energy Manager'},
+        {'id': 'COR-008', 'type': 'Legal', 'source': 'Fire Safety Regulations', 'req': 'Conduct fire risk assessment. Maintain fire detection and suppression systems. Fire drill records. Emergency evacuation plans.',
+         'app': 'Full', 'status': 'Compliant', 'evidence': 'Fire risk assessment completed and reviewed annually. Fire wardens trained. Drills conducted quarterly. Systems tested weekly.',
+         'due': 'Ongoing', 'resp': 'Facilities Manager'},
+    ]
+
+    counts = {'Compliant': 0, 'Partially Compliant': 0, 'Non-Compliant': 0, 'Not Assessed': 0}
+    for o in obligations:
+        s = o['status']
+        if s in counts:
+            counts[s] += 1
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'methodology': (
+            f'Compliance obligations for {client} were identified through review of applicable legislation, '
+            f'regulatory requirements, industry standards, contractual commitments, and other requirements '
+            f'to which the organization subscribes. The register is reviewed quarterly and updated '
+            f'when new obligations arise or existing obligations change.'
+        ),
+        'obligations': [
+            {
+                'obligation_id': o['id'], 'obligation_type': o['type'], 'source': o['source'],
+                'requirement': o['req'], 'applicability': o['app'],
+                'compliance_status': o['status'], 'evidence': o['evidence'],
+                'due_date': o['due'], 'responsible': o['resp'],
+            }
+            for o in obligations
+        ],
+        'summary': {
+            'total_obligations': len(obligations),
+            'compliant': counts['Compliant'],
+            'partially_compliant': counts['Partially Compliant'],
+            'non_compliant': counts['Non-Compliant'],
+            'not_assessed': counts['Not Assessed'],
+        },
+    }
+
+
+def generate_service_portfolio(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    services = [
+        {'id': 'SVC-001', 'name': 'IT Help Desk & End-User Support', 'desc': 'First-line IT support for all employees. Incident logging, triage, and resolution. Hardware and software support for workstations.',
+         'cat': 'Core', 'status': 'Active',
+         'uptime': '99.5%', 'response': '30 minutes (Priority 1), 4 hours (Priority 2)', 'resolution': '4 hours (P1), 24 hours (P2), 5 days (P3)',
+         'owner': 'IT Support Manager'},
+        {'id': 'SVC-002', 'name': 'Network Infrastructure Services', 'desc': 'Corporate LAN/WAN connectivity, VPN access, WiFi, firewall management, network monitoring and capacity management.',
+         'cat': 'Core', 'status': 'Active',
+         'uptime': '99.9% (backbone), 99.5% (user-facing)', 'response': '15 minutes for network outages', 'resolution': '2 hours for critical outages, 8 hours for standard issues',
+         'owner': 'Network Manager'},
+        {'id': 'SVC-003', 'name': 'Business Application Hosting', 'desc': 'Hosting and maintenance of ERP, CRM, HRIS, and other business-critical applications. Database administration and patch management.',
+         'cat': 'Core', 'status': 'Active',
+         'uptime': '99.7%', 'response': '15 minutes (application down), 1 hour (performance degradation)', 'resolution': '2 hours (critical), 8 hours (major), 48 hours (minor)',
+         'owner': 'Applications Manager'},
+        {'id': 'SVC-004', 'name': 'Cloud Migration Service', 'desc': 'Assessment, planning, and execution of workload migration to cloud. Hybrid cloud architecture management.',
+         'cat': 'Enabling', 'status': 'In Development',
+         'uptime': 'N/A (in development)', 'response': 'N/A', 'resolution': 'N/A',
+         'owner': 'Cloud Architect'},
+        {'id': 'SVC-005', 'name': 'Data Backup & Disaster Recovery', 'desc': 'Automated backup of servers, databases, and critical data. Off-site replication. DR testing and business continuity support.',
+         'cat': 'Support', 'status': 'Active',
+         'uptime': 'Guaranteed 99.9% backup success rate', 'response': 'Immediate for backup failures (automated alerting)', 'resolution': '4 hours for restore requests (non-DR), 1 hour for DR activation',
+         'owner': 'Infrastructure Manager'},
+        {'id': 'SVC-006', 'name': 'Cybersecurity Operations', 'desc': 'Security monitoring, threat detection and response, vulnerability management, endpoint protection, SIEM operations.',
+         'cat': 'Core', 'status': 'Active',
+         'uptime': '24/7 monitoring coverage', 'response': '10 minutes (critical security incident), 1 hour (high severity)', 'resolution': '1 hour (contain critical), 4 hours (contain high), 24 hours (remediate)',
+         'owner': 'CISO'},
+        {'id': 'SVC-007', 'name': 'Software Development Platform', 'desc': 'CI/CD pipeline, source control, test automation, dev/staging/prod environments. Developer tooling and access management.',
+         'cat': 'Enabling', 'status': 'Active',
+         'uptime': '99.5% pipeline availability', 'response': '30 minutes (pipeline down), 2 hours (tool issues)', 'resolution': '2 hours (critical), 24 hours (non-critical)',
+         'owner': 'DevOps Lead'},
+        {'id': 'SVC-008', 'name': 'Managed Print Services', 'desc': 'Printer fleet management, print server administration, consumables replenishment, print cost tracking.',
+         'cat': 'Support', 'status': 'Planned',
+         'uptime': 'Target: 98%', 'response': 'Target: 4 hours for printer faults', 'resolution': 'Target: 24 hours',
+         'owner': 'Facilities Manager'},
+    ]
+
+    statuses = {'Active': 0, 'In Development': 0, 'Retired': 0, 'Planned': 0}
+    for s in services:
+        st = s['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'portfolio_manager': 'IT Service Delivery Manager',
+        'services': [
+            {
+                'service_id': s['id'], 'service_name': s['name'], 'description': s['desc'],
+                'category': s['cat'], 'status': s['status'],
+                'sla_uptime': s['uptime'], 'sla_response_time': s['response'],
+                'sla_resolution_time': s['resolution'], 'service_owner': s['owner'],
+            }
+            for s in services
+        ],
+        'summary': {
+            'total_services': len(services),
+            'active': statuses['Active'],
+            'in_development': statuses['In Development'],
+            'retired': statuses['Retired'],
+            'planned': statuses['Planned'],
+        },
+    }
+
+
 OFFLINE_GENERATORS = {
     'Audit_Plan_Stage_1': lambda d: generate_audit_plan_stage(d, 'Stage 1 - Readiness Review'),
     'Audit_Plan_Stage_2': lambda d: generate_audit_plan_stage(d, 'Stage 2 - Certification Audit'),
@@ -1262,6 +1614,11 @@ OFFLINE_GENERATORS = {
     'Risk_Treatment_Plan': generate_risk_treatment_plan,
     'Incident_Investigation_Report': generate_incident_investigation_report,
     'Internal_Audit_Program': generate_internal_audit_program,
+    'Environmental_Aspect_Register': generate_environmental_aspect_register,
+    'Hazard_Identification_Register': generate_hazard_identification_register,
+    'Energy_Review': generate_energy_review,
+    'Compliance_Obligations_Register': generate_compliance_obligations_register,
+    'Service_Portfolio': generate_service_portfolio,
 }
 
 

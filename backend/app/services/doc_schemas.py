@@ -400,6 +400,151 @@ DOCUMENT_CONTRACTS = {
             'cancelled': 'int',
         },
     },
+
+    # ── Environmental Aspect Register (ISO 14001 Clause 6.1.2) ──────────────
+    'Environmental_Aspect_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'methodology': 'str — aspect identification methodology',
+        'aspects': [
+            {
+                'aspect_id': 'str — e.g. EAR-001',
+                'activity': 'str — activity, product, or service',
+                'aspect': 'str — environmental aspect description',
+                'environmental_impact': 'str — actual or potential impact',
+                'impact_type': 'str — Positive/Negative',
+                'significance': 'str — Low/Medium/High/Critical',
+                'control_measures': 'str — existing controls',
+                'legal_requirement': 'str — applicable legal or other requirement',
+                'evaluation': 'str — significance evaluation criteria and result',
+            },
+        ],
+        'summary': {
+            'total_aspects': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+        },
+    },
+
+    # ── Hazard Identification Register (ISO 45001 Clause 6.1.2) ────────────
+    'Hazard_Identification_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'methodology': 'str — hazard identification methodology',
+        'hazards': [
+            {
+                'hazard_id': 'str — e.g. HIR-001',
+                'activity': 'str — work activity or area',
+                'hazard': 'str — hazard description',  'associated_risk': 'str — risk description including who may be harmed',
+                'existing_controls': 'str — current control measures',
+                'risk_level': 'str — Low/Medium/High/Critical',
+                'additional_controls': 'str — further controls required',
+                'hierarchy_of_control': 'str — Elimination/Substitution/Engineering/Administrative/PPE',
+            },
+        ],
+        'summary': {
+            'total_hazards': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+        },
+    },
+
+    # ── Energy Review + EnB + EnPI (ISO 50001 Clause 6.3) ──────────────────
+    'Energy_Review': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'review_period': 'str — e.g. January 2026 – December 2026',
+        'methodology': 'str — energy review methodology',
+        'energy_sources': [
+            {
+                'source': 'str — energy type (electricity, natural gas, diesel, etc.)',
+                'consumption': 'str — annual consumption with unit',
+                'cost': 'str — annual cost',
+                'trend': 'str — Increasing/Stable/Decreasing',
+                'notes': 'str — additional observations',
+            },
+        ],
+        'significant_uses': [
+            {
+                'use_id': 'str — e.g. SEU-001',
+                'equipment': 'str — equipment or process name',
+                'energy_source': 'str — primary energy source',
+                'consumption': 'str — consumption value and unit',
+                'variables': 'str — relevant variables affecting consumption',
+                'enpi': 'str — Energy Performance Indicator',
+                'baseline': 'str — Energy Baseline (EnB) reference period and value',
+                'current_performance': 'str — current performance vs baseline',
+            },
+        ],
+        'summary': {
+            'total_energy_sources': 'int',
+            'total_seus': 'int',
+            'total_energy_cost': 'str — total annual energy cost',
+        },
+    },
+
+    # ── Compliance Obligations Register (ISO 37301 / ISO 14001) ────────────
+    'Compliance_Obligations_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'methodology': 'str — compliance identification methodology',
+        'obligations': [
+            {
+                'obligation_id': 'str — e.g. COR-001',
+                'obligation_type': 'str — Legal/Regulatory/Contractual/Other',
+                'source': 'str — source of obligation (law, regulation, contract, standard)',
+                'requirement': 'str — specific requirement text',
+                'applicability': 'str — Full/Partial/Not Applicable',
+                'compliance_status': 'str — Compliant/Partially Compliant/Non-Compliant/Not Assessed',
+                'evidence': 'str — evidence of compliance',
+                'due_date': 'str DD/MM/YYYY or "Ongoing"',
+                'responsible': 'str — responsible person or role',
+            },
+        ],
+        'summary': {
+            'total_obligations': 'int',
+            'compliant': 'int',
+            'partially_compliant': 'int',
+            'non_compliant': 'int',
+            'not_assessed': 'int',
+        },
+    },
+
+    # ── Service Portfolio & SLAs (ISO 20000-1 Clause 7.2) ─────────────────
+    'Service_Portfolio': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'portfolio_manager': 'str',
+        'services': [
+            {
+                'service_id': 'str — e.g. SVC-001',
+                'service_name': 'str — service name',
+                'description': 'str — service description',
+                'category': 'str — Core/Support/Enabling',
+                'status': 'str — Active/In Development/Retired/Planned',
+                'sla_uptime': 'str — SLA uptime percentage target',
+                'sla_response_time': 'str — SLA response time target',
+                'sla_resolution_time': 'str — SLA resolution time target',
+                'service_owner': 'str',
+            },
+        ],
+        'summary': {
+            'total_services': 'int',
+            'active': 'int',
+            'in_development': 'int',
+            'retired': 'int',
+            'planned': 'int',
+        },
+    },
 }
 
 

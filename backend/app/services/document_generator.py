@@ -1611,6 +1611,224 @@ def generate_internal_audit_program(data, output_path, client_key: str = None):
     return output_path
 
 
+# ── Environmental Aspect Register (ISO 14001 Clause 6.1.2) ─────────────────
+
+def generate_environmental_aspect_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Environmental Aspect Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    aspects = data.get('aspects', [])
+    if aspects:
+        add_section_heading(doc, 'Environmental Aspects Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=9)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Aspect ID', 'Activity', 'Aspect', 'Environmental Impact', 'Type',
+                               'Significance', 'Control Measures', 'Legal Requirement', 'Evaluation'], client_key=client_key)
+        for a in aspects:
+            sig = a.get('significance', '')
+            rc = TUV_RED if sig == 'Critical' else (RGBColor(0xCC, 0x7A, 0x00) if sig == 'High' else None)
+            add_data_row(table, [
+                a.get('aspect_id', ''), a.get('activity', ''), a.get('aspect', ''),
+                a.get('environmental_impact', ''), a.get('impact_type', ''),
+                sig, a.get('control_measures', ''), a.get('legal_requirement', ''), a.get('evaluation', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Aspects', 'total_aspects'), ('Critical', 'critical'),
+                      ('High', 'high'), ('Medium', 'medium'), ('Low', 'low')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Hazard Identification Register (ISO 45001 Clause 6.1.2) ───────────────
+
+def generate_hazard_identification_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Hazard Identification Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    hazards = data.get('hazards', [])
+    if hazards:
+        add_section_heading(doc, 'Hazard Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Hazard ID', 'Activity', 'Hazard', 'Associated Risk', 'Existing Controls',
+                               'Risk Level', 'Additional Controls', 'Hierarchy of Control'], client_key=client_key)
+        for h in hazards:
+            lv = h.get('risk_level', '')
+            rc = TUV_RED if lv == 'Critical' else (RGBColor(0xCC, 0x7A, 0x00) if lv == 'High' else None)
+            add_data_row(table, [
+                h.get('hazard_id', ''), h.get('activity', ''), h.get('hazard', ''),
+                h.get('associated_risk', ''), h.get('existing_controls', ''),
+                lv, h.get('additional_controls', ''), h.get('hierarchy_of_control', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Hazards', 'total_hazards'), ('Critical', 'critical'),
+                      ('High', 'high'), ('Medium', 'medium'), ('Low', 'low')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Energy Review + EnB + EnPI (ISO 50001 Clause 6.3) ──────────────────────
+
+def generate_energy_review(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Energy Review',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Review Period', client_key=client_key)
+    add_body_text(doc, data.get('review_period', 'N/A'), client_key=client_key)
+    add_section_heading(doc, 'Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    sources = data.get('energy_sources', [])
+    if sources:
+        add_section_heading(doc, 'Energy Sources & Consumption', client_key=client_key)
+        table = doc.add_table(rows=1, cols=5)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Energy Source', 'Annual Consumption', 'Annual Cost', 'Trend', 'Notes'], client_key=client_key)
+        for s in sources:
+            add_data_row(table, [s.get('source', ''), s.get('consumption', ''), s.get('cost', ''),
+                                 s.get('trend', ''), s.get('notes', '')], client_key=client_key)
+
+    seus = data.get('significant_uses', [])
+    if seus:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Significant Energy Uses (SEUs) with EnPI & EnB', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['SEU ID', 'Equipment / Process', 'Energy Source', 'Consumption',
+                               'Relevant Variables', 'EnPI', 'Energy Baseline (EnB)', 'Current Performance'], client_key=client_key)
+        for seu in seus:
+            add_data_row(table, [
+                seu.get('use_id', ''), seu.get('equipment', ''), seu.get('energy_source', ''),
+                seu.get('consumption', ''), seu.get('variables', ''), seu.get('enpi', ''),
+                seu.get('baseline', ''), seu.get('current_performance', ''),
+            ], client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Energy Sources: {summary.get('total_energy_sources', 0)}", client_key=client_key)
+        add_body_text(doc, f"Significant Energy Uses: {summary.get('total_seus', 0)}", client_key=client_key)
+        add_body_text(doc, f"Total Annual Energy Cost: {summary.get('total_energy_cost', 'N/A')}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Compliance Obligations Register (ISO 37301 / 14001 Clause 6.1.3) ───────
+
+def generate_compliance_obligations_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Compliance Obligations Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    obligations = data.get('obligations', [])
+    if obligations:
+        add_section_heading(doc, 'Compliance Obligations', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Obligation ID', 'Type', 'Source', 'Requirement', 'Applicability',
+                               'Compliance Status', 'Evidence', 'Due Date'], client_key=client_key)
+        for o in obligations:
+            st = o.get('compliance_status', '')
+            rc = TUV_RED if st == 'Non-Compliant' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'Partially Compliant' else None)
+            add_data_row(table, [
+                o.get('obligation_id', ''), o.get('obligation_type', ''), o.get('source', ''),
+                o.get('requirement', ''), o.get('applicability', ''),
+                st, o.get('evidence', ''), o.get('due_date', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Obligations', 'total_obligations'), ('Compliant', 'compliant'),
+                      ('Partially Compliant', 'partially_compliant'), ('Non-Compliant', 'non_compliant'),
+                      ('Not Assessed', 'not_assessed')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Service Portfolio & SLAs (ISO 20000-1 Clause 7.2) ─────────────────────
+
+def generate_service_portfolio(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Service Portfolio & SLAs',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Portfolio Manager', client_key=client_key)
+    add_body_text(doc, data.get('portfolio_manager', 'N/A'), client_key=client_key)
+
+    services = data.get('services', [])
+    if services:
+        add_section_heading(doc, 'Service Portfolio & SLA Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=9)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Service ID', 'Service Name', 'Description', 'Category', 'Status',
+                               'SLA — Uptime', 'SLA — Response Time', 'SLA — Resolution Time', 'Service Owner'], client_key=client_key)
+        for s in services:
+            st = s.get('status', '')
+            rc = RGBColor(0x00, 0x80, 0x00) if st == 'Active' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'In Development' else None)
+            add_data_row(table, [
+                s.get('service_id', ''), s.get('service_name', ''), s.get('description', ''),
+                s.get('category', ''), st,
+                s.get('sla_uptime', ''), s.get('sla_response_time', ''), s.get('sla_resolution_time', ''),
+                s.get('service_owner', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Services', 'total_services'), ('Active', 'active'),
+                      ('In Development', 'in_development'), ('Retired', 'retired'), ('Planned', 'planned')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
 # ── Generator registry ─────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -1631,6 +1849,11 @@ GENERATORS = {
     'Risk_Treatment_Plan': generate_risk_treatment_plan,
     'Incident_Investigation_Report': generate_incident_investigation_report,
     'Internal_Audit_Program': generate_internal_audit_program,
+    'Environmental_Aspect_Register': generate_environmental_aspect_register,
+    'Hazard_Identification_Register': generate_hazard_identification_register,
+    'Energy_Review': generate_energy_review,
+    'Compliance_Obligations_Register': generate_compliance_obligations_register,
+    'Service_Portfolio': generate_service_portfolio,
 }
 
 

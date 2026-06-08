@@ -2,7 +2,7 @@
 import os, tempfile, shutil
 
 from app.services.pdf_generator import (
-    generate_pdf_file, AuditPDF, GENERATORS, TUV_BLUE, DARK_GRAY,
+    generate_pdf_file, AuditPDF, GENERATORS,
     generate_audit_plan_stage_1, generate_audit_plan_stage_2,
     generate_participation_list, generate_audit_report,
     generate_iso_checklist, generate_certificate_text,

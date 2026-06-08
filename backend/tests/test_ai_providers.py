@@ -3,7 +3,6 @@
 Tests instantiation, key handling, and error paths without making API calls.
 """
 
-import os
 import pytest
 from app.services.ai import create_provider, AIProvider
 

@@ -102,6 +102,11 @@ OUTPUT_DOCUMENTS = [
     'Risk_Treatment_Plan',
     'Incident_Investigation_Report',
     'Internal_Audit_Program',
+    'Environmental_Aspect_Register',
+    'Hazard_Identification_Register',
+    'Energy_Review',
+    'Compliance_Obligations_Register',
+    'Service_Portfolio',
 ]
 
 DOC_LABELS = {
@@ -122,6 +127,11 @@ DOC_LABELS = {
     'Risk_Treatment_Plan': 'Risk Treatment Plan',
     'Incident_Investigation_Report': 'Incident Investigation Report',
     'Internal_Audit_Program': 'Internal Audit Program',
+    'Environmental_Aspect_Register': 'Environmental Aspect Register',
+    'Hazard_Identification_Register': 'Hazard Identification Register',
+    'Energy_Review': 'Energy Review + EnB + EnPI',
+    'Compliance_Obligations_Register': 'Compliance Obligations Register',
+    'Service_Portfolio': 'Service Portfolio & SLAs',
 }
 
 DEFAULT_LOGO_PATH = os.path.join(BASE_DIR, 'static', 'tuv_logo.png')

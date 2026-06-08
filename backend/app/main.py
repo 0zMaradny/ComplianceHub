@@ -182,7 +182,12 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
               'incident_date', 'incident_description', 'location', 'incident_type',
               'investigation_team', 'immediate_actions', 'corrective_actions',
               'lessons_learned', 'recommendations', 'reviewed_by',
-              'program_year', 'audit_manager', 'audits'):
+              'program_year', 'audit_manager', 'audits',
+              'aspects', 'impact_type', 'significance', 'control_measures', 'legal_requirement',
+              'hazards', 'associated_risk', 'existing_controls', 'additional_controls', 'hierarchy_of_control',
+              'energy_sources', 'review_period', 'significant_uses', 'enpi', 'baseline', 'current_performance',
+              'obligations', 'obligation_type', 'compliance_status', 'evidence',
+              'services', 'portfolio_manager', 'sla_uptime', 'sla_response_time', 'sla_resolution_time'):
         if k in doc_data:
             doc_info[k] = doc_data[k]
     return doc_info
@@ -586,6 +591,22 @@ def get_status(job_id: str):
             elif doc_type == 'Internal_Audit_Program':
                 cleaned['program_year'] = data.get('program_year', '')
                 cleaned['total_audits'] = len(data.get('audits', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Environmental_Aspect_Register':
+                cleaned['total_aspects'] = len(data.get('aspects', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Hazard_Identification_Register':
+                cleaned['total_hazards'] = len(data.get('hazards', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Energy_Review':
+                cleaned['total_sources'] = len(data.get('energy_sources', []))
+                cleaned['total_seus'] = len(data.get('significant_uses', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Compliance_Obligations_Register':
+                cleaned['total_obligations'] = len(data.get('obligations', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Service_Portfolio':
+                cleaned['total_services'] = len(data.get('services', []))
                 cleaned['summary'] = data.get('summary', {})
             cleaned_results[doc_type] = cleaned
 

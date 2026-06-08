@@ -1,5 +1,5 @@
 """Unit tests for the SQLite persistence layer."""
-import os, time
+import time
 from app.services import db
 
 

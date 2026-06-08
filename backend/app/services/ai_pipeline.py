@@ -550,6 +550,103 @@ Return JSON with:
 - audit_manager: string
 - audits: list of {{audit_id: string, scope: string, audit_type: string ("Full"/"Partial"/"Follow-up"/"Special"), planned_date: string (DD/MM/YYYY), auditor: string, auditee_department: string, status: string ("Planned"/"In Progress"/"Completed"/"Cancelled"), findings_count: int}} — include 6-10 audits spread across the year covering all relevant clauses
 - summary: {{total_audits: int, planned: int, in_progress: int, completed: int, cancelled: int}}""",
+
+        'Environmental_Aspect_Register': f"""Generate an Environmental Aspect Register for ISO 14001:2015 Clause 6.1.2. Identifies environmental aspects, impacts, significance, and controls. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- methodology: string
+- aspects: list of {{aspect_id: string, activity: string, aspect: string, environmental_impact: string, impact_type: string ("Positive"/"Negative"), significance: string ("Low"/"Medium"/"High"/"Critical"), control_measures: string, legal_requirement: string, evaluation: string}} — include 6-10 aspects covering operations, waste, emissions, chemicals, energy, water
+- summary: {{total_aspects: int, critical: int, high: int, medium: int, low: int}}""",
+
+        'Hazard_Identification_Register': f"""Generate a Hazard Identification and Risk Assessment Register for ISO 45001:2018 Clause 6.1.2. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- methodology: string
+- hazards: list of {{hazard_id: string, activity: string, hazard: string, associated_risk: string, existing_controls: string, risk_level: string ("Low"/"Medium"/"High"/"Critical"), additional_controls: string, hierarchy_of_control: string ("Elimination"/"Substitution"/"Engineering"/"Administrative"/"PPE")}} — include 6-10 hazards covering machinery, chemicals, manual handling, electrical, fire, DSE, workplace transport
+- summary: {{total_hazards: int, critical: int, high: int, medium: int, low: int}}""",
+
+        'Energy_Review': f"""Generate an Energy Review including Energy Baseline (EnB) and Energy Performance Indicators (EnPI) for ISO 50001:2018 Clause 6.3. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- review_period: string
+- methodology: string
+- energy_sources: list of {{source: string, consumption: string, cost: string, trend: string ("Increasing"/"Stable"/"Decreasing"), notes: string}} — include 4-6 energy types
+- significant_uses: list of {{use_id: string, equipment: string, energy_source: string, consumption: string, variables: string, enpi: string, baseline: string, current_performance: string}} — include 3-5 SEUs
+- summary: {{total_energy_sources: int, total_seus: int, total_energy_cost: string}}""",
+
+        'Compliance_Obligations_Register': f"""Generate a Compliance Obligations Register per ISO 37301:2021 / ISO 14001:2015 Clause 6.1.3. Documents all legal, regulatory, and other requirements. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- methodology: string
+- obligations: list of {{obligation_id: string, obligation_type: string ("Legal"/"Regulatory"/"Contractual"/"Other"), source: string, requirement: string, applicability: string ("Full"/"Partial"/"Not Applicable"), compliance_status: string ("Compliant"/"Partially Compliant"/"Non-Compliant"/"Not Assessed"), evidence: string, due_date: string, responsible: string}} — include 6-10 obligations covering H&S, environmental, data protection, fire safety, contractual, industry standards
+- summary: {{total_obligations: int, compliant: int, partially_compliant: int, non_compliant: int, not_assessed: int}}""",
+
+        'Service_Portfolio': f"""Generate a Service Portfolio and SLA Register for ISO 20000-1:2018 Clause 7.2. Documents all services, their status, and service level agreements. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- portfolio_manager: string
+- services: list of {{service_id: string, service_name: string, description: string, category: string ("Core"/"Support"/"Enabling"), status: string ("Active"/"In Development"/"Retired"/"Planned"), sla_uptime: string, sla_response_time: string, sla_resolution_time: string, service_owner: string}} — include 6-10 services covering IT support, network, applications, security, backup, cloud
+- summary: {{total_services: int, active: int, in_development: int, retired: int, planned: int}}""",
     }
     return prompts.get(doc_type, prompts['Audit_Report'])
 

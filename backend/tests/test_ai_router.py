@@ -1,7 +1,6 @@
 import os
 import time
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.services.ai.router import (
     _provider_available,
@@ -9,7 +8,6 @@ from app.services.ai.router import (
     _is_provider_healthy, _mark_provider_success, _mark_provider_failure,
     set_api_key,
     _try_provider, _try_parallel,
-    FREE_PARALLEL_PROVIDERS,
     generate, extract_structured,
 )
 
