@@ -23,6 +23,27 @@ TASK_ROUTING = {
     'TNL': ['openai', 'claude', 'gemini', 'hf', 'local'],
 }
 
+# ── Client-Specific Provider Overrides ──────────────────────────────────────
+# Override the default chain for specific client + doc_type combinations.
+# Key: (client_key, doc_type) -> provider chain
+# If not found, falls back to TASK_ROUTING[doc_type]
+
+CLIENT_ROUTING = {
+    # MSD-MOI: Arabic BCM content — Claude handles Arabic best
+    ('msd_moi', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    ('msd_moi', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    ('msd_moi', 'TNL'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    # UACC: English EnMS — Gemini is faster for technical content
+    ('uacc', 'ISO_Checklist'): ['gemini', 'openai', 'claude', 'hf', 'local'],
+    ('uacc', 'Audit_Plan_Stage_1'): ['gemini', 'openai', 'claude', 'hf', 'local'],
+    # SAGCO: IMS dual-standard — Claude for complex integrated content
+    ('sagco', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    ('sagco', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    # Al-Ahsa: Arabic ISMS — Claude for Arabic ISMS content
+    ('al_ahsa', 'Audit_Report'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+    ('al_ahsa', 'Certificate_Text'): ['claude', 'openai', 'gemini', 'hf', 'local'],
+}
+
 
 def set_api_key(provider_name: str, api_key: str):
     """Set the correct env var for the given provider.
@@ -56,9 +77,10 @@ KEY_PROVIDER_ENV = {
 }
 
 
-def resolve_chain(task_type: str, override_provider: str | None = None, api_key: str = '') -> list[str]:
+def resolve_chain(task_type: str, override_provider: str | None = None, api_key: str = '', client_key: str = '') -> list[str]:
     """Return ordered provider chain for a task type.
-    Checks both passed api_key and environment variables for available providers."""
+    Checks both passed api_key and environment variables for available providers.
+    Uses client-specific routing when available."""
     if override_provider:
         chain = [override_provider]
         fallback_str = os.environ.get('AI_FALLBACK_PROVIDERS', '').strip()
@@ -66,6 +88,18 @@ def resolve_chain(task_type: str, override_provider: str | None = None, api_key:
             chain.extend(p.strip() for p in fallback_str.split(',') if p.strip())
         return chain
 
+    # ── Client-specific routing ─────────────────────────────────────────
+    if client_key:
+        client_chain = CLIENT_ROUTING.get((client_key, task_type))
+        if client_chain:
+            chain = []
+            for provider_name in client_chain:
+                if _is_provider_available(provider_name, api_key):
+                    chain.append(provider_name)
+            if chain:
+                return chain
+
+    # ── Standard routing ────────────────────────────────────────────────
     if api_key:
         if api_key == 'hf' or api_key.startswith('hf_'):
             chain = ['hf']
@@ -85,6 +119,31 @@ def resolve_chain(task_type: str, override_provider: str | None = None, api_key:
     return chain if chain else ['local']
 
 
+def _is_provider_available(provider_name: str, api_key: str = '') -> bool:
+    """Check if a provider is available (has API key or is running)."""
+    # If user explicitly passed a key for this provider, it's available
+    if api_key:
+        if provider_name == 'hf' and (api_key == 'hf' or api_key.startswith('hf_')):
+            return True
+        if provider_name != 'hf' and api_key.startswith(
+            {'gemini': 'AIza', 'openai': 'sk-', 'claude': 'sk-ant-'}.get(provider_name, 'x')
+        ):
+            return True
+    # Check environment variables
+    env_map = {
+        'gemini': 'GEMINI_API_KEY',
+        'openai': 'OPENAI_API_KEY',
+        'claude': 'CLAUDE_API_KEY',
+        'hf': 'HF_API_KEY',
+    }
+    if os.environ.get(env_map.get(provider_name, ''), '').strip():
+        return True
+    # Local provider — check if server is reachable
+    if provider_name == 'local':
+        return True  # Will be checked at call time
+    return True  # Allow attempt — provider itself will fail gracefully
+
+
 def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt: str,
                         system_prompt: str | None = None, **kwargs) -> tuple[dict, list[str]]:
     """Call a provider wrapped in Autodebugger self-healing."""
@@ -98,10 +157,10 @@ def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt:
 
 def generate(task_type: str, prompt: str, system_prompt: str | None = None,
              api_key: str = '', override_provider: str | None = None,
-             **kwargs) -> dict[str, Any]:
+             client_key: str = '', **kwargs) -> dict[str, Any]:
     """Route a generation task through the best provider chain with fallback
     and autodebugger self-healing on each provider."""
-    chain = resolve_chain(task_type, override_provider, api_key)
+    chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     last_error = None
     for provider_name in chain:
         try:
@@ -128,10 +187,10 @@ def generate(task_type: str, prompt: str, system_prompt: str | None = None,
 
 def extract_structured(task_type: str, prompt: str,
                        api_key: str = '', override_provider: str | None = None,
-                       **kwargs) -> dict[str, Any]:
+                       client_key: str = '', **kwargs) -> dict[str, Any]:
     """Route a structured extraction task through the best provider chain
     with autodebugger self-healing on each provider."""
-    chain = resolve_chain(task_type, override_provider, api_key)
+    chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     last_error = None
     for provider_name in chain:
         try:

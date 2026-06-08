@@ -129,7 +129,7 @@ def _build_prompt(notes_text, manday_text, standards, doc_type, shared_context=N
 
     # ── Client context injection ──────────────────────────────────────────
     if client_key:
-        from .client_config import get_client
+        from ..services.client_config import get_client
         client = get_client(client_key)
         if client:
             lang_note = ''
@@ -355,4 +355,4 @@ Return JSON with:
 
 def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None, manday_info=None):
     prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key, manday_info=manday_info)
-    return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key)
+    return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key, client_key=client_key)

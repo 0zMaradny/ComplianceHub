@@ -1239,3 +1239,57 @@ def get_evidence_for_clause(clause_dict: dict, clause_id: str) -> list:
         else:
             return []
     return []
+
+
+def get_all_clause_items(standard_key: str) -> list:
+    """Return a flat list of all clause items for a standard.
+    Each item: {id, title, evidence, source} where source is 'hls' or 'annex_a'.
+    Includes HLS clauses 1-10 + Clause 8 variant + Annex A controls if applicable.
+    """
+    items = []
+    seen = set()
+
+    clause_dict = get_clause_data(standard_key)
+    annex = get_annex_a_data(standard_key)
+
+    def _flatten(d, prefix=""):
+        for cid, info in d.items():
+            if isinstance(info, str):
+                key = f"{prefix}{cid}"
+                if key not in seen:
+                    seen.add(key)
+                    items.append({"id": key, "title": info, "evidence": "", "source": "hls"})
+                continue
+            if not isinstance(info, dict):
+                continue
+            title = info.get("title", "")
+            evidence_list = info.get("evidence", [])
+            evidence_str = "; ".join(evidence_list[:2]) if evidence_list else ""
+            key = f"{prefix}{cid}"
+            if key not in seen:
+                seen.add(key)
+                items.append({"id": key, "title": title, "evidence": evidence_str, "source": "hls"})
+            sub = info.get("sub_clauses", {})
+            if sub:
+                _flatten(sub, prefix=f"{key}.")
+
+    _flatten(clause_dict)
+
+    # Annex A controls
+    if annex:
+        for group_name, controls in annex.items():
+            if isinstance(controls, dict):
+                for ctrl_id, ctrl_info in controls.items():
+                    if isinstance(ctrl_info, dict):
+                        title = ctrl_info.get("title", ctrl_id)
+                        evidence_list = ctrl_info.get("evidence", ctrl_info.get("description", ""))
+                        if isinstance(evidence_list, list):
+                            evidence_str = "; ".join(evidence_list[:2])
+                        else:
+                            evidence_str = str(evidence_list)
+                    else:
+                        title = str(ctrl_info)
+                        evidence_str = ""
+                    items.append({"id": ctrl_id, "title": title, "evidence": evidence_str, "source": "annex_a"})
+
+    return items

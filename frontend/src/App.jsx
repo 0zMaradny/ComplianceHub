@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Audit from './pages/Audit'
 import Compliance from './pages/Compliance'
 import Projects from './pages/Projects'
+import AuditProgram from './pages/AuditProgram'
 import Templates from './pages/Templates'
 import History from './pages/History'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -80,6 +81,7 @@ const NAV_ITEMS = [
   { id: 'history', label: 'History', icon: 'history' },
   { id: 'compliance', label: 'Compliance', icon: 'compliance' },
   { id: 'projects', label: 'Projects', icon: 'projects' },
+  { id: 'audit_program', label: 'Audit Execution', icon: 'audit' },
   { id: 'templates', label: 'Templates', icon: 'templates' },
 ]
 
@@ -150,6 +152,7 @@ function App() {
           {page === 'history' && <History API={API} />}
           {page === 'compliance' && <Compliance API={API} />}
           {page === 'projects' && <Projects API={API} />}
+          {page === 'audit_program' && <AuditProgram API={API} />}
           {page === 'templates' && <Templates API={API} />}
         </ErrorBoundary>
       </main>
