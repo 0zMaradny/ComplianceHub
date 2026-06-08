@@ -8,7 +8,6 @@ import AuditProgram from './pages/AuditProgram'
 import AuditPlan from './pages/AuditPlan'
 import Templates from './pages/Templates'
 import History from './pages/History'
-import Templates from './pages/Templates'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const API = '/api'
@@ -75,14 +74,6 @@ const ICONS = {
       <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
     </svg>
   ),
-  templates: (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/>
-      <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-      <line x1="9" y1="12" x2="15" y2="12"/>
-      <line x1="9" y1="16" x2="15" y2="16"/>
-    </svg>
-  ),
 }
 
 const NAV_ITEMS = [
@@ -94,7 +85,6 @@ const NAV_ITEMS = [
   { id: 'projects', label: 'Projects', icon: 'projects' },
   { id: 'audit_plan', label: 'Audit Plan', icon: 'audit' },
   { id: 'audit_program', label: 'Audit Execution', icon: 'projects' },
-  { id: 'templates', label: 'Templates', icon: 'templates' },
 ]
 
 function App() {
@@ -167,7 +157,6 @@ function App() {
           {page === 'projects' && <Projects API={API} />}
           {page === 'audit_plan' && <AuditPlan API={API} />}
           {page === 'audit_program' && <AuditProgram API={API} />}
-          {page === 'templates' && <Templates API={API} />}
         </ErrorBoundary>
       </main>
     </div>
