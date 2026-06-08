@@ -684,7 +684,7 @@ from app.services.ims import (
 )
 
 
-@app.post("/api/projects")
+@app.post("/api/projects", summary="Create audit project", description="Create a new audit project for a client with specified standards and target date. The project starts at Gate 1 (Scope & Context).")
 def create_audit_project(
     client_key: str = Form(""),
     title: str = Form(""),
@@ -872,6 +872,18 @@ def review_evidence(
     if not ev:
         raise HTTPException(status_code=404, detail="Evidence not found")
     return {"success": True, "evidence": ev.to_dict()}
+
+
+# ── Template Management Endpoints ──
+
+@app.get("/api/templates")
+def list_templates():
+    """List all available document and checklist templates."""
+    from app.services.template_manager import TEMPLATE_MAP, CHECKLIST_TEMPLATES
+    return {
+        "doc_templates": TEMPLATE_MAP,
+        "checklist_templates": CHECKLIST_TEMPLATES,
+    }
 
 
 # ── IMS Multi-Standard Endpoints ──
