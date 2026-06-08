@@ -263,6 +263,143 @@ DOCUMENT_CONTRACTS = {
             'not_implemented': 'int',
         },
     },
+
+    # ── Business Impact Analysis (ISO 22301 Clause 8.2.1) ────────────────────
+    'Business_Impact_Analysis': {
+        'client_name': 'str',
+        'assessment_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'methodology': 'str — BIA methodology description',
+        'critical_activities': [
+            {
+                'activity': 'str — business process name',
+                'rto': 'str — Recovery Time Objective (e.g. 4 hours)',
+                'rpo': 'str — Recovery Point Objective (e.g. 1 hour)',
+                'mtd': 'str — Maximum Tolerable Downtime (e.g. 8 hours)',
+                'impact_criteria': 'str — financial, reputational, regulatory, operational impact',
+                'dependencies': 'str — internal and external dependencies',
+                'recovery_strategy': 'str — recovery approach for the activity',
+                'priority': 'str — Critical/High/Medium/Low',
+            },
+        ],
+        'summary': {
+            'total_activities': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+        },
+        'overall_findings': 'str — 2-3 paragraphs summarizing BIA outcomes',
+    },
+
+    # ── Records of Processing Activities (ISO 27701 Clause 7.6 / GDPR Art 30)
+    'Records_of_Processing_Activities': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'data_controller': 'str — legal entity name and address',
+        'data_protection_officer': 'str — DPO name and contact',
+        'processing_activities': [
+            {
+                'activity_id': 'str — e.g. ROPA-001',
+                'activity_name': 'str — processing activity description',
+                'purpose': 'str — lawful basis and purpose of processing',
+                'data_subjects': 'str — categories of data subjects',
+                'personal_data_categories': 'str — categories of personal data processed',
+                'retention_period': 'str — retention schedule',
+                'cross_border_transfer': 'str — transfer details or "None"',
+                'security_measures': 'str — technical and organizational measures',
+            },
+        ],
+        'summary': {
+            'total_activities': 'int',
+            'has_cross_border_transfers': 'str — Yes/No',
+        },
+    },
+
+    # ── Risk Treatment Plan (ISO 27001 Clause 8.3 / ISO 31000) ─────────────
+    'Risk_Treatment_Plan': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'risk_assessment_reference': 'str — reference to risk assessment report',
+        'risks': [
+            {
+                'risk_id': 'str — e.g. RISK-001',
+                'risk_description': 'str — description of the risk',
+                'source': 'str — risk source or threat',
+                'likelihood': 'str — Very Low/Low/Medium/High/Very High',
+                'impact': 'str — Very Low/Low/Medium/High/Very High',
+                'risk_level': 'str — Low/Medium/High/Critical',
+                'treatment_option': 'str — Avoid/Reduce/Transfer/Accept',
+                'treatment_details': 'str — detailed treatment plan description',
+                'selected_controls': 'str — Annex A or other controls selected',
+                'risk_owner': 'str — responsible person',
+                'target_date': 'str DD/MM/YYYY',
+                'status': 'str — Open/In Progress/Implemented/Closed',
+            },
+        ],
+        'summary': {
+            'total_risks': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+        },
+    },
+
+    # ── Incident Investigation Report (ISO 45001 Clause 10.2) ──────────────
+    'Incident_Investigation_Report': {
+        'client_name': 'str',
+        'incident_date': 'str DD/MM/YYYY',
+        'report_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'incident_description': 'str — detailed incident description',
+        'location': 'str — incident location',
+        'incident_type': 'str — Near Miss/First Aid/Medical Treatment/Lost Time/Fatality/Property Damage',
+        'severity': 'str — Low/Medium/High/Critical',
+        'investigation_team': [
+            {'name': 'str', 'role': 'str'},
+        ],
+        'root_cause': 'str — root cause analysis findings (2-3 paragraphs)',
+        'immediate_actions': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str'},
+        ],
+        'corrective_actions': [
+            {'action': 'str', 'owner': 'str', 'due_date': 'str'},
+        ],
+        'lessons_learned': ['str — lessons identified from the incident'],
+        'recommendations': ['str — recommendations to prevent recurrence'],
+        'status': 'str — Open/In Progress/Closed',
+        'reviewed_by': 'str',
+    },
+
+    # ── Internal Audit Program (ISO Clause 9.2) ────────────────────────────
+    'Internal_Audit_Program': {
+        'client_name': 'str',
+        'program_year': 'str — e.g. 2026',
+        'standard': 'str',
+        'audit_manager': 'str',
+        'audits': [
+            {
+                'audit_id': 'str — e.g. IA-2026-001',
+                'scope': 'str — audit scope description',
+                'audit_type': 'str — Full/Partial/Follow-up/Special',
+                'planned_date': 'str DD/MM/YYYY',
+                'auditor': 'str',
+                'auditee_department': 'str',
+                'status': 'str — Planned/In Progress/Completed/Cancelled',
+                'findings_count': 'int',
+            },
+        ],
+        'summary': {
+            'total_audits': 'int',
+            'planned': 'int',
+            'in_progress': 'int',
+            'completed': 'int',
+            'cancelled': 'int',
+        },
+    },
 }
 
 

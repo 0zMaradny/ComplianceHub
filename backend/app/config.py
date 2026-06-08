@@ -97,6 +97,11 @@ OUTPUT_DOCUMENTS = [
     'Corrective_Action_Report',
     'Gap_Analysis_Report',
     'Statement_of_Applicability',
+    'Business_Impact_Analysis',
+    'Records_of_Processing_Activities',
+    'Risk_Treatment_Plan',
+    'Incident_Investigation_Report',
+    'Internal_Audit_Program',
 ]
 
 DOC_LABELS = {
@@ -112,6 +117,11 @@ DOC_LABELS = {
     'Corrective_Action_Report': 'Corrective Action Report',
     'Gap_Analysis_Report': 'Gap Analysis Report',
     'Statement_of_Applicability': 'Statement of Applicability (SoA)',
+    'Business_Impact_Analysis': 'Business Impact Analysis (BIA)',
+    'Records_of_Processing_Activities': 'Records of Processing Activities (ROPA)',
+    'Risk_Treatment_Plan': 'Risk Treatment Plan',
+    'Incident_Investigation_Report': 'Incident Investigation Report',
+    'Internal_Audit_Program': 'Internal Audit Program',
 }
 
 DEFAULT_LOGO_PATH = os.path.join(BASE_DIR, 'static', 'tuv_logo.png')

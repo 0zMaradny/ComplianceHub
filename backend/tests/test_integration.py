@@ -173,7 +173,7 @@ class TestDocumentGenerators:
             generate_audit_report, generate_iso_checklist,
             GENERATORS
         )
-        assert len(GENERATORS) == 12
+        assert len(GENERATORS) == 17
 
     def test_all_generators_have_client_key(self):
         import inspect
@@ -394,7 +394,7 @@ class TestOfflineGenerator:
             "Lead Auditor: John Doe\nTotal Mandays: 5",
             ["ISO 27001:2022"], ["iso_27001"]
         )
-        assert len(results) >= 6
+        assert len(results) >= 17
         for doc_type, data in results.items():
             assert "error" not in data or data.get("client_name") is not None
 

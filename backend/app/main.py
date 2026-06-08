@@ -175,7 +175,14 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
               'controls', 'action_items', 'agenda_items', 'decisions',
               'root_cause', 'overall_assessment', 'status',
               'review_date', 'next_review_date', 'car_number', 'nc_reference',
-              'severity', 'recommended_action', 'priority'):
+              'severity', 'recommended_action', 'priority',
+              'critical_activities', 'overall_findings',
+              'processing_activities', 'data_controller', 'data_protection_officer',
+              'risks', 'risk_assessment_reference',
+              'incident_date', 'incident_description', 'location', 'incident_type',
+              'investigation_team', 'immediate_actions', 'corrective_actions',
+              'lessons_learned', 'recommendations', 'reviewed_by',
+              'program_year', 'audit_manager', 'audits'):
         if k in doc_data:
             doc_info[k] = doc_data[k]
     return doc_info
@@ -559,6 +566,26 @@ def get_status(job_id: str):
                 cleaned['summary'] = data.get('summary', {})
             elif doc_type == 'Statement_of_Applicability':
                 cleaned['total_controls'] = len(data.get('controls', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Business_Impact_Analysis':
+                cleaned['total_activities'] = len(data.get('critical_activities', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Records_of_Processing_Activities':
+                cleaned['total_activities'] = len(data.get('processing_activities', []))
+                cleaned['data_controller'] = data.get('data_controller', '')
+                cleaned['data_protection_officer'] = data.get('data_protection_officer', '')
+            elif doc_type == 'Risk_Treatment_Plan':
+                cleaned['total_risks'] = len(data.get('risks', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Incident_Investigation_Report':
+                cleaned['incident_type'] = data.get('incident_type', '')
+                cleaned['severity'] = data.get('severity', '')
+                cleaned['incident_date'] = data.get('incident_date', '')
+                cleaned['status'] = data.get('status', '')
+                cleaned['location'] = data.get('location', '')
+            elif doc_type == 'Internal_Audit_Program':
+                cleaned['program_year'] = data.get('program_year', '')
+                cleaned['total_audits'] = len(data.get('audits', []))
                 cleaned['summary'] = data.get('summary', {})
             cleaned_results[doc_type] = cleaned
 

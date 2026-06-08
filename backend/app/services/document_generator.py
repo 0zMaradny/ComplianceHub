@@ -1297,6 +1297,320 @@ def generate_statement_of_applicability(data, output_path, client_key: str = Non
     return output_path
 
 
+# ── Business Impact Analysis (ISO 22301 Clause 8.2.1) ───────────────────────
+
+def generate_business_impact_analysis(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Business Impact Analysis (BIA)',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('assessment_date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Methodology', client_key=client_key)
+    add_body_text(doc, data.get('methodology', ''), client_key=client_key)
+
+    activities = data.get('critical_activities', [])
+    if activities:
+        add_section_heading(doc, 'Critical Activities Assessment', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Activity', 'RTO', 'RPO', 'MTD', 'Impact Criteria', 'Dependencies', 'Recovery Strategy', 'Priority'], client_key=client_key)
+
+        for act in activities:
+            priority = act.get('priority', '')
+            row_color = None
+            if priority == 'Critical':
+                row_color = RGBColor(0xCC, 0x00, 0x00)
+            elif priority == 'High':
+                row_color = RGBColor(0xCC, 0x7A, 0x00)
+            elif priority == 'Medium':
+                row_color = RGBColor(0x00, 0x80, 0x00)
+
+            add_data_row(table, [
+                act.get('activity', ''),
+                act.get('rto', ''),
+                act.get('rpo', ''),
+                act.get('mtd', ''),
+                act.get('impact_criteria', ''),
+                act.get('dependencies', ''),
+                act.get('recovery_strategy', ''),
+                priority,
+            ], color=row_color, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Activities Assessed: {summary.get('total_activities', 0)}", client_key=client_key)
+        add_body_text(doc, f"Critical: {summary.get('critical', 0)}", client_key=client_key)
+        add_body_text(doc, f"High: {summary.get('high', 0)}", client_key=client_key)
+        add_body_text(doc, f"Medium: {summary.get('medium', 0)}", client_key=client_key)
+        add_body_text(doc, f"Low: {summary.get('low', 0)}", client_key=client_key)
+
+    findings = data.get('overall_findings', '')
+    if findings:
+        add_section_heading(doc, 'Overall Findings', client_key=client_key)
+        add_body_text(doc, findings, client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Records of Processing Activities (ISO 27701 Clause 7.6) ────────────────
+
+def generate_records_of_processing_activities(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Records of Processing Activities (ROPA)',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Data Controller Information', client_key=client_key)
+    add_body_text(doc, f"Data Controller: {data.get('data_controller', 'N/A')}", client_key=client_key)
+    add_body_text(doc, f"DPO: {data.get('data_protection_officer', 'N/A')}", client_key=client_key)
+
+    activities = data.get('processing_activities', [])
+    if activities:
+        add_section_heading(doc, 'Processing Activities Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        headers = ['Activity ID', 'Activity Name', 'Purpose', 'Data Subjects', 'Data Categories', 'Retention', 'Cross-Border Transfer', 'Security Measures']
+        add_header_row(table, headers, client_key=client_key)
+
+        for act in activities:
+            add_data_row(table, [
+                act.get('activity_id', ''),
+                act.get('activity_name', ''),
+                act.get('purpose', ''),
+                act.get('data_subjects', ''),
+                act.get('personal_data_categories', ''),
+                act.get('retention_period', ''),
+                act.get('cross_border_transfer', ''),
+                act.get('security_measures', ''),
+            ], client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Processing Activities: {summary.get('total_activities', 0)}", client_key=client_key)
+        add_body_text(doc, f"Cross-Border Transfers: {summary.get('has_cross_border_transfers', 'N/A')}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Risk Treatment Plan (ISO 27001 Clause 8.3) ────────────────────────────
+
+def generate_risk_treatment_plan(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Risk Treatment Plan',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Risk Assessment Reference', client_key=client_key)
+    add_body_text(doc, data.get('risk_assessment_reference', ''), client_key=client_key)
+
+    risks = data.get('risks', [])
+    if risks:
+        add_section_heading(doc, 'Risk Treatment Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=11)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Risk ID', 'Description', 'Source', 'Likelihood', 'Impact', 'Risk Level',
+                               'Treatment Option', 'Treatment Details', 'Selected Controls', 'Risk Owner', 'Target Date', 'Status'], client_key=client_key)
+
+        for risk in risks:
+            level = risk.get('risk_level', '')
+            row_color = None
+            if level == 'Critical':
+                row_color = TUV_RED
+            elif level == 'High':
+                row_color = RGBColor(0xCC, 0x7A, 0x00)
+            elif level == 'Medium':
+                row_color = RGBColor(0x00, 0x80, 0x00)
+
+            add_data_row(table, [
+                risk.get('risk_id', ''),
+                risk.get('risk_description', ''),
+                risk.get('source', ''),
+                risk.get('likelihood', ''),
+                risk.get('impact', ''),
+                level,
+                risk.get('treatment_option', ''),
+                risk.get('treatment_details', ''),
+                risk.get('selected_controls', ''),
+                risk.get('risk_owner', ''),
+                risk.get('target_date', ''),
+                risk.get('status', ''),
+            ], color=row_color, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Risks: {summary.get('total_risks', 0)}", client_key=client_key)
+        add_body_text(doc, f"Critical: {summary.get('critical', 0)}", client_key=client_key)
+        add_body_text(doc, f"High: {summary.get('high', 0)}", client_key=client_key)
+        add_body_text(doc, f"Medium: {summary.get('medium', 0)}", client_key=client_key)
+        add_body_text(doc, f"Low: {summary.get('low', 0)}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Incident Investigation Report (ISO 45001 Clause 10.2) ─────────────────
+
+def generate_incident_investigation_report(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Incident Investigation Report',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('report_date', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Incident Information', client_key=client_key)
+    fields = [
+        ('Incident Date', data.get('incident_date', 'N/A')),
+        ('Report Date', data.get('report_date', 'N/A')),
+        ('Location', data.get('location', 'N/A')),
+        ('Incident Type', data.get('incident_type', 'N/A')),
+        ('Severity', data.get('severity', 'N/A')),
+        ('Status', data.get('status', 'Open')),
+    ]
+    for label, val in fields:
+        add_body_text(doc, f'{label}: {val}', client_key=client_key)
+
+    desc = data.get('incident_description', '')
+    if desc:
+        add_section_heading(doc, 'Incident Description', client_key=client_key)
+        add_body_text(doc, desc, client_key=client_key)
+
+    team = data.get('investigation_team', [])
+    if team:
+        add_section_heading(doc, 'Investigation Team', client_key=client_key)
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Name', 'Role'], client_key=client_key)
+        for m in team:
+            add_data_row(table, [m.get('name', ''), m.get('role', '')], client_key=client_key)
+
+    rc = data.get('root_cause', '')
+    if rc:
+        add_section_heading(doc, 'Root Cause Analysis', client_key=client_key)
+        add_body_text(doc, rc, client_key=client_key)
+
+    imm = data.get('immediate_actions', [])
+    if imm:
+        add_section_heading(doc, 'Immediate Actions Taken', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date'], client_key=client_key)
+        for act in imm:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', '')], client_key=client_key)
+
+    corr = data.get('corrective_actions', [])
+    if corr:
+        add_section_heading(doc, 'Corrective Actions', client_key=client_key)
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Action', 'Owner', 'Due Date'], client_key=client_key)
+        for act in corr:
+            add_data_row(table, [act.get('action', ''), act.get('owner', ''), act.get('due_date', '')], client_key=client_key)
+
+    lessons = data.get('lessons_learned', [])
+    if lessons:
+        add_section_heading(doc, 'Lessons Learned', client_key=client_key)
+        for i, lesson in enumerate(lessons, 1):
+            add_body_text(doc, f'{i}. {lesson}', client_key=client_key)
+
+    recs = data.get('recommendations', [])
+    if recs:
+        add_section_heading(doc, 'Recommendations', client_key=client_key)
+        for i, rec in enumerate(recs, 1):
+            add_body_text(doc, f'{i}. {rec}', client_key=client_key)
+
+    add_section_heading(doc, 'Review', client_key=client_key)
+    add_body_text(doc, f'Reviewed By: {data.get("reviewed_by", "N/A")}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+# ── Internal Audit Program (ISO Clause 9.2) ────────────────────────────────
+
+def generate_internal_audit_program(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+
+    doc = Document()
+    setup_document(doc, client_key=client_key)
+    add_cover_page(doc, 'Internal Audit Program',
+                   data.get('client_name', 'N/A'),
+                   data.get('standard', 'N/A'),
+                   data.get('program_year', 'N/A'),
+                   client_key=client_key)
+
+    add_section_heading(doc, 'Program Information', client_key=client_key)
+    add_body_text(doc, f'Audit Manager: {data.get("audit_manager", "N/A")}', client_key=client_key)
+    add_body_text(doc, f'Program Year: {data.get("program_year", "N/A")}', client_key=client_key)
+
+    audits = data.get('audits', [])
+    if audits:
+        add_section_heading(doc, 'Audit Schedule', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Audit ID', 'Scope', 'Type', 'Planned Date', 'Auditor', 'Department', 'Status', 'Findings'], client_key=client_key)
+
+        for a in audits:
+            status = a.get('status', '')
+            row_color = None
+            if status == 'Completed':
+                row_color = RGBColor(0x00, 0x80, 0x00)
+            elif status == 'In Progress':
+                row_color = RGBColor(0xCC, 0x7A, 0x00)
+            elif status == 'Cancelled':
+                row_color = RGBColor(0x99, 0x99, 0x99)
+
+            add_data_row(table, [
+                a.get('audit_id', ''),
+                a.get('scope', ''),
+                a.get('audit_type', ''),
+                a.get('planned_date', ''),
+                a.get('auditor', ''),
+                a.get('auditee_department', ''),
+                status,
+                str(a.get('findings_count', 0)),
+            ], color=row_color, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        add_body_text(doc, f"Total Audits: {summary.get('total_audits', 0)}", client_key=client_key)
+        add_body_text(doc, f"Planned: {summary.get('planned', 0)}", client_key=client_key)
+        add_body_text(doc, f"In Progress: {summary.get('in_progress', 0)}", client_key=client_key)
+        add_body_text(doc, f"Completed: {summary.get('completed', 0)}", client_key=client_key)
+        add_body_text(doc, f"Cancelled: {summary.get('cancelled', 0)}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
 # ── Generator registry ─────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -1312,6 +1626,11 @@ GENERATORS = {
     'Corrective_Action_Report': generate_corrective_action_report,
     'Gap_Analysis_Report': generate_gap_analysis_report,
     'Statement_of_Applicability': generate_statement_of_applicability,
+    'Business_Impact_Analysis': generate_business_impact_analysis,
+    'Records_of_Processing_Activities': generate_records_of_processing_activities,
+    'Risk_Treatment_Plan': generate_risk_treatment_plan,
+    'Incident_Investigation_Report': generate_incident_investigation_report,
+    'Internal_Audit_Program': generate_internal_audit_program,
 }
 
 

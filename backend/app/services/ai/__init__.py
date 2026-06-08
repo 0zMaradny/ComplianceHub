@@ -29,19 +29,14 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         'claude': ('.claude_provider', 'ClaudeProvider'),
         'hf': ('.hf_provider', 'HFProvider'),
         'local': ('.local_provider', 'LocalProvider'),
-        # OpenRouter free-tier models (no individual API key needed)
-        'fusion': ('.openrouter_provider', 'OpenRouterProvider'),
-        'gpt_oss_120b': ('.openrouter_provider', 'OpenRouterProvider'),
+        'agentrouter': ('.agentrouter_provider', 'AgentRouterProvider'),
+        'groq': ('.groq_provider', 'GroqProvider'),
+        'openrouter': ('.openrouter_provider', 'OpenRouterProvider'),
     }
     mod_path, cls_name = providers.get(name, providers['gemini'])
     import importlib
-    mod_path, cls_name = providers.get(name, providers['local'])
     mod = importlib.import_module(mod_path, __package__)
     cls = getattr(mod, cls_name)
-    # OpenRouter provider needs the provider_name to select the right model
-    if cls_name == 'OpenRouterProvider':
-        inst = cls(provider_name=name)
-    else:
-        inst = cls()
+    inst = cls()
     _PROVIDER_CACHE[name] = inst
     return inst

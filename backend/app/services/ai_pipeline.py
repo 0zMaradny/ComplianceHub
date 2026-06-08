@@ -443,6 +443,113 @@ Return JSON with:
 - based_on_risk_assessment: string — reference to risk assessment (1 sentence)
 - controls: list of {{control_ref: string (e.g. "A.5.1"), control_title: string, applicability: "Applicable"/"Not Applicable", justification: string (2 sentences with risk context), selected_control: string, implementation_status: "Planned"/"In Progress"/"Implemented"/"Not Implemented", responsible: string}} — include ALL Annex A controls grouped by theme (A.5 Organizational: 37 controls, A.6 People: 8 controls, A.7 Physical: 14 controls, A.8 Technological: 34 controls)
 - summary: {{total_controls: int, applicable: int, not_applicable: int, implemented: int, not_implemented: int}}""",
+
+        'Business_Impact_Analysis': f"""Generate a Business Impact Analysis (BIA) for ISO 22301:2019 Business Continuity Management. Identifies critical activities, RTO/RPO/MTD, dependencies, and recovery strategies. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- assessment_date: string (DD/MM/YYYY)
+- standard: string
+- methodology: string — BIA methodology description (2-3 sentences)
+- critical_activities: list of {{activity: string, rto: string, rpo: string, mtd: string, impact_criteria: string, dependencies: string, recovery_strategy: string, priority: string ("Critical"/"High"/"Medium"/"Low")}} — include 5-8 critical activities
+- summary: {{total_activities: int, critical: int, high: int, medium: int, low: int}}
+- overall_findings: string — 2-3 FULL PARAGRAPHS with BIA outcomes, key dependencies, and recommendations""",
+
+        'Records_of_Processing_Activities': f"""Generate a Record of Processing Activities (ROPA) per ISO 27701:2025 Clause 7.6 / GDPR Article 30. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- data_controller: string — legal entity name
+- data_protection_officer: string — DPO contact
+- processing_activities: list of {{activity_id: string, activity_name: string, purpose: string, data_subjects: string, personal_data_categories: string, retention_period: string, cross_border_transfer: string, security_measures: string}} — include 4-6 processing activities covering HR, CRM, Marketing, Suppliers, Security, IT
+- summary: {{total_activities: int, has_cross_border_transfers: string ("Yes"/"No")}}""",
+
+        'Risk_Treatment_Plan': f"""Generate a Risk Treatment Plan for ISO 27001:2022 Clause 8.3. Documents how identified risks will be treated with selected controls and timelines. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- risk_assessment_reference: string
+- risks: list of {{risk_id: string, risk_description: string, source: string, likelihood: string ("Very Low"/"Low"/"Medium"/"High"/"Very High"), impact: string ("Very Low"/"Low"/"Medium"/"High"/"Very High"), risk_level: string ("Low"/"Medium"/"High"/"Critical"), treatment_option: string ("Avoid"/"Reduce"/"Transfer"/"Accept"), treatment_details: string (2-3 sentences), selected_controls: string (Annex A references), risk_owner: string, target_date: string (DD/MM/YYYY), status: string ("Open"/"In Progress"/"Implemented"/"Closed")}} — include 6-10 risks covering technical, organizational, physical, and compliance risks
+- summary: {{total_risks: int, critical: int, high: int, medium: int, low: int}}""",
+
+        'Incident_Investigation_Report': f"""Generate an Incident Investigation Report for ISO 45001:2018 Clause 10.2. Documents incident details, root cause, corrective actions, and lessons learned. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- incident_date: string (DD/MM/YYYY)
+- report_date: string (DD/MM/YYYY)
+- standard: string
+- incident_description: string — 3-4 sentences with date, time, location, what happened
+- location: string
+- incident_type: string — "Near Miss"/"First Aid"/"Medical Treatment"/"Lost Time"/"Fatality"/"Property Damage"
+- severity: string — "Low"/"Medium"/"High"/"Critical"
+- investigation_team: list of {{name: string, role: string}} — 3-5 team members
+- root_cause: string — 2-3 paragraphs using 5 Whys or fishbone methodology
+- immediate_actions: list of {{action: string, owner: string, due_date: string}} — 3-4 immediate containment actions
+- corrective_actions: list of {{action: string, owner: string, due_date: string}} — 3-5 corrective actions
+- lessons_learned: list of strings — 3-5 lessons
+- recommendations: list of strings — 3-5 recommendations
+- status: string — "Open"/"In Progress"/"Closed"
+- reviewed_by: string""",
+
+        'Internal_Audit_Program': f"""Generate an Internal Audit Program for ISO Clause 9.2 covering the annual audit schedule across the management system. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- program_year: string (e.g. "2026")
+- standard: string
+- audit_manager: string
+- audits: list of {{audit_id: string, scope: string, audit_type: string ("Full"/"Partial"/"Follow-up"/"Special"), planned_date: string (DD/MM/YYYY), auditor: string, auditee_department: string, status: string ("Planned"/"In Progress"/"Completed"/"Cancelled"), findings_count: int}} — include 6-10 audits spread across the year covering all relevant clauses
+- summary: {{total_audits: int, planned: int, in_progress: int, completed: int, cancelled: int}}""",
     }
     return prompts.get(doc_type, prompts['Audit_Report'])
 

@@ -9,6 +9,9 @@ PROVIDER_LIMITS = {
     'openai': 60,
     'claude': 50,
     'local': 30,
+    'groq': 30,
+    'openrouter': 30,
+    'agentrouter': 60,
 }
 
 

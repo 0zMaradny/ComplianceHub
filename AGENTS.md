@@ -1,13 +1,31 @@
 # ComplianceHub — Agent Instructions
 
-## Content Modes (API Key → Provider Chain)
+## AI Provider Architecture (4-Tier Fallback)
 
-| Mode | API Key | Provider Chain | Speed | Quality |
-|------|---------|----------------|-------|---------|
-| **HF Free** | HF_API_KEY set | hf → local → offline | Fast | 7/8 docs via Llama-3-8B |
-| **Cloud AI** | Valid Gemini/OpenAI key | gemini → openai → hf → local | Fast | Best (all 8) |
-| **Local AI** | Empty (+ model running) | local → offline | Slow | ~6-7/8 docs |
-| **Offline** | Empty (no model) | offline only | Instant | Professional |
+```
+generate() / extract_structured()
+  ├─ Cache check (md5, 1h TTL)
+  ├─ Tier 1: AgentRouter (single, paid, highest quality)
+  │   └─ fail → Tier 2: ThreadPoolExecutor(Groq, OpenRouter, HF) — first valid JSON wins
+  │       └─ all fail → Tier 3: local AI (qwen-0.5b)
+  │           └─ fail → return error
+```
+
+| Tier | Provider | Model | Cost | Speed | Quality |
+|------|----------|-------|------|-------|---------|
+| **1** | AgentRouter | agentrouter/claude-sonnet-4-20250514 | Paid (key in .env) | Fast | Best |
+| **2a** | Groq | llama-3.3-70b-versatile | **Free** (~800 t/s) | Fastest | Good |
+| **2b** | OpenRouter | mistral-small-3.1-24b → openrouter/free fallback | Cheap → **Free** | Fast | Good |
+| **2c** | HuggingFace | meta-llama/Meta-Llama-3-8B-Instruct | **Free** tier | Medium | Good |
+| **3** | Local AI | qwen-0.5b (469MB) | $0 | Slow (~20s/doc) | OK |
+| **Offline** | Template engine | Static generation | $0 | Instant (3.2s/8docs) | Professional |
+
+### API Key Setup
+- `.env` keys: `AGENTROUTER_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `HF_API_KEY`
+- AgentRouter: https://agentrouter.org
+- Groq: https://console.groq.com/keys (free, no CC)
+- OpenRouter: https://openrouter.ai/keys (free tier available)
+- HF: https://huggingface.co/settings/tokens (free, enable Inference Providers)
 
 ## Supported Standards (13 total)
 
@@ -34,6 +52,10 @@
 - **`app/services/ai_pipeline.py`**: Injects standard family context (main + supporting standards) and Annex A structure into all AI prompts. Includes few-shot evidence examples for all doc types. Accepts `manday_info` — injects `{manday_summary}` block (audit type, total days, per-standard breakdown, team, IMS reduction) before raw manday text in every prompt.
 - **`app/services/manday_calculator.py`**: IAF MD 5 reference tables for all 13 standards, audit type multipliers (initial=1.0, surv=1/3, recert=2/3, transfer=2/3), IAF MD 11 IMS reduction matrix (15 per-pair reductions, max 20%), `compute_mandays()`, `detect_audit_type()`, `compute_ims_reduction()`, `compute_audit_team()`, `lookup_base_mandays()`.
 - **`app/services/template_manager.py`**: Maps doc types to TÜV template files. `CHECKLIST_TEMPLATES` covers 8 standards (iso_9001, 14001, 45001, 50001, 20000, 22301, 27001 via Excel); remaining 5 standards generate from scratch.
+- **`app/services/ai/router.py`**: 4-tier fallback architecture — AgentRouter (Tier 1) → parallel free tier: Groq+OpenRouter+HF (Tier 2) → local qwen-0.5b (Tier 3) → error. Uses `ThreadPoolExecutor` with future cancellation for parallel execution. Rate limiter, health tracking, and autodebugger self-healing integrated per provider.
+- **`app/services/ai/agentrouter_provider.py`**: OpenAI-compatible client for AgentRouter gateway (`agentrouter.org/v1`). Model: `agentrouter/claude-sonnet-4-20250514`.
+- **`app/services/ai/groq_provider.py`**: OpenAI-compatible client for Groq (`api.groq.com/openai/v1`). Model: `llama-3.3-70b-versatile`. Fastest free inference (~800 t/s).
+- **`app/services/ai/openrouter_provider.py`**: OpenAI-compatible client for OpenRouter (`openrouter.ai/api/v1`). Two-tier: try `mistralai/mistral-small-3.1-24b-instruct` (paid) → fallback to `openrouter/free`.
 - **`frontend/src/components/MandayForm.jsx`**: Collapsible form — audit type dropdown, employee/site inputs, per-standard risk/complexity table, IMS reduction %, real-time calculation preview (total, per-standard, team). Auto-fills from `mandayExtracted`.
 - **`generate_document_file`** in `document_generator.py`: `safe_name` capped to 60 chars with regex sanitization to prevent 500+ char filenames. Merged-cell tables handled gracefully in `set_col_widths` and `_inject_into_template_table`.
 
@@ -81,9 +103,12 @@
 - `cd frontend && npm run lint` — ESLint check
 
 ### Cloud AI Keys
-- `backend/.env` — Set GEMINI_API_KEY, OPENAI_API_KEY, CLAUDE_API_KEY, or HF_API_KEY
-- HF_API_KEY: Get a free token at https://huggingface.co/settings/tokens
-  - Then **enable Inference Providers** at https://huggingface.co/settings/inference-providers
+- `backend/.env` — Current keys: AGENTROUTER_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY, HF_API_KEY (legacy: GEMINI_API_KEY, OPENAI_API_KEY, CLAUDE_API_KEY)
+- AgentRouter: https://agentrouter.org — key prefix `sk-`
+- Groq: https://console.groq.com/keys — free, sign up → copy key (`gsk_` prefix)
+- OpenRouter: https://openrouter.ai/keys — free tier available, key prefix `sk-or-`
+- HF: https://huggingface.co/settings/tokens — free
+  - **enable Inference Providers** at https://huggingface.co/settings/inference-providers
   - Default model: `meta-llama/Meta-Llama-3-8B-Instruct` (fast, good quality)
   - Override via `HF_MODEL` env var in `.env`
   - Token provided (`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`) works with Llama-3-8B and Llama-3.2-1B
@@ -116,7 +141,7 @@
 
 ### Provider Rate Limiting
 - `rate_limiter.py` — sliding window per provider, checked in `router.py` before each call
-- Limits: hf=10, gemini=60, openai=60, claude=50, local=30 req/min
+- Limits: hf=10, gemini=60, openai=60, claude=50, local=30, groq=30, openrouter=30, agentrouter=60 req/min
 - Thread-safe via `threading.Lock()`
 
 ### Provider Health Tracking

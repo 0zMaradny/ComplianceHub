@@ -887,6 +887,363 @@ def generate_statement_of_applicability(data: dict) -> dict:
     }
 
 
+def generate_business_impact_analysis(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 22301:2019')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    activities = [
+        {'activity': 'Order-to-Cash Process', 'rto': '4 hours', 'rpo': '1 hour', 'mtd': '8 hours',
+         'impact_criteria': 'Revenue loss of ~$50K/hour. Regulatory reporting deadlines affected. Customer contractual penalties apply after 6 hours.',
+         'dependencies': 'ERP system, payment gateway, warehouse management, logistics provider, banking APIs',
+         'recovery_strategy': 'Failover to secondary data center with hot-standby ERP. Manual order processing procedures available.',
+         'priority': 'Critical'},
+        {'activity': 'Customer Service Operations', 'rto': '2 hours', 'rpo': 'Real-time', 'mtd': '4 hours',
+         'impact_criteria': 'Customer churn risk, SLA breach penalties up to $10K/day, brand reputation damage.',
+         'dependencies': 'CRM system, telephony platform, knowledge base, ticketing system',
+         'recovery_strategy': 'Cloud-based call routing to backup contact center. Agents can work remotely via VPN.',
+         'priority': 'Critical'},
+        {'activity': 'Production / Manufacturing', 'rto': '8 hours', 'rpo': '4 hours', 'mtd': '24 hours',
+         'impact_criteria': 'Production loss of $20K/hour. Supply chain obligations affected. Fixed costs continue during downtime.',
+         'dependencies': 'SCADA systems, MES, raw material suppliers, logistics, quality testing equipment',
+         'recovery_strategy': 'Alternate production line at secondary site. Contract manufacturing agreement in place.',
+         'priority': 'High'},
+        {'activity': 'IT Infrastructure & Network Operations', 'rto': '2 hours', 'rpo': '30 min', 'mtd': '6 hours',
+         'impact_criteria': 'All other processes depend on IT availability. Security incidents may increase during disruption.',
+         'dependencies': 'Power supply, internet connectivity, cloud providers, data center facilities',
+         'recovery_strategy': 'Dual data center with automatic failover. UPS and generator backup for 72 hours.',
+         'priority': 'Critical'},
+        {'activity': 'HR & Payroll Processing', 'rto': '48 hours', 'rpo': '24 hours', 'mtd': '96 hours',
+         'impact_criteria': 'Employee dissatisfaction, regulatory fines for late payroll, labor law compliance.',
+         'dependencies': 'HRIS system, payroll provider, time tracking system',
+         'recovery_strategy': 'Manual payroll calculation procedures. Backup payroll service provider on retainer.',
+         'priority': 'Medium'},
+        {'activity': 'Procurement & Supplier Management', 'rto': '24 hours', 'rpo': '8 hours', 'mtd': '72 hours',
+         'impact_criteria': 'Supply chain disruption, inability to fulfill customer orders, potential stockouts.',
+         'dependencies': 'Procurement system, supplier portal, inventory management, email/communication',
+         'recovery_strategy': 'Manual purchase order processing with authorized approvers. Offline supplier contact list maintained.',
+         'priority': 'Medium'},
+        {'activity': 'Regulatory Compliance & Reporting', 'rto': '8 hours', 'rpo': '4 hours', 'mtd': '24 hours',
+         'impact_criteria': 'Regulatory fines for late filings, compliance breaches, legal liability.',
+         'dependencies': 'Regulatory filing systems, legal counsel, auditors, board communication channels',
+         'recovery_strategy': 'Duplicate records maintained off-site. Legal counsel retains copies of key filings.',
+         'priority': 'High'},
+    ]
+
+    tiers = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+    for a in activities:
+        p = a['priority']
+        if p in tiers:
+            tiers[p] += 1
+
+    return {
+        'client_name': client,
+        'assessment_date': date,
+        'standard': standard_label,
+        'methodology': (
+            f'The Business Impact Analysis was conducted using a questionnaire-based approach '
+            f'across all business units of {client}. Critical activities were identified based on '
+            f'financial impact, regulatory requirements, customer contractual obligations, and reputational risk. '
+            f'Recovery Time Objectives (RTO), Recovery Point Objectives (RPO), and Maximum Tolerable Downtime (MTD) '
+            f'were determined for each critical activity through stakeholder interviews.'
+        ),
+        'critical_activities': activities,
+        'summary': {
+            'total_activities': len(activities),
+            'critical': tiers['Critical'],
+            'high': tiers['High'],
+            'medium': tiers['Medium'],
+            'low': tiers['Low'],
+        },
+        'overall_findings': (
+            f'The BIA assessed {len(activities)} business activities across {client}\'s operations. '
+            f'Of these, {tiers["Critical"]} activities are classified as critical with maximum tolerance '
+            f'for downtime measured in hours. The order-to-cash and customer service processes have the '
+            f'most stringent RTO requirements at 2-4 hours. '
+            f'IT infrastructure dependencies are pervasive across all critical activities, making data center '
+            f'resilience and network continuity top priorities for the BCMS. '
+            f'Recommendations include conducting annual BIA reviews, establishing formal RTO/RPO agreements '
+            f'with all critical suppliers, and implementing automated failover for Tier 1 systems.'
+        ),
+    }
+
+
+def generate_records_of_processing_activities(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 27701:2025')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    activities = [
+        {
+            'activity_id': 'ROPA-001',
+            'activity_name': 'Employee HR and Payroll Data Processing',
+            'purpose': 'Performance of employment contract — legal obligation (GDPR Art 6.1.b/c). Processing of special category data for social security (Art 9.2.b).',
+            'data_subjects': 'Employees, contractors, interns, former employees',
+            'personal_data_categories': 'Name, address, ID number, bank details, salary, performance records, medical leave data, disciplinary records, training records',
+            'retention_period': 'Duration of employment + 7 years for tax/legal obligations',
+            'cross_border_transfer': 'None — data processed within EU/EEA',
+            'security_measures': 'Access control (RBAC), encryption at rest, pseudonymization for reporting, audit logging, HRIS security certification',
+        },
+        {
+            'activity_id': 'ROPA-002',
+            'activity_name': 'Customer Relationship Management',
+            'purpose': 'Performance of contract (Art 6.1.b) — customer account management, service delivery, invoicing, support.',
+            'data_subjects': 'Customers, prospects, client representatives, end users',
+            'personal_data_categories': 'Name, email, phone, company, job title, billing address, payment history, communication records, support tickets',
+            'retention_period': 'Duration of contract + 3 years for customer relationship management; 7 years for financial records',
+            'cross_border_transfer': 'Data stored in EU data centers. Limited access from US-based support team under SCCs.',
+            'security_measures': 'CRM access controls, data minimization in support portals, encryption in transit, annual access review, data masking for support staff',
+        },
+        {
+            'activity_id': 'ROPA-003',
+            'activity_name': 'Marketing and Communications',
+            'purpose': 'Legitimate interest (Art 6.1.f) / Consent (Art 6.1.a) — newsletter, event invitations, targeted campaigns, analytics.',
+            'data_subjects': 'Marketing prospects, newsletter subscribers, event attendees, website visitors',
+            'personal_data_categories': 'Name, email, company, job title, marketing preferences, browsing behavior on company website, event attendance history',
+            'retention_period': 'Until consent withdrawn or 2 years after last interaction',
+            'cross_border_transfer': 'Email marketing platform based in US — Data Processing Agreement with SCCs in place.',
+            'security_measures': 'Consent management platform, unsubscribe mechanism in all communications, data anonymization for analytics, regular list cleansing',
+        },
+        {
+            'activity_id': 'ROPA-004',
+            'activity_name': 'Supplier and Vendor Management',
+            'purpose': 'Performance of contract (Art 6.1.b) — procurement, vendor evaluation, contract management, payment processing.',
+            'data_subjects': 'Supplier contacts, vendor representatives, subcontractor personnel',
+            'personal_data_categories': 'Name, business email, phone, bank account details, tax ID, contract records, performance evaluations',
+            'retention_period': 'Duration of contract + 5 years for procurement records',
+            'cross_border_transfer': 'None — all suppliers managed within EEA',
+            'security_measures': 'Vendor portal with RBAC, encrypted storage of bank details, supplier DPAs in place, periodic vendor security reviews',
+        },
+        {
+            'activity_id': 'ROPA-005',
+            'activity_name': 'Video Surveillance and Access Control',
+            'purpose': 'Legitimate interest (Art 6.1.f) — premises security, employee safety, property protection, incident investigation.',
+            'data_subjects': 'Employees, visitors, contractors, general public entering premises',
+            'personal_data_categories': 'CCTV footage, access badge records, visitor logs, vehicle registration data',
+            'retention_period': '30 days for CCTV (90 days for incident-related footage). Access logs retained 12 months.',
+            'cross_border_transfer': 'None — on-premises systems',
+            'security_measures': 'Restricted access to CCTV control room, encrypted storage, retention auto-deletion, privacy masking of non-relevant areas, access control audit trail',
+        },
+    ]
+
+    has_transfer = any('cross_border' in a.get('cross_border_transfer', '').lower() or 'transfer' in a.get('cross_border_transfer', '').lower() or 'US' in a.get('cross_border_transfer', '') for a in activities)
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'data_controller': f'{client} — registered address as per company registration',
+        'data_protection_officer': 'DPO@client.com — Data Protection Officer appointed per GDPR Article 37',
+        'processing_activities': activities,
+        'summary': {
+            'total_activities': len(activities),
+            'has_cross_border_transfers': 'Yes' if has_transfer else 'No',
+        },
+    }
+
+
+def generate_risk_treatment_plan(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 27001:2022')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    risks = [
+        {'id': 'RISK-001', 'desc': 'Unauthorized access to customer database containing PII', 'source': 'External attacker / credential theft',
+         'likelihood': 'High', 'impact': 'High', 'level': 'Critical', 'option': 'Reduce',
+         'details': 'Implement MFA for all database access. Deploy database activity monitoring. Conduct quarterly access reviews.',
+         'controls': 'A.8.2, A.8.15, A.8.16, A.5.15, A.5.23', 'owner': 'CISO', 'days': 45},
+        {'id': 'RISK-002', 'desc': 'Ransomware attack on file servers and shared storage', 'source': 'External attacker / phishing email',
+         'likelihood': 'High', 'impact': 'High', 'level': 'Critical', 'option': 'Reduce',
+         'details': 'Deploy endpoint detection and response (EDR). Implement air-gapped backups with 3-2-1 strategy. Conduct phishing awareness training.',
+         'controls': 'A.8.7, A.8.23, A.8.24, A.5.10, A.6.3', 'owner': 'IT Security Manager', 'days': 30},
+        {'id': 'RISK-003', 'desc': 'Data exfiltration via insider threat (malicious or accidental)', 'source': 'Internal employee / contractor',
+         'likelihood': 'Medium', 'impact': 'High', 'level': 'High', 'option': 'Reduce',
+         'details': 'Implement DLP solution for email and web traffic. Enforce least privilege access. Monitor unusual data access patterns.',
+         'controls': 'A.5.9, A.5.15, A.8.11, A.5.18, A.6.4', 'owner': 'IT Security Manager', 'days': 60},
+        {'id': 'RISK-004', 'desc': 'Cloud service provider outage affecting business applications', 'source': 'External dependency / CSP failure',
+         'likelihood': 'Medium', 'impact': 'Medium', 'level': 'High', 'option': 'Transfer',
+         'details': 'Review cloud SLA for credits. Develop runbook for manual fallback. Test annually.',
+         'controls': 'A.5.19, A.5.20, A.5.21, A.8.1', 'owner': 'Cloud Operations Lead', 'days': 90},
+        {'id': 'RISK-005', 'desc': 'Loss of sensitive data during third-party integration', 'source': 'External partner / API vulnerability',
+         'likelihood': 'Medium', 'impact': 'Medium', 'level': 'Medium', 'option': 'Reduce',
+         'details': 'Implement API gateway with authentication and rate limiting. Conduct third-party security assessment. Encrypt data in transit.',
+         'controls': 'A.5.13, A.5.19, A.8.2, A.8.20, A.5.36', 'owner': 'Integration Architect', 'days': 60},
+        {'id': 'RISK-006', 'desc': 'Inadequate incident response capability delaying breach containment', 'source': 'Process deficiency',
+         'likelihood': 'Low', 'impact': 'High', 'level': 'Medium', 'option': 'Reduce',
+         'details': 'Develop and test Incident Response Plan. Conduct tabletop exercises quarterly. Establish 24/7 escalation contacts.',
+         'controls': 'A.5.24, A.5.25, A.5.26, A.5.5', 'owner': 'CISO', 'days': 30},
+        {'id': 'RISK-007', 'desc': 'Compliance violation due to missing records retention', 'source': 'Process deficiency',
+         'likelihood': 'Medium', 'impact': 'Low', 'level': 'Low', 'option': 'Accept',
+         'details': 'Accept residual risk. Monitor via annual compliance audits.',
+         'controls': 'A.5.10, A.5.31, A.8.10', 'owner': 'Compliance Officer', 'days': 90},
+    ]
+
+    levels = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+    for r in risks:
+        lv = r['level']
+        if lv in levels:
+            levels[lv] += 1
+
+    return {
+        'client_name': client,
+        'date': date,
+        'standard': standard_label,
+        'risk_assessment_reference': f'Information Security Risk Assessment for {client} — conducted per ISO 27005:2022 methodology',
+        'risks': [
+            {
+                'risk_id': r['id'],
+                'risk_description': r['desc'],
+                'source': r['source'],
+                'likelihood': r['likelihood'],
+                'impact': r['impact'],
+                'risk_level': r['level'],
+                'treatment_option': r['option'],
+                'treatment_details': r['details'],
+                'selected_controls': r['controls'],
+                'risk_owner': r['owner'],
+                'target_date': (today_dt + timedelta(days=r['days'])).strftime('%d/%m/%Y'),
+                'status': 'Open',
+            }
+            for r in risks
+        ],
+        'summary': {
+            'total_risks': len(risks),
+            'critical': levels['Critical'],
+            'high': levels['High'],
+            'medium': levels['Medium'],
+            'low': levels['Low'],
+        },
+    }
+
+
+def generate_incident_investigation_report(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 45001:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    return {
+        'client_name': client,
+        'incident_date': (today_dt - timedelta(days=7)).strftime('%d/%m/%Y'),
+        'report_date': date,
+        'standard': standard_label,
+        'incident_description': (
+            f'On {(today_dt - timedelta(days=7)).strftime("%d %B %Y")} at approximately 10:30 AM, an incident occurred '
+            f'in the warehouse area of {client}. An employee slipped on a wet surface near the loading dock '
+            f'sustaining a minor ankle injury. The employee was immediately attended to by the first aid team '
+            f'and transported to the nearest medical facility for evaluation. The area was cordoned off and '
+            f'secured pending investigation.'
+        ),
+        'location': 'Warehouse Area — Loading Dock Bay 3',
+        'incident_type': 'Medical Treatment (Minor Injury)',
+        'severity': 'Medium',
+        'investigation_team': [
+            {'name': 'Safety Manager', 'role': 'Lead Investigator'},
+            {'name': 'Warehouse Supervisor', 'role': 'Site Representative'},
+            {'name': 'HR Representative', 'role': 'Witness Coordinator'},
+            {'name': 'Maintenance Lead', 'role': 'Technical Advisor'},
+        ],
+        'root_cause': (
+            'Root cause analysis was conducted using the 5 Whys methodology. '
+            'The immediate cause was a wet floor surface in the loading dock area. '
+            'The underlying causes identified include: (1) A leaking hydraulic line on forklift #FL-07 was not '
+            'reported after the morning pre-use inspection, (2) The designated spill kit near Bay 3 was found '
+            'to be expired and missing absorbent materials, (3) The warehouse floor drainage system in Bay 3 '
+            'was partially blocked preventing proper runoff, (4) No wet floor warning signs were available '
+            'in the immediate area, and (5) The near-miss reporting system had not captured two prior '
+            'incidents of minor slipping in the same area. '
+            'Root cause: Inadequate preventive maintenance reporting system and insufficient spill response '
+            'readiness in high-risk areas.'
+        ),
+        'immediate_actions': [
+            {'action': 'Provide medical treatment and arrange follow-up care for affected employee', 'owner': 'HR Manager', 'due_date': date},
+            {'action': 'Cordon off affected area and deploy temporary non-slip matting', 'owner': 'Warehouse Supervisor', 'due_date': date},
+            {'action': 'Inspect and repair hydraulic system on forklift #FL-07', 'owner': 'Maintenance Lead', 'due_date': (today_dt + timedelta(days=1)).strftime('%d/%m/%Y')},
+            {'action': 'Restock spill kit at Loading Dock Bay 3 and verify all other bay kits', 'owner': 'Safety Manager', 'due_date': (today_dt + timedelta(days=2)).strftime('%d/%m/%Y')},
+        ],
+        'corrective_actions': [
+            {'action': 'Implement daily spill kit inspection checklist for all high-risk areas', 'owner': 'Safety Manager', 'due_date': (today_dt + timedelta(days=7)).strftime('%d/%m/%Y')},
+            {'action': 'Repair drainage system in Bay 3 and inspect adjacent bays', 'owner': 'Maintenance Lead', 'due_date': (today_dt + timedelta(days=14)).strftime('%d/%m/%Y')},
+            {'action': 'Install wet floor warning sign holders at all loading dock entrances', 'owner': 'Warehouse Supervisor', 'due_date': (today_dt + timedelta(days=10)).strftime('%d/%m/%Y')},
+            {'action': 'Revise pre-use inspection checklist to include hydraulic system checks', 'owner': 'Maintenance Lead', 'due_date': (today_dt + timedelta(days=5)).strftime('%d/%m/%Y')},
+        ],
+        'lessons_learned': [
+            'Pre-use inspection checklists should explicitly include hydraulic system checks for forklifts',
+            'Spill kit locations must be verified monthly with documented sign-off',
+            'Near-miss reporting culture needs strengthening — two prior slipping incidents were not formally reported',
+            'Floor drainage maintenance should be included in the preventive maintenance schedule',
+        ],
+        'recommendations': [
+            'Conduct refresher training on incident reporting for all warehouse staff within 30 days',
+            'Implement a digital near-miss reporting tool accessible via mobile devices',
+            'Review and update the spill response procedure to include clear roles and communication protocols',
+            'Install anti-slip flooring in high-risk wet areas during next maintenance shutdown',
+        ],
+        'status': 'In Progress',
+        'reviewed_by': 'Safety Manager',
+    }
+
+
+def generate_internal_audit_program(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 9001:2015')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    year = today_dt.year
+
+    audits = [
+        {'id': f'IA-{year}-001', 'scope': f'Quality Management System — all clauses of {standard_label}', 'type': 'Full',
+         'planned': f'15/02/{year}', 'auditor': 'Internal Auditor A', 'dept': 'All Departments', 'status': 'Completed', 'findings': 5},
+        {'id': f'IA-{year}-002', 'scope': 'Production and Service Provision — Clause 8', 'type': 'Partial',
+          'planned': f'10/04/{year}', 'auditor': 'Internal Auditor B', 'dept': 'Operations', 'status': 'Completed', 'findings': 3},
+        {'id': f'IA-{year}-003', 'scope': 'Procurement and Supplier Management — Clause 8.4', 'type': 'Partial',
+         'planned': f'05/06/{year}', 'auditor': 'Internal Auditor A', 'dept': 'Procurement', 'status': 'In Progress', 'findings': 0},
+         {'id': f'IA-{year}-004', 'scope': 'Management Review and Improvement — Clauses 9 & 10', 'type': 'Partial',
+          'planned': f'12/08/{year}', 'auditor': 'Internal Auditor B', 'dept': 'Management', 'status': 'Planned', 'findings': 0},
+        {'id': f'IA-{year}-005', 'scope': 'Documented Information and Records Control — Clause 7.5', 'type': 'Partial',
+          'planned': f'10/10/{year}', 'auditor': 'Internal Auditor A', 'dept': 'All Departments', 'status': 'Planned', 'findings': 0},
+        {'id': f'IA-{year}-006', 'scope': f'Full {standard_label} Internal Audit — Pre-Certification', 'type': 'Full',
+         'planned': f'20/11/{year}', 'auditor': 'External Lead Auditor', 'dept': 'All Departments', 'status': 'Planned', 'findings': 0},
+    ]
+
+    status_counts = {'Planned': 0, 'In Progress': 0, 'Completed': 0, 'Cancelled': 0}
+    for a in audits:
+        s = a['status']
+        if s in status_counts:
+            status_counts[s] += 1
+
+    return {
+        'client_name': client,
+        'program_year': str(year),
+        'standard': standard_label,
+        'audit_manager': 'Quality Manager',
+        'audits': [
+            {
+                'audit_id': a['id'],
+                'scope': a['scope'],
+                'audit_type': a['type'],
+                'planned_date': a['planned'],
+                'auditor': a['auditor'],
+                'auditee_department': a['dept'],
+                'status': a['status'],
+                'findings_count': a['findings'],
+            }
+            for a in audits
+        ],
+        'summary': {
+            'total_audits': len(audits),
+            'planned': status_counts['Planned'],
+            'in_progress': status_counts['In Progress'],
+            'completed': status_counts['Completed'],
+            'cancelled': status_counts['Cancelled'],
+        },
+    }
+
+
 OFFLINE_GENERATORS = {
     'Audit_Plan_Stage_1': lambda d: generate_audit_plan_stage(d, 'Stage 1 - Readiness Review'),
     'Audit_Plan_Stage_2': lambda d: generate_audit_plan_stage(d, 'Stage 2 - Certification Audit'),
@@ -900,6 +1257,11 @@ OFFLINE_GENERATORS = {
     'Corrective_Action_Report': generate_corrective_action_report,
     'Gap_Analysis_Report': generate_gap_analysis_report,
     'Statement_of_Applicability': generate_statement_of_applicability,
+    'Business_Impact_Analysis': generate_business_impact_analysis,
+    'Records_of_Processing_Activities': generate_records_of_processing_activities,
+    'Risk_Treatment_Plan': generate_risk_treatment_plan,
+    'Incident_Investigation_Report': generate_incident_investigation_report,
+    'Internal_Audit_Program': generate_internal_audit_program,
 }
 
 
