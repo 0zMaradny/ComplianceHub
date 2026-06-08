@@ -28,7 +28,23 @@ from app.services.offline_generator import generate_all as offline_generate_all
 from app.services.clause_data import get_clause_data, get_annex_a_data
 from app.services import db
 
-app = FastAPI(title="ComplianceHub API", version="2.0.0")
+app = FastAPI(
+    title="ComplianceHub API",
+    version="2.0.0",
+    description="TÜV Austria ComplianceHub — ISO audit document generation, project management, and multi-standard IMS platform",
+    openapi_tags=[
+        {"name": "System", "description": "Health check and system status"},
+        {"name": "Standards", "description": "ISO standard definitions and clause data"},
+        {"name": "Document Generation", "description": "Upload, generate, and download audit documents"},
+        {"name": "Excel Export", "description": "Generate Excel workbooks (risk register, BIA, EnMS, KPI)"},
+        {"name": "Clients", "description": "Client configuration and validation"},
+        {"name": "Compliance", "description": "Compliance frameworks and checklists"},
+        {"name": "Audit Workflow", "description": "6-gate audit project lifecycle management"},
+        {"name": "IMS Multi-Standard", "description": "Cross-standard clause mapping and gap analysis"},
+        {"name": "Templates", "description": "Document template management"},
+        {"name": "Analytics", "description": "Dashboard statistics and reporting"},
+    ],
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -872,18 +888,6 @@ def review_evidence(
     if not ev:
         raise HTTPException(status_code=404, detail="Evidence not found")
     return {"success": True, "evidence": ev.to_dict()}
-
-
-# ── Template Management Endpoints ──
-
-@app.get("/api/templates")
-def list_templates():
-    """List all available document and checklist templates."""
-    from app.services.template_manager import TEMPLATE_MAP, CHECKLIST_TEMPLATES
-    return {
-        "doc_templates": TEMPLATE_MAP,
-        "checklist_templates": CHECKLIST_TEMPLATES,
-    }
 
 
 # ── IMS Multi-Standard Endpoints ──
