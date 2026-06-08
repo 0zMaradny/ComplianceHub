@@ -41,7 +41,9 @@
 
 ### Run Servers
 - `bash run.sh` — Start backend + frontend (offline mode)
-- `bash run.sh --local-ai` — Start with local AI model (qwen-0.5b)
+- `bash run.sh --local-ai` — Start with local AI (auto-selects qwen-0.5b)
+- `bash run.sh --local-model=qwen-0.5b` — Start with Qwen2.5-0.5B (469 MB, ~20s/doc)
+- `bash run.sh --no-local-ai` — Explicitly skip local AI
 
 ### Backend (Python / FastAPI)
 - `cd backend && python -m compileall . -q` — Check all Python syntax
@@ -56,12 +58,22 @@
 - `cd frontend && npm run dev` — Development server (port 5173)
 
 ### Local AI (llama.cpp server)
-- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start local 0.5B model (fast)
-- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080 --cache-type-k q8_0 --cache-type-v q8_0` — With KV cache optimization
-- Models: single canonical copy at `/opt/llama-server/models/qwen-0.5b.gguf` (~469 MB, Q4_K_M); repo `models/` is a symlink to `/opt/llama-server/models/`
+- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start Qwen2.5-0.5B (469 MB, ~20s/doc)
+- Models: canonical copy at `/opt/llama-server/models/qwen-0.5b.gguf`; repo `models/` is a symlink to `/opt/llama-server/models/`
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
-- **Model download**: `curl -L -H "Authorization: Bearer $HF_TOKEN" -o /opt/llama-server/models/qwen-0.5b.gguf "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"`
 - **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
+
+### Model Benchmarks (ARM64, 4 threads, CPU-only, 4096 ctx)
+
+| Model | Size | Time/doc | JSON | Verdict |
+|-------|------|----------|------|---------|
+| **qwen-0.5b** (Qwen2.5-0.5B) | **469 MB** | **~20s** | ✅ Valid | **Recommended** |
+| ~~Phi-4 Mini (3.8B)~~ | ~~2.4 GB~~ | ~~~65s~~ | ✅ Valid, nested | ❌ Removed (too slow) |
+| ~~Qwen3-4B~~ | ~~2.4 GB~~ | ~~~90s~~ | ❌ Non-JSON | ❌ Removed (too slow) |
+
+- 4B-class models are impractical on this CPU-only ARM device. Only qwen-0.5b is usable for real-time generation.
+- Cloud AI (HF/OpenAI/Gemini/Claude) provides better quality at higher speed when API keys are available.
+- Offline mode completes all 8 docs in **3.2s total** (0.4s avg/doc) — the fastest option.
 
 ### Code Quality
 - `cd backend && python -m pyflakes app/` — Check for unused imports, undefined vars, bugs (should return **zero**)
@@ -101,6 +113,27 @@
 - 8 standards with template injection: iso_9001, iso_14001, iso_45001, iso_50001, iso_20000, iso_22301, iso_27001 (Excel), iso_45001/50001 (shared combined template)
 - 5 standards from scratch: iso_37301, iso_42001, iso_30401, iso_27701, iso_31000, iso_10002
 - **iso_22301 fix**: table with merged cells (`no 'tc' element`) — graceful fallback to from-scratch generation
+
+### Provider Rate Limiting
+- `rate_limiter.py` — sliding window per provider, checked in `router.py` before each call
+- Limits: hf=10, gemini=60, openai=60, claude=50, local=30 req/min
+- Thread-safe via `threading.Lock()`
+
+### Provider Health Tracking
+- `router.py` tracks consecutive failures per provider in `_provider_health` dict
+- After **3 consecutive fails**, provider is skipped (logged as "degraded")
+- Counter resets to 0 on any successful call
+
+### Response Cache
+- `router.py` caches results by md5 hash of `task_type:prompt`
+- TTL: 1 hour (`_CACHE_TTL = 3600`)
+- Cache hit skips the provider chain entirely
+
+### HF Cooldown
+- `hf_provider.py` detects 402/429/503 errors from HuggingFace Inference API
+- Sets exponential cooldown: 60s → 120s → 300s → 600s max
+- 0.8s inter-request minimum gap
+- Quick-fails on cooldown without wasting an API call
 
 ### Thread Safety
 - `generate_background` wrapper catches all `Exception`, logs traceback, sets `status=error` in progress_store

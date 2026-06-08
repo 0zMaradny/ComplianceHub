@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, startTransition } from 'react'
 
 function formatDate(ts) {
   if (!ts) return '—'
@@ -29,15 +29,31 @@ function History({ API }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [page, setPage] = useState(0)
+  const [search, setSearch] = useState('')
+  const [hasMore, setHasMore] = useState(false)
+  const limit = 15
 
-  useEffect(() => {
-    let cancelled = false
-    fetch(`${API}/jobs`)
+  const fetchJobs = useCallback((pageNum, searchTerm) => {
+    setLoading(true)
+    const params = new URLSearchParams({ limit, offset: pageNum * limit })
+    if (searchTerm) params.set('search', searchTerm)
+    fetch(`${API}/jobs?${params}`)
       .then(r => r.json())
-      .then(data => { if (!cancelled) { setJobs(data.jobs || []); setLoading(false) } })
-      .catch(e => { if (!cancelled) { setError(e.message); setLoading(false) } })
-    return () => { cancelled = true }
+      .then(data => {
+        setJobs(data.jobs || [])
+        setHasMore((data.jobs || []).length >= limit)
+        setLoading(false)
+      })
+      .catch(e => { setError(e.message); setLoading(false) })
   }, [API])
+
+  useEffect(() => { startTransition(() => fetchJobs(page, search)) }, [fetchJobs, page, search])
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value)
+    setPage(0)
+  }
 
   return (
     <div>
@@ -48,55 +64,73 @@ function History({ API }) {
 
       {error && <div className="error-banner">{error}</div>}
 
+      <div style={{ marginBottom: 16 }}>
+        <input
+          type="text"
+          placeholder="Search jobs..."
+          value={search}
+          onChange={handleSearch}
+          style={{ width: '100%', maxWidth: 320, padding: '8px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text)' }}
+        />
+      </div>
+
       {loading ? (
         <div className="loading">Loading...</div>
       ) : jobs.length === 0 ? (
         <div className="empty-state">No jobs found. Generate your first audit documents from the Audit Generator page.</div>
       ) : (
-        <div className="table-container">
-          <table className="jobs-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Standards</th>
-                <th>Status</th>
-                <th>Result</th>
-                <th>Documents</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map(job => {
-                const status = findStatus(job.results)
-                const standards = getStandardsLabel(job.standards)
-                const docCount = job.results && typeof job.results === 'object'
-                  ? Object.keys(job.results).length : 0
-                return (
-                  <tr key={job.job_id} className={selected?.job_id === job.job_id ? 'selected' : ''}>
-                    <td className="nowrap">{formatDate(job.created_at)}</td>
-                    <td className="standards-cell">{standards}</td>
-                    <td>
-                      <span className={`status-badge status-${job.status}`}>{job.status}</span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${status === 'Certified' ? 'done' : status !== '—' ? 'warn' : 'muted'}`}>{status}</span>
-                    </td>
-                    <td>
-                      {docCount > 0 ? (
-                        <div className="doc-links">
-                          <span className="doc-count">{docCount} docs</span>
-                          <a href={`${API}/download/${job.job_id}`} className="btn btn-small btn-primary">ZIP</a>
-                          <button className="btn btn-small btn-secondary" onClick={() => setSelected(job)}>Details</button>
-                        </div>
-                      ) : (
-                        <span className="muted">—</span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="table-container">
+            <table className="jobs-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Standards</th>
+                  <th>Status</th>
+                  <th>Result</th>
+                  <th>Documents</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jobs.map(job => {
+                  const status = findStatus(job.results)
+                  const standards = getStandardsLabel(job.standards)
+                  const docCount = job.results && typeof job.results === 'object'
+                    ? Object.keys(job.results).length : 0
+                  return (
+                    <tr key={job.job_id} className={selected?.job_id === job.job_id ? 'selected' : ''}>
+                      <td className="nowrap">{formatDate(job.created_at)}</td>
+                      <td className="standards-cell">{standards}</td>
+                      <td>
+                        <span className={`status-badge status-${job.status}`}>{job.status}</span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${status === 'Certified' ? 'done' : status !== '—' ? 'warn' : 'muted'}`}>{status}</span>
+                      </td>
+                      <td>
+                        {docCount > 0 ? (
+                          <div className="doc-links">
+                            <span className="doc-count">{docCount} docs</span>
+                            <a href={`${API}/download/${job.job_id}`} className="btn btn-small btn-primary">ZIP</a>
+                            <button className="btn btn-small btn-secondary" onClick={() => setSelected(job)}>Details</button>
+                          </div>
+                        ) : (
+                          <span className="muted">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+            <button className="btn btn-small btn-secondary" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+            <span style={{ padding: '4px 12px', color: 'var(--text-secondary)' }}>Page {page + 1}</span>
+            <button className="btn btn-small btn-secondary" disabled={!hasMore} onClick={() => setPage(p => p + 1)}>Next</button>
+          </div>
+        </>
       )}
 
       {selected && (

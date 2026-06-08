@@ -1,5 +1,7 @@
 import os
 import re
+import logging
+
 from docx import Document
 from docx.shared import Inches, Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -12,6 +14,8 @@ from app.utils import sanitize_filename
 from app.config import DEFAULT_LOGO_PATH
 from app.services.client_config import get_client
 from app.services.bilingual import t, TABLE_HEADERS, COVER_LABELS, METHODOLOGY, CONFIDENTIALITY
+
+logger = logging.getLogger(__name__)
 
 TUV_BLUE = RGBColor(0x00, 0x3D, 0x7A)
 TUV_RED = RGBColor(0xC0, 0x00, 0x00)
@@ -57,7 +61,8 @@ def set_col_widths(table, widths_pct, available_inches=6.5):
     for row in table.rows:
         try:
             cells = row.cells
-        except Exception:
+        except Exception as e:
+            logger.warning('set_col_widths: failed to access row cells: %s', e)
             continue
         for i, cell in enumerate(cells):
             if i < len(widths_pct):
@@ -124,6 +129,14 @@ def add_data_row(table, data, bold=False, color=None, client_key=None):
     return row
 
 
+def _parse_hex_color(val):
+    if isinstance(val, RGBColor):
+        return val
+    if isinstance(val, str) and val.startswith('#'):
+        return RGBColor(int(val[1:3], 16), int(val[3:5], 16), int(val[5:7], 16))
+    return TUV_BLUE
+
+
 def add_cover_page(doc, title, client_name, standard, date, lead_auditor='', client_key=None):
     # Resolve client for colors and language
     header_color = TUV_BLUE
@@ -134,6 +147,7 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor='', cli
             header_color = c.visual.primary_header
             lang = c.language
             labels = COVER_LABELS.get(lang, COVER_LABELS["en"])
+    header_color = _parse_hex_color(header_color)
 
     if os.path.exists(DEFAULT_LOGO_PATH):
         p = doc.add_paragraph()
@@ -149,9 +163,7 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor='', cli
     run = p.add_run(title)
     run.font.size = Pt(24)
     run.bold = True
-    run.font.color.rgb = RGBColor(
-        int(header_color[1:3], 16), int(header_color[3:5], 16), int(header_color[5:7], 16)
-    )
+    run.font.color.rgb = header_color
 
     doc.add_paragraph()
 
@@ -177,9 +189,7 @@ def add_cover_page(doc, title, client_name, standard, date, lead_auditor='', cli
         run = p.add_run(f'{label}: ')
         run.font.size = Pt(11)
         run.bold = True
-        run.font.color.rgb = RGBColor(
-            int(header_color[1:3], 16), int(header_color[3:5], 16), int(header_color[5:7], 16)
-        )
+        run.font.color.rgb = header_color
         run = p.add_run(value)
         run.font.size = Pt(11)
 

@@ -8,6 +8,7 @@ import time
 import asyncio
 import logging
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -148,16 +149,21 @@ def cleanup_old_jobs():
 
 def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=None):
     """Generate DOCX + PDF files from data, return doc_info dict or None."""
+    _t1 = time.perf_counter()
     path = generate_document_file(doc_type, doc_data, output_dir, template_path, standard_key, client_key=client_key)
     if not path:
         return None
+    _docx_t = time.perf_counter() - _t1
     filename = os.path.basename(path)
     doc_info = {'path': path, 'filename': filename}
     try:
-        pdf_info = generate_pdf_file(doc_type, doc_data, output_dir)
-        if pdf_info and os.path.exists(pdf_info.get('path', '')):
-            doc_info['pdf_path'] = pdf_info['path']
-            doc_info['pdf_filename'] = pdf_info.get('filename', os.path.basename(pdf_info['path']))
+        _t2 = time.perf_counter()
+        pdf_path = generate_pdf_file(doc_type, doc_data, output_dir)
+        _pdf_t = time.perf_counter() - _t2
+        if pdf_path and os.path.exists(pdf_path):
+            doc_info['pdf_path'] = pdf_path
+            doc_info['pdf_filename'] = os.path.basename(pdf_path)
+        logger.info('PROFILE filegen %s: DOCX %.2fs + PDF %.2fs = %.2fs', doc_type, _docx_t, _pdf_t, _docx_t + _pdf_t)
     except Exception as e:
         logger.warning("PDF generation failed for %s: %s", doc_type, e)
     for k in ('certification_decision', 'conditions', 'findings_summary',
@@ -171,6 +177,9 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
 
 
 def generate_background(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key=None, manday_config=None):
+    _t0 = time.perf_counter()
+    logger.info('JOB %s START: generate_background with api_key=%s, standards=%s, client_key=%s, manday_config=%s',
+                job_id, bool(api_key), selected_standards, client_key, bool(manday_config))
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
     output_dir = os.path.join(OUTPUT_FOLDER, job_id)
     os.makedirs(output_dir, exist_ok=True)
@@ -187,30 +196,40 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
 
     shared_context = None
     if api_key and api_key.strip().lower() not in ('', 'local'):
+        _ts = time.perf_counter()
         shared_context = extract_shared_context(api_key, notes_text, manday_text)
+        logger.info('JOB %s extract_shared_context took %.2fs', job_id, time.perf_counter() - _ts)
         if 'error' in shared_context:
+            logger.warning('JOB %s extract_shared_context error: %s', job_id, shared_context['error'])
             shared_context = None
 
     manday_info = manday_config if manday_config else None
 
+    # Pre-compute offline results once (reused across doc types)
+    offline_cache = None
+    _offline_timer = None
+
     results = {}
     total = len(OUTPUT_DOCUMENTS)
     client_name = 'Client'
+    completed = 0
+    _nonlocal_lock = threading.Lock()
 
-    for idx, doc_type in enumerate(OUTPUT_DOCUMENTS):
-        label = DOC_LABELS.get(doc_type, doc_type)
-        _update_progress(job_id, status='generating', current_doc=label)
-        # Set doc_progress entry
+    def process_doc(doc_type):
+        nonlocal offline_cache, client_name, _offline_timer
+
+        _t_start = time.perf_counter()
         with _progress_lock:
             if job_id in progress_store:
                 progress_store[job_id]['doc_progress'][doc_type] = 'generating'
-        base_progress = 20 + int((idx / total) * 70)
-        _update_progress(job_id, progress=base_progress)
 
-        # 1) Try AI pipeline (router → local/cloud provider)
         doc_data = None
         ai_error = None
-        if True:
+        _ai_attempted = False
+
+        # 1) Try AI pipeline (router → local/cloud provider)
+        if api_key and api_key.strip().lower() not in ('', 'local'):
+            _ai_attempted = True
             try:
                 ai_result = ai_generate(
                     api_key, notes_text, manday_text,
@@ -224,42 +243,58 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             except Exception as e:
                 ai_error = str(e)
 
-        # 2) If AI failed, fall back to offline generator
+        # 2) If AI failed or no key, fall back to offline generator
         if doc_data is None:
-            offline_results = offline_generate_all(
-                notes_text, manday_text,
-                standards_full, selected_standards
-            )
-            doc_data = offline_results.get(doc_type, {})
+            with _nonlocal_lock:
+                if _offline_timer is None:
+                    _offline_timer = time.perf_counter()
+                if offline_cache is None:
+                    _ts = time.perf_counter()
+                    offline_cache = offline_generate_all(
+                        notes_text, manday_text,
+                        standards_full, selected_standards
+                    )
+                    logger.info('JOB %s offline_generate_all took %.2fs', job_id, time.perf_counter() - _ts)
+            doc_data = offline_cache.get(doc_type, {})
             if 'error' in doc_data:
                 ai_error = ai_error or doc_data['error']
                 doc_data = None
 
-        # 3) Generate the DOCX from whatever data we have
+        # 3) Generate the DOCX + PDF from whatever data we have
         if doc_data:
-            # Inject client_key into doc_data so generators can use it
             if client_key:
                 doc_data['client_key'] = client_key
             doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=client_key)
             if doc_info:
-                if not client_name or client_name == 'Client':
-                    client_name = doc_data.get('client_name', 'Client')
+                with _nonlocal_lock:
+                    if client_name == 'Client':
+                        client_name = doc_data.get('client_name', 'Client')
                 doc_info['_data'] = doc_data
-                results[doc_type] = doc_info
                 with _progress_lock:
                     if job_id in progress_store:
                         progress_store[job_id]['doc_progress'][doc_type] = 'done'
-                _update_progress(job_id, progress=20 + int(((idx + 1) / total) * 70))
-                continue
+                dt = time.perf_counter() - _t_start
+                logger.info('JOB %s doc %s completed in %.2fs (source=%s)', job_id, doc_type, dt, 'ai' if _ai_attempted and ai_error is None else 'offline')
+                return doc_type, doc_info
 
-        results[doc_type] = {'error': ai_error or 'Document generation failed'}
         with _progress_lock:
             if job_id in progress_store:
                 progress_store[job_id]['doc_progress'][doc_type] = 'error'
-        _update_progress(job_id, progress=20 + int(((idx + 1) / total) * 70))
+        logger.warning('JOB %s doc %s FAILED after %.2fs', job_id, doc_type, time.perf_counter() - _t_start)
+        return doc_type, {'error': ai_error or 'Document generation failed'}
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = {executor.submit(process_doc, dt): dt for dt in OUTPUT_DOCUMENTS}
+        for future in as_completed(futures):
+            dt, result = future.result()
+            results[dt] = result
+            completed += 1
+            _update_progress(job_id, current_doc=DOC_LABELS.get(dt, dt),
+                             progress=20 + int((completed / total) * 70))
 
     _update_progress(job_id, progress=95, current_doc='Creating package...')
 
+    _ts = time.perf_counter()
     safe_name = sanitize_filename(client_name)
     zip_name = f'TUV_Audit_Package_{safe_name}.zip'
     zip_path = os.path.join(OUTPUT_FOLDER, f'{job_id}.zip')
@@ -270,12 +305,16 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             if 'pdf_path' in result and os.path.exists(result['pdf_path']):
                 pdf_filename = result.get('pdf_filename') or (result.get('filename', os.path.basename(result['path'])).rsplit('.', 1)[0] + '.pdf')
                 zf.write(result['pdf_path'], pdf_filename)
+    logger.info('JOB %s zip took %.2fs', job_id, time.perf_counter() - _ts)
 
     shutil.rmtree(job_dir, ignore_errors=True)
 
     _update_progress(job_id, status='done', progress=100, current_doc=None,
                      results=results, download_url=f'/api/download/{job_id}',
                      zip_name=zip_name)
+
+    _total = time.perf_counter() - _t0
+    logger.info('JOB %s TOTAL: %.2fs for %d docs (%.2f avg)', job_id, _total, total, _total / total)
 
 
 @app.get("/api/standards", summary="List all ISO standards", description="Returns all supported ISO standards, categories, and document types.")
@@ -320,6 +359,16 @@ async def upload_files(
     if len(content) > MAX_FILE_SIZE:
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=413, detail=f'Audit notes file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
+    # Basic MIME validation: docx must be ZIP (PK), txt should be text
+    if notes_ext == '.docx' and content[:2] != b'PK':
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid DOCX')
+    if notes_ext == '.txt':
+        try:
+            content.decode('utf-8')
+        except UnicodeDecodeError:
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid text file')
     with open(notes_path, 'wb') as f:
         f.write(content)
 
@@ -413,7 +462,9 @@ async def generate_docs(
     api_key: str = Form(''),
     standards: str = Form('[]'),
     client_key: str = Form(''),
+    manday_config: str = Form('null'),
 ):
+    mc = json.loads(manday_config) if manday_config not in ('null', 'None', '') else None
     selected_standards = json.loads(standards)
 
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
@@ -428,8 +479,11 @@ async def generate_docs(
     if not notes_path or not os.path.exists(manday_path):
         raise HTTPException(status_code=400, detail='Uploaded files not found. Please upload again.')
 
-    notes_data = extract_audit_notes(notes_path)
-    manday_data = extract_manday_data(manday_path)
+    try:
+        notes_data = extract_audit_notes(notes_path)
+        manday_data = extract_manday_data(manday_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f'Failed to parse documents: {str(e)}')
     standards_full = [ISO_STANDARDS.get(s, s) for s in selected_standards]
 
     with _progress_lock:
@@ -448,7 +502,7 @@ async def generate_docs(
 
     t = threading.Thread(
         target=generate_background,
-        args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None),
+        args=(job_id, api_key, notes_data, manday_data, standards_full, selected_standards, client_key or None, mc),
         daemon=True,
     )
     t.start()
@@ -536,6 +590,27 @@ def download_doc(job_id: str, doc_type: str):
                 filename=fname,
             )
     raise HTTPException(status_code=404, detail='Document not found')
+
+
+@app.get("/api/download_doc/{job_id}/{doc_type}/pdf")
+def download_doc_pdf(job_id: str, doc_type: str):
+    if not validate_job_id(job_id):
+        raise HTTPException(status_code=400, detail='Invalid job ID')
+    if doc_type not in OUTPUT_DOCUMENTS:
+        raise HTTPException(status_code=400, detail='Invalid document type')
+
+    output_dir = os.path.join(OUTPUT_FOLDER, job_id)
+    if not os.path.exists(output_dir):
+        raise HTTPException(status_code=404, detail='Job output not found')
+
+    for fname in sorted(os.listdir(output_dir)):
+        if fname.startswith(doc_type) and fname.endswith('.pdf'):
+            return FileResponse(
+                os.path.join(output_dir, fname),
+                filename=fname,
+                media_type='application/pdf',
+            )
+    raise HTTPException(status_code=404, detail='PDF not found')
 
 
 # --- Excel generation endpoint ---
@@ -965,9 +1040,8 @@ def get_dashboard(client_key: str = ""):
 
 
 @app.get("/api/jobs")
-def list_jobs(limit: int = 20):
-    """List recent audit generation jobs with basic metadata for the History page."""
-    return {'jobs': db.list_jobs(limit=limit)}
+def list_jobs(limit: int = 20, offset: int = 0, search: str = ""):
+    return {'jobs': db.list_jobs(limit=limit, offset=offset, search=search)}
 
 
 @app.get("/api/stats")

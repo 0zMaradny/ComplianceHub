@@ -5,6 +5,7 @@ BOLD='\033[1m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+RED='\033[0;31m'
 NC='\033[0m'
 
 echo ""
@@ -22,9 +23,22 @@ LOCAL_AI_PORT=8080
 
 # ── Parse args ─────────────────────────────────────────────────────────────
 START_LOCAL=false
+LOCAL_MODEL_NAME=""
+
 for arg in "$@"; do
   case "$arg" in
-    --local-ai) START_LOCAL=true ;;
+    --local-ai)
+      START_LOCAL=true
+      LOCAL_MODEL_NAME=""
+      ;;
+    --local-model=*)
+      START_LOCAL=true
+      LOCAL_MODEL_NAME="${arg#*=}"
+      ;;
+    --no-local-ai)
+      START_LOCAL=false
+      LOCAL_MODEL_NAME=""
+      ;;
   esac
 done
 
@@ -39,28 +53,56 @@ echo -e "  Done"
 # ── Step 2 (optional): Start local AI server ──────────────────────────────
 LOCAL_AI_PID=""
 if [ "$START_LOCAL" = true ]; then
-  if [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
-    echo -e "${YELLOW}[2/4] Starting local AI model on port $LOCAL_AI_PORT ...${NC}"
-    MODEL="$MODEL_DIR/qwen-0.5b.gguf"
-  elif [ -f "$MODEL_DIR/qwen-1.5b.gguf" ]; then
-    echo -e "${YELLOW}[2/4] Starting local AI model on port $LOCAL_AI_PORT ...${NC}"
-    MODEL="$MODEL_DIR/qwen-1.5b.gguf"
+  if [ -n "$LOCAL_MODEL_NAME" ]; then
+    MODEL="$MODEL_DIR/$LOCAL_MODEL_NAME.gguf"
   else
-    echo -e "  ${YELLOW}No model found in $MODEL_DIR. Skipping local AI.${NC}"
-    echo -e "  ${YELLOW}Download: curl -L -H \"Authorization: Bearer \$HF_TOKEN\" -o \$MODEL_DIR/qwen-0.5b.gguf <url>${NC}"
+    # Auto-detect: prefer qwen-0.5b (only model that's fast enough on CPU ARM)
+    if [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
+      MODEL="$MODEL_DIR/qwen-0.5b.gguf"
+      echo -e "  ${CYAN}Auto-selected: qwen-0.5b (~20s/doc)${NC}"
+    fi
   fi
 
-  if [ -n "$MODEL" ]; then
+  if [ -z "$MODEL" ] || [ ! -f "$MODEL" ]; then
+    model_name="${LOCAL_MODEL_NAME:-qwen-0.5b}"
+    echo -e "  ${YELLOW}Model not found: $MODEL_DIR/$model_name.gguf${NC}"
+    echo -e "  ${YELLOW}Available models:${NC}"
+    if ls "$MODEL_DIR"/*.gguf >/dev/null 2>&1; then
+      ls -1 "$MODEL_DIR"/*.gguf | sed 's/^/  /'
+    else
+      echo "  (none)"
+    fi
+    echo -e "  ${YELLOW}Skipping local AI.${NC}"
+  else
+    echo -e "${YELLOW}[2/4] Starting local AI on port $LOCAL_AI_PORT ...${NC}"
+    MODEL_NAME="$(basename "$MODEL")"
+    echo -e "  Model: $MODEL_NAME ($(du -h "$MODEL" | cut -f1))"
     /opt/llama-server/llama-server \
       -m "$MODEL" -c 4096 -t 4 -b 2048 --mlock \
       --host 0.0.0.0 --port $LOCAL_AI_PORT --temp 0.3 \
       > /tmp/llama-server.log 2>&1 &
     LOCAL_AI_PID=$!
     sleep 2
-    echo -e "  ${GREEN}✓ Local AI starting (PID $LOCAL_AI_PID)${NC}"
+
+    # Readiness check: poll /health up to 3 times (5s timeout each)
+    READY=false
+    for i in 1 2 3; do
+      if curl -sf http://127.0.0.1:$LOCAL_AI_PORT/health > /dev/null 2>&1; then
+        READY=true
+        break
+      fi
+      echo -e "  Waiting for model to load... (attempt $i/3)"
+      sleep 3
+    done
+
+    if [ "$READY" = true ]; then
+      echo -e "  ${GREEN}✓ Local AI ready (PID $LOCAL_AI_PID)${NC}"
+    else
+      echo -e "  ${RED}✗ Local AI failed to respond. Check /tmp/llama-server.log${NC}"
+    fi
   fi
 else
-  echo -e "${YELLOW}[2/4] Local AI: disabled (use --local-ai to enable)${NC}"
+  echo -e "${YELLOW}[2/4] Local AI: disabled (use --local-ai or --local-model=<name>)${NC}"
 fi
 
 # ── Step 3: Start backend ──────────────────────────────────────────────────
@@ -96,10 +138,19 @@ echo -e "${BOLD}${GREEN}║  ${CYAN}http://localhost:5173${GREEN}               
 echo -e "${BOLD}${GREEN}║                                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  Content modes:                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Offline (default): no API key needed         ║${NC}"
-echo -e "${BOLD}${GREEN}║  • Local AI: run with --local-ai                ║${NC}"
+echo -e "${BOLD}${GREEN}║  • Local AI: --local-model=<name>               ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Cloud AI: enter Gemini/OpenAI key in UI      ║${NC}"
 if grep -q "^HF_API_KEY=hf_" backend/.env 2>/dev/null; then
   echo -e "${BOLD}${GREEN}║  • HF Free Tier: active (Llama-3-8B via API)    ║${NC}"
+fi
+echo -e "${BOLD}${GREEN}║                                                  ║${NC}"
+echo -e "${BOLD}${GREEN}║  Models:                                         ║${NC}"
+if ls "$MODEL_DIR"/*.gguf >/dev/null 2>&1; then
+  for m in "$MODEL_DIR"/*.gguf; do
+    name="$(basename "$m")"
+    size="$(du -h "$m" | cut -f1)"
+    echo -e "${BOLD}${GREEN}║    $name ($size)              ║${NC}"
+  done
 fi
 echo -e "${BOLD}${GREEN}║                                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  Press Ctrl+C to stop all servers               ║${NC}"

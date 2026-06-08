@@ -1,21 +1,5 @@
 import { useState, useEffect } from 'react'
 
-const ALL_STANDARDS = [
-  { id: 'iso_9001', label: 'ISO 9001:2015', desc: 'Quality Management' },
-  { id: 'iso_14001', label: 'ISO 14001:2015', desc: 'Environmental Management' },
-  { id: 'iso_45001', label: 'ISO 45001:2018', desc: 'OH&S' },
-  { id: 'iso_50001', label: 'ISO 50001:2018', desc: 'Energy Management' },
-  { id: 'iso_27001', label: 'ISO 27001:2022', desc: 'Information Security' },
-  { id: 'iso_20000', label: 'ISO 20000-1:2018', desc: 'Service Management' },
-  { id: 'iso_22301', label: 'ISO 22301:2019', desc: 'Business Continuity' },
-  { id: 'iso_37301', label: 'ISO 37301:2021', desc: 'Compliance Management' },
-  { id: 'iso_42001', label: 'ISO 42001:2023', desc: 'AI Management' },
-  { id: 'iso_30401', label: 'ISO 30401:2018', desc: 'Knowledge Management' },
-  { id: 'iso_27701', label: 'ISO 27701:2025', desc: 'Privacy Information' },
-  { id: 'iso_31000', label: 'ISO 31000:2018', desc: 'Risk Management (Framework)' },
-  { id: 'iso_10002', label: 'ISO 10002:2018', desc: 'Complaints Management' },
-]
-
 const STATUS_ORDER = ['compliant', 'partial', 'non_compliant', 'na']
 const STATUS_LABELS = { compliant: 'Compliant', partial: 'Partial', non_compliant: 'Non-Compliant', na: 'N/A' }
 const STATUS_COLORS = {
@@ -37,11 +21,27 @@ function saveAssessments(assessments) {
 
 export default function Compliance({ API }) {
   const [selected, setSelected] = useState(null)
+  const [allStandards, setAllStandards] = useState([])
   const [clauses, setClauses] = useState([])
   const [annex, setAnnex] = useState({})
   const [loading, setLoading] = useState(false)
   const [assessments, setAssessments] = useState(loadAssessments)
   const [filter, setFilter] = useState('all')
+
+  useEffect(() => {
+    fetch(`${API}/standards`)
+      .then(r => r.json())
+      .then(data => {
+        if (data?.standards) {
+          const list = Object.entries(data.standards).map(([id, label]) => {
+            const parts = label.split(' — ')
+            return { id, label: parts[0] || label, desc: parts[1] || '' }
+          })
+          setAllStandards(list)
+        }
+      })
+      .catch(() => {})
+  }, [API])
 
   const stdKey = selected || '__empty__'
 
@@ -108,7 +108,7 @@ export default function Compliance({ API }) {
         <div className="card">
           <h3>ISO Standards</h3>
           <div className="checkbox-group">
-            {ALL_STANDARDS.map(s => (
+            {allStandards.map(s => (
               <div key={s.id} className="checkbox-item" style={{ cursor: 'pointer', justifyContent: 'space-between' }}
                    onClick={() => setSelected(s.id)}>
                 <div>
@@ -124,7 +124,7 @@ export default function Compliance({ API }) {
     )
   }
 
-  const currentStd = ALL_STANDARDS.find(s => s.id === selected)
+  const currentStd = allStandards.find(s => s.id === selected)
 
   return (
     <div>

@@ -21,7 +21,6 @@ TEMPLATE_MAP = {
 CHECKLIST_TEMPLATES = {
     'iso_9001': 'Form \'FM-TAGMBH-MSZ-010_Audit-Checklist-ISO-9001-EN\' [English] (1).docx',
     'iso_14001': 'Form \'FM-TAGMBH-MSZ-014_Audit-checklist-ISO-14001-EN\' [English] (1).docx',
-    'iso_22000': 'Form \'FM-TAGMBH-MSZ-030_Audit-Checklist-ISO-22000-EN\' [English].docx',
     'iso_27001': 'Form \'FM-TAGMBH-MSZ-023_Audit-Checklist-ISO-27001-EN.xlsx',
     'iso_45001': 'Form \'FM-TAGMBH-MSZ-033-Audit-Checklist-combined-QM-EM-HSE-EN-EN\' [English] (1).docx',
     'iso_50001': 'Form \'FM-TAGMBH-MSZ-033-Audit-Checklist-combined-QM-EM-HSE-EN-EN\' [English] (1).docx',

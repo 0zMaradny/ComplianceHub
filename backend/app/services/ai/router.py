@@ -1,11 +1,26 @@
 import os
+import time
+import hashlib
 import logging
 from typing import Any
 
 from . import create_provider
 from .debugger import Autodebugger
+from .rate_limiter import ProviderRateLimiter
 
 logger = logging.getLogger(__name__)
+
+# ── Rate limiter (per-provider sliding window) ─────────────────────────────
+_rate_limiter = ProviderRateLimiter()
+
+# ── Provider health tracking (skip after 3 consecutive fails) ──────────────
+_provider_health: dict[str, int] = {}
+_PROVIDER_DEGRADE_THRESHOLD = 3
+
+# ── Response cache (md5 hash, 1h TTL) ──────────────────────────────────────
+_response_cache: dict[str, tuple[float, dict]] = {}
+_CACHE_TTL = 3600
+
 
 # ── Task → ordered provider chain ──────────────────────────────────────────
 # First entry is the primary; subsequent entries are fallbacks on failure.
@@ -59,7 +74,6 @@ def set_api_key(provider_name: str, api_key: str):
     var = env_map.get(provider_name)
     if not var or not api_key:
         return
-    # Only set if key looks valid for this provider
     valid_prefixes = {
         'gemini': 'AIza',
         'openai': 'sk-',
@@ -68,7 +82,12 @@ def set_api_key(provider_name: str, api_key: str):
     }
     prefix = valid_prefixes.get(provider_name)
     if prefix and not api_key.startswith(prefix):
-        return  # Don't overwrite env var with non-matching key
+        if api_key == 'hf':
+            return
+        return
+    if api_key.startswith('hf_') or api_key == 'hf':
+        os.environ['HF_API_KEY'] = api_key if api_key != 'hf' else os.environ.get('HF_API_KEY', '')
+        return
     os.environ[var] = api_key
 
 
@@ -119,29 +138,35 @@ def resolve_chain(task_type: str, override_provider: str | None = None, api_key:
     return chain if chain else ['local']
 
 
-def _is_provider_available(provider_name: str, api_key: str = '') -> bool:
-    """Check if a provider is available (has API key or is running)."""
-    # If user explicitly passed a key for this provider, it's available
-    if api_key:
-        if provider_name == 'hf' and (api_key == 'hf' or api_key.startswith('hf_')):
-            return True
-        if provider_name != 'hf' and api_key.startswith(
-            {'gemini': 'AIza', 'openai': 'sk-', 'claude': 'sk-ant-'}.get(provider_name, 'x')
-        ):
-            return True
-    # Check environment variables
-    env_map = {
-        'gemini': 'GEMINI_API_KEY',
-        'openai': 'OPENAI_API_KEY',
-        'claude': 'CLAUDE_API_KEY',
-        'hf': 'HF_API_KEY',
-    }
-    if os.environ.get(env_map.get(provider_name, ''), '').strip():
-        return True
-    # Local provider — check if server is reachable
-    if provider_name == 'local':
-        return True  # Will be checked at call time
-    return True  # Allow attempt — provider itself will fail gracefully
+def _cache_key(task_type: str, prompt: str) -> str:
+    raw = f'{task_type}:{prompt}'
+    return hashlib.md5(raw.encode()).hexdigest()
+
+
+def _check_cache(key: str) -> dict | None:
+    entry = _response_cache.get(key)
+    if entry and (time.time() - entry[0]) < _CACHE_TTL:
+        logger.debug('Cache hit for %s', key[:12])
+        return entry[1]
+    if entry:
+        del _response_cache[key]
+    return None
+
+
+def _set_cache(key: str, result: dict):
+    _response_cache[key] = (time.time(), result)
+
+
+def _is_provider_healthy(provider_name: str) -> bool:
+    return _provider_health.get(provider_name, 0) < _PROVIDER_DEGRADE_THRESHOLD
+
+
+def _mark_provider_success(provider_name: str):
+    _provider_health[provider_name] = 0
+
+
+def _mark_provider_failure(provider_name: str):
+    _provider_health[provider_name] = _provider_health.get(provider_name, 0) + 1
 
 
 def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt: str,
@@ -158,11 +183,29 @@ def _call_with_debugger(task_type: str, provider_name: str, provider_fn, prompt:
 def generate(task_type: str, prompt: str, system_prompt: str | None = None,
              api_key: str = '', override_provider: str | None = None,
              client_key: str = '', **kwargs) -> dict[str, Any]:
-    """Route a generation task through the best provider chain with fallback
-    and autodebugger self-healing on each provider."""
+    # Check cache first
+    ck = _cache_key(task_type, prompt)
+    cached = _check_cache(ck)
+    if cached is not None:
+        return cached
+
     chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     last_error = None
     for provider_name in chain:
+        # Rate limit check
+        if not _rate_limiter.check(provider_name):
+            logger.warning('Provider %s rate-limited, skipping', provider_name)
+            last_error = f'Provider {provider_name} exceeded rate limit'
+            continue
+
+        # Health check
+        if not _is_provider_healthy(provider_name):
+            logger.warning('Provider %s degraded (skipping, %d consecutive fails)',
+                          provider_name, _provider_health.get(provider_name, 0))
+            last_error = f'Provider {provider_name} degraded'
+            continue
+
+        _ts = time.perf_counter()
         try:
             set_api_key(provider_name, api_key)
             provider = create_provider(provider_name)
@@ -172,16 +215,23 @@ def generate(task_type: str, prompt: str, system_prompt: str | None = None,
                 provider.generate, prompt,
                 system_prompt=system_prompt, **kwargs
             )
+            elapsed = time.perf_counter() - _ts
             if 'error' not in result or result['error'] is None:
                 if not validation_errors:
+                    logger.info('PROFILE router %s via %s in %.2fs', task_type, provider_name, elapsed)
+                    _mark_provider_success(provider_name)
+                    _set_cache(ck, result)
                     return result
                 last_error = f"Validation failed after self-heal: {'; '.join(validation_errors)}"
             else:
                 last_error = result['error']
-            logger.warning('Provider %s failed for %s: %s', provider_name, task_type, last_error)
+            logger.warning('Provider %s failed for %s after %.2fs: %s', provider_name, task_type, elapsed, last_error)
+            _mark_provider_failure(provider_name)
         except Exception as e:
+            elapsed = time.perf_counter() - _ts
             last_error = str(e)
-            logger.warning('Provider %s raised exception for %s: %s', provider_name, task_type, last_error)
+            logger.warning('Provider %s raised exception for %s after %.2fs: %s', provider_name, task_type, elapsed, last_error)
+            _mark_provider_failure(provider_name)
     return {'error': f'All providers failed. Last error: {last_error}'}
 
 
@@ -190,9 +240,28 @@ def extract_structured(task_type: str, prompt: str,
                        client_key: str = '', **kwargs) -> dict[str, Any]:
     """Route a structured extraction task through the best provider chain
     with autodebugger self-healing on each provider."""
+    # Check cache first
+    ck = _cache_key(task_type, prompt)
+    cached = _check_cache(ck)
+    if cached is not None:
+        return cached
+
     chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     last_error = None
     for provider_name in chain:
+        # Rate limit check
+        if not _rate_limiter.check(provider_name):
+            logger.warning('Provider %s rate-limited, skipping extraction', provider_name)
+            last_error = f'Provider {provider_name} exceeded rate limit'
+            continue
+
+        # Health check
+        if not _is_provider_healthy(provider_name):
+            logger.warning('Provider %s degraded (skipping extraction, %d consecutive fails)',
+                          provider_name, _provider_health.get(provider_name, 0))
+            last_error = f'Provider {provider_name} degraded'
+            continue
+
         try:
             set_api_key(provider_name, api_key)
             provider = create_provider(provider_name)
@@ -203,12 +272,16 @@ def extract_structured(task_type: str, prompt: str,
             )
             if 'error' not in result or result['error'] is None:
                 if not validation_errors:
+                    _mark_provider_success(provider_name)
+                    _set_cache(ck, result)
                     return result
                 last_error = f"Validation failed after self-heal: {'; '.join(validation_errors)}"
             else:
                 last_error = result['error']
             logger.warning('Provider %s failed extraction for %s: %s', provider_name, task_type, last_error)
+            _mark_provider_failure(provider_name)
         except Exception as e:
             last_error = str(e)
             logger.warning('Provider %s raised exception for extraction %s: %s', provider_name, task_type, last_error)
+            _mark_provider_failure(provider_name)
     return {'error': f'All providers failed. Last error: {last_error}'}

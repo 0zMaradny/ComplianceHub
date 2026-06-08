@@ -24,11 +24,9 @@ class LocalProvider(AIProvider):
         self._healthy = None
 
     def _is_alive(self) -> bool:
-        if self._healthy is False:
-            return False
         try:
             req = urllib.request.Request(f'{self.base_url}/health')
-            urllib.request.urlopen(req, timeout=2)
+            urllib.request.urlopen(req, timeout=3)
             self._healthy = True
             return True
         except Exception:
@@ -46,8 +44,8 @@ class LocalProvider(AIProvider):
             method='POST',
         )
         try:
-            resp = urllib.request.urlopen(req, timeout=self.timeout)
-            return json.loads(resp.read().decode())
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                return json.loads(resp.read().decode())
         except Exception as e:
             return {'error': f'Local AI unavailable: {e}'}
 
@@ -69,13 +67,14 @@ class LocalProvider(AIProvider):
         if 'error' in result:
             return result
 
+        text = ''
         try:
             text = result['choices'][0]['message']['content']
             text = _clean_json(text)
             parsed = json.loads(text)
             return parsed
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            return {'error': f'Failed to parse response: {e}', 'raw': text if 'text' in dir() else ''}
+            return {'error': f'Failed to parse response: {e}', 'raw': text if text else ''}
 
     def extract_structured(self, prompt: str, response_mime_type: str | None = None) -> dict[str, Any]:
         messages = [{'role': 'user', 'content': prompt}]
@@ -90,10 +89,11 @@ class LocalProvider(AIProvider):
         if 'error' in result:
             return result
 
+        text = ''
         try:
             text = result['choices'][0]['message']['content']
             text = _clean_json(text)
             parsed = json.loads(text)
             return parsed
         except (KeyError, IndexError, json.JSONDecodeError) as e:
-            return {'error': f'Failed to parse response: {e}', 'raw': text if 'text' in dir() else ''}
+            return {'error': f'Failed to parse response: {e}', 'raw': text if text else ''}

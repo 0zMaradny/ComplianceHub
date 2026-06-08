@@ -1,154 +1,140 @@
-import { useState, useEffect } from 'react'
 
-const DOC_TYPE_LABELS = {
-  Audit_Plan_Stage_1: 'Audit Plan Stage 1',
-  Audit_Plan_Stage_2: 'Audit Plan Stage 2',
-  Participation_List: 'Participation List',
-  Audit_Report: 'Audit Report',
-  Certificate_Text: 'Certificate Text',
-  TNL: 'Test/Nonconformity Log',
-  Certificate: 'Certificate',
-  ISO_Checklist: 'ISO Compliance Checklist',
-}
-
-const STANDARD_LABELS = {
-  iso_9001: 'ISO 9001:2015',
-  iso_14001: 'ISO 14001:2015',
-  iso_45001: 'ISO 45001:2018',
-  iso_27001: 'ISO 27001:2022',
-  iso_22301: 'ISO 22301:2019',
-  iso_50001: 'ISO 50001:2018',
-  iso_20000: 'ISO 20000:2018',
-  iso_42001: 'ISO 42001:2023',
-  iso_27701: 'ISO 27701:2019',
-  iso_31000: 'ISO 31000:2018',
-  iso_37301: 'ISO 37301:2021',
-  iso_10002: 'ISO 10002:2018',
-  iso_22000: 'ISO 22000:2018',
-  iso_30401: 'ISO 30401:2018',
-}
+import { useState, useEffect, startTransition } from 'react'
 
 export default function Templates({ API }) {
-  const [templates, setTemplates] = useState({ doc_templates: {}, checklist_templates: {} })
+  const [templates, setTemplates] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('all')
+  const [error, setError] = useState(null)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
+    startTransition(() => setLoading(true))
     fetch(`${API}/templates`)
       .then(r => r.json())
-      .then(d => { setTemplates(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(data => {
+        const all = []
+        for (const t of (data.document_templates || [])) {
+          all.push({ ...t, category: 'document' })
+        }
+        for (const t of (data.checklist_templates || [])) {
+          all.push({ ...t, category: 'checklist' })
+        }
+        setTemplates(all)
+        setLoading(false)
+      })
+      .catch(e => { setError(e.message); setLoading(false) })
   }, [API])
 
-  const docTemplates = Object.entries(templates.doc_templates || {})
-  const checklistTemplates = Object.entries(templates.checklist_templates || {})
+  const handleUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    const form = new FormData()
+    form.append('file', file)
+    try {
+      const r = await fetch(`${API}/templates/upload`, { method: 'POST', body: form })
+      const data = await r.json()
+      if (!r.ok) { alert(data.detail || 'Upload failed') }
+      else {
+        setLoading(true)
+        fetch(`${API}/templates`)
+          .then(r => r.json())
+          .then(data => {
+            const all = []
+            for (const t of (data.document_templates || [])) {
+              all.push({ ...t, category: 'document' })
+            }
+            for (const t of (data.checklist_templates || [])) {
+              all.push({ ...t, category: 'checklist' })
+            }
+            setTemplates(all)
+            setLoading(false)
+          })
+          .catch(e => { setError(e.message); setLoading(false) })
+      }
+    } catch { alert('Upload failed') }
+    setUploading(false)
+    e.target.value = ''
+  }
 
-  const filteredChecklist = filter === 'all'
-    ? checklistTemplates
-    : checklistTemplates.filter(([key]) => key.includes(filter.replace('ISO ', 'iso_').split(':')[0]))
+  const handleDelete = async (filename) => {
+    if (!confirm(`Delete "${filename}"?`)) return
+    try {
+      const r = await fetch(`${API}/templates/${encodeURIComponent(filename)}`, { method: 'DELETE' })
+      if (r.ok) {
+        setLoading(true)
+        fetch(`${API}/templates`)
+          .then(r => r.json())
+          .then(data => {
+            const all = []
+            for (const t of (data.document_templates || [])) {
+              all.push({ ...t, category: 'document' })
+            }
+            for (const t of (data.checklist_templates || [])) {
+              all.push({ ...t, category: 'checklist' })
+            }
+            setTemplates(all)
+            setLoading(false)
+          })
+          .catch(e => { setError(e.message); setLoading(false) })
+      } else { const d = await r.json(); alert(d.detail || 'Delete failed') }
+    } catch { alert('Delete failed') }
+  }
+
+  const docTemplates = templates.filter(t => t.category === 'document')
+  const checklistTemplates = templates.filter(t => t.category === 'checklist')
 
   return (
     <div>
-      <div className="page-header">
-        <h2>Template Manager</h2>
-        <p>Browse and manage TÜV Austria document templates</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2>Template Manager</h2>
+          <p>Manage TÜV Austria document and checklist templates</p>
+        </div>
+        <label className="btn btn-primary" style={{ cursor: 'pointer', fontSize: 13 }}>
+          {uploading ? 'Uploading...' : 'Upload Template'}
+          <input type="file" accept=".docx,.xlsx,.doc" onChange={handleUpload} style={{ display: 'none' }} disabled={uploading} />
+        </label>
       </div>
 
+      {error && <div className="error-banner">{error}</div>}
+
       {loading ? (
-        <div className="loading">Loading templates...</div>
+        <div className="loading">Loading...</div>
+      ) : templates.length === 0 ? (
+        <div className="empty-state">No templates found.</div>
       ) : (
         <>
-          {/* Summary */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-            <div className="stat-card">
-              <div className="stat-number">{docTemplates.length}</div>
-              <h3>Document Templates</h3>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number">{checklistTemplates.length}</div>
-              <h3>Checklist Templates</h3>
-            </div>
-            <div className="stat-card">
-              <div className="stat-number">{new Set(checklistTemplates.map(([k]) => k.split('_')[1])).size}</div>
-              <h3>Standards</h3>
-            </div>
-          </div>
-
-          {/* Document Templates */}
-          <div className="card" style={{ marginBottom: 16 }}>
-            <h3 style={{ marginBottom: 12 }}>📄 Document Templates</h3>
-            {docTemplates.length === 0 ? (
-              <div className="empty-state">No document templates found</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {docTemplates.map(([docType, filename]) => (
-                  <div key={docType} style={{
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    padding: '10px 14px', borderRadius: 8, background: 'var(--gray-50)',
-                    border: '1px solid var(--gray-200)',
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 14 }}>
-                        {DOC_TYPE_LABELS[docType] || docType}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 2, fontFamily: 'monospace' }}>
-                        {filename}
-                      </div>
-                    </div>
-                    <span className="badge badge-blue">DOCX</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Checklist Templates */}
           <div className="card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <h3 style={{ margin: 0 }}>📋 Checklist Templates</h3>
-              <select
-                value={filter}
-                onChange={e => setFilter(e.target.value)}
-                style={{ padding: '4px 10px', borderRadius: 4, border: '1px solid var(--gray-300)', fontSize: 12 }}
-              >
-                <option value="all">All Standards</option>
-                {[...new Set(checklistTemplates.map(([k]) => k.split('_')[1]))].sort().map(std => (
-                  <option key={std} value={std}>{STANDARD_LABELS[std] || std}</option>
-                ))}
-              </select>
+            <h3>Document Templates ({docTemplates.length})</h3>
+            <div className="checkbox-group">
+              {docTemplates.map(t => (
+                <div key={t.filename} className="checkbox-item" style={{ justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{t.doc_type || t.filename}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.filename}</div>
+                  </div>
+                  <button className="btn btn-small btn-secondary" onClick={() => handleDelete(t.filename)}
+                          style={{ color: 'var(--red-500)' }}>Delete</button>
+                </div>
+              ))}
             </div>
-            {filteredChecklist.length === 0 ? (
-              <div className="empty-state">No checklist templates found</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 8 }}>
-                {filteredChecklist.map(([key, filename]) => {
-                  const parts = key.split('_')
-                  const std = parts[1]
-                  return (
-                    <div key={key} style={{
-                      padding: '10px 14px', borderRadius: 8, background: 'var(--gray-50)',
-                      border: '1px solid var(--gray-200)',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <div style={{ fontWeight: 600, fontSize: 13 }}>
-                          {STANDARD_LABELS[std] || std}
-                        </div>
-                        <span className="badge" style={{
-                          fontSize: 10,
-                          background: filename.endsWith('.xlsx') ? '#E8F5E9' : '#E3F2FD',
-                          color: filename.endsWith('.xlsx') ? '#2E7D32' : '#1565C0',
-                        }}>
-                          {filename.endsWith('.xlsx') ? 'XLSX' : 'DOCX'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 10, color: 'var(--gray-500)', marginTop: 4, fontFamily: 'monospace' }}>
-                        {filename}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+          </div>
+
+          <div className="card">
+            <h3>Checklist Templates ({checklistTemplates.length})</h3>
+            <div className="checkbox-group">
+              {checklistTemplates.map(t => (
+                <div key={t.filename} className="checkbox-item" style={{ justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{t.standard_key || t.filename}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{t.filename}</div>
+                  </div>
+                  <button className="btn btn-small btn-secondary" onClick={() => handleDelete(t.filename)}
+                          style={{ color: 'var(--red-500)' }}>Delete</button>
+                </div>
+              ))}
+            </div>
           </div>
         </>
       )}

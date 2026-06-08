@@ -20,15 +20,18 @@ function getStandardsLabel(standards) {
 export default function Dashboard({ API }) {
   const [stats, setStats] = useState(null)
   const [recentJobs, setRecentJobs] = useState([])
+  const [standards, setStandards] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       fetch(`${API}/stats`).then(r => r.json()),
       fetch(`${API}/jobs?limit=5`).then(r => r.json()),
-    ]).then(([s, j]) => {
+      fetch(`${API}/standards`).then(r => r.json()),
+    ]).then(([s, j, st]) => {
       setStats(s)
       setRecentJobs(j.jobs || [])
+      setStandards(st?.standards ? Object.values(st.standards) : null)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [API])
@@ -148,20 +151,7 @@ export default function Dashboard({ API }) {
           <div className="card">
             <h3>Supported ISO Standards</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 8 }}>
-              {['ISO 9001:2015 — Quality Management',
-                'ISO 14001:2015 — Environmental Management',
-                'ISO 45001:2018 — Occupational Health & Safety',
-                'ISO 27001:2022 — Information Security',
-                'ISO 22301:2019 — Business Continuity',
-                'ISO 37301:2021 — Compliance Management',
-                'ISO 31000:2018 — Risk Management',
-                'ISO 50001:2018 — Energy Management',
-                'ISO 20000:2018 — Service Management',
-                'ISO 42001:2023 — AI Management',
-                'ISO 30401:2018 — Knowledge Management',
-                'ISO 27701:2025 — Privacy Information',
-                'ISO 10002:2018 — Complaints Management',
-              ].map(s => (
+              {(standards || []).map(s => (
                 <div key={s} className="checkbox-item" style={{ cursor: 'default' }}>
                    {s}
                 </div>

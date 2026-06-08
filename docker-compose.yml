@@ -7,7 +7,9 @@ services:
       - "8000:8000"
     volumes:
       - uploads:/app/uploads
+      - data:/app/data
       - ./backend/.env:/app/.env:ro
+      - ./backend/compliancehub.db:/app/compliancehub.db
     env_file:
       - ./backend/.env
     environment:
@@ -26,3 +28,4 @@ services:
 
 volumes:
   uploads:
+  data:

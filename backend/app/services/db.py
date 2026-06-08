@@ -4,6 +4,9 @@ Thread-safe via SQLite's built-in locking. WAL mode for concurrent reads."""
 import sqlite3
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'compliancehub.db')
 
@@ -37,7 +40,7 @@ def init_db():
     try:
         conn.execute('ALTER TABLE jobs ADD COLUMN standards TEXT DEFAULT \'[]\'')
     except Exception:
-        pass
+        logger.warning('ALTER TABLE jobs.standards skipped (column already exists or DB error)')
     conn.commit()
     conn.close()
 
@@ -107,12 +110,20 @@ def cleanup_old_jobs(max_age=3600):
     return [r['job_id'] for r in rows if r]
 
 
-def list_jobs(limit=20):
+def list_jobs(limit=20, offset=0, search=""):
     conn = _get_conn()
-    rows = conn.execute(
-        'SELECT job_id, status, progress, created_at, results, download_url, error, standards, zip_name '
-        'FROM jobs ORDER BY created_at DESC LIMIT ?', (limit,)
-    ).fetchall()
+    if search:
+        rows = conn.execute(
+            'SELECT job_id, status, progress, created_at, results, download_url, error, standards, zip_name '
+            'FROM jobs WHERE job_id LIKE ? OR status LIKE ? OR standards LIKE ? '
+            'ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (f'%{search}%', f'%{search}%', f'%{search}%', limit, offset),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            'SELECT job_id, status, progress, created_at, results, download_url, error, standards, zip_name '
+            'FROM jobs ORDER BY created_at DESC LIMIT ? OFFSET ?', (limit, offset,)
+        ).fetchall()
     conn.close()
     out = []
     for r in rows:
