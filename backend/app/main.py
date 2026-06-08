@@ -22,7 +22,7 @@ from app.utils import sanitize_filename, validate_job_id
 from app.services.client_config import get_client, list_clients, get_doc_code, validate_client_data
 from app.services.file_parser import extract_audit_notes, extract_manday_data, extract_manday_tables
 from app.services.ai_pipeline import generate_document as ai_generate, extract_shared_context
-from app.services.document_generator import generate_document_file
+from app.services.document_generator import generate_document_file, generate_audit_plan_stage
 from app.services.pdf_generator import generate_pdf_file
 from app.services.offline_generator import generate_all as offline_generate_all
 from app.services.clause_data import get_clause_data, get_annex_a_data
@@ -1138,6 +1138,125 @@ def delete_template(filename: str):
         raise HTTPException(status_code=404, detail=f'Template "{fname}" not found')
     os.remove(path)
     return {'success': True, 'filename': fname}
+
+
+# ── Standalone Audit Plan Generator ───────────────────────────────────────
+
+@app.post("/api/audit_plan/generate", summary="Generate standalone Audit Plan", tags=["Audit Plan"])
+def generate_audit_plan(
+    client_name: str = Form(""),
+    client_key: str = Form(""),
+    standards: str = Form("[]"),
+    audit_type: str = Form("stage2"),
+    lead_auditor: str = Form(""),
+    audit_team: str = Form(""),
+    start_date: str = Form(""),
+    end_date: str = Form(""),
+    location: str = Form(""),
+    audit_scope: str = Form(""),
+    audit_language: str = Form("English"),
+    report_due_days: int = Form(30),
+    daily_schedule: str = Form("[]"),
+    notes: str = Form(""),
+):
+    """Generate a standalone TÜV-branded Audit Plan Word document for client pre-approval."""
+    if not client_name or not start_date or not end_date:
+        raise HTTPException(status_code=400, detail="client_name, start_date, end_date are required")
+
+    stds = json.loads(standards) if standards else []
+    team_names = [t.strip() for t in audit_team.split(",") if t.strip()] if audit_team else []
+    schedule = json.loads(daily_schedule) if daily_schedule else []
+
+    # Build standard label
+    from app.config import ISO_STANDARDS
+    std_labels = [ISO_STANDARDS.get(s, s) for s in stds]
+    standard_label = " / ".join(std_labels) if std_labels else "ISO Standard"
+
+    # Build stage label
+    stage_map = {
+        "stage1": "Stage 1 — Readiness Review",
+        "stage2": "Stage 2 — Certification Audit",
+        "surveillance": "Surveillance Audit",
+        "recertification": "Recertification Audit",
+        "transfer": "Transfer Audit",
+    }
+    stage_label = stage_map.get(audit_type, "Stage 2 — Certification Audit")
+
+    # Build audit team with roles
+    team_data = []
+    for i, name in enumerate(team_names):
+        role = "Lead Auditor" if i == 0 else "Auditor"
+        team_data.append({"name": name, "role": role, "days": ""})
+
+    # Build daily schedule if not provided
+    if not schedule:
+        from datetime import datetime as dt, timedelta
+        try:
+            sd = dt.strptime(start_date, "%Y-%m-%d")
+            ed = dt.strptime(end_date, "%Y-%m-%d")
+            num_days = (ed - sd).days + 1
+            for d in range(num_days):
+                day_date = sd + timedelta(days=d)
+                schedule.append({
+                    "day": d + 1,
+                    "date": day_date.strftime("%d/%m/%Y"),
+                    "time": "09:00 – 17:00",
+                    "activity": "Audit activities per audit programme",
+                    "auditee": "",
+                    "auditor": team_names[0] if team_names else "",
+                    "clause": "",
+                })
+        except Exception:
+            schedule = [{"day": 1, "date": start_date, "time": "09:00 – 17:00",
+                         "activity": "Audit activities", "auditee": "",
+                         "auditor": team_names[0] if team_names else "", "clause": ""}]
+
+    from datetime import datetime as dt, timedelta
+    report_due = (dt.strptime(start_date, "%Y-%m-%d") + timedelta(days=report_due_days)).strftime("%d/%m/%Y")
+
+    plan_data = {
+        "client_name": client_name,
+        "standard": standard_label,
+        "standard_key": stds[0] if stds else "iso_9001",
+        "audit_date": start_date,
+        "stage": stage_label,
+        "audit_team": team_data,
+        "audit_scope": audit_scope or f"The audit covers the management system at {client_name} against {standard_label} requirements.",
+        "audit_objectives": [
+            f"Evaluate the management system conformity with {standard_label} requirements",
+            "Assess the effectiveness of implemented processes in achieving planned outcomes",
+            "Verify conformity with applicable statutory and regulatory requirements",
+            "Evaluate personnel competence and awareness of relevant policies and procedures",
+            "Assess internal audit process and management review outputs",
+            "Identify opportunities for improvement in the management system",
+        ],
+        "audit_criteria": [standard_label] + [
+            "Management system documented policies, procedures, and work instructions",
+            "Applicable statutory and regulatory requirements",
+        ],
+        "daily_schedule": schedule,
+        "confidentiality": "All information obtained during this audit shall be treated as strictly confidential and used solely for the purpose of certification.",
+        "language": audit_language,
+        "report_date": report_due,
+        "location": location,
+        "notes": notes,
+    }
+
+    output_dir = os.path.join(OUTPUT_FOLDER, 'audit_plans')
+    os.makedirs(output_dir, exist_ok=True)
+    safe_name = sanitize_filename(f"{client_name}_{audit_type}")
+    output_path = os.path.join(output_dir, f"TUV_Audit_Plan_{safe_name}.docx")
+
+    try:
+        generate_audit_plan_stage(plan_data, output_path, stage_label, client_key=client_key or None)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Audit Plan generation failed: {str(e)}")
+
+    return FileResponse(
+        output_path,
+        filename=f"TUV_Audit_Plan_{safe_name}.docx",
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
 
 
 # ── Audit Program & Live Audit Execution ──────────────────────────────────
