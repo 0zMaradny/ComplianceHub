@@ -1,6 +1,67 @@
 import { useState, useRef, useEffect } from 'react'
 import MandayForm from '../components/MandayForm'
 
+function DocResultItem({ docType, result, standards, API, jobId, setPreview }) {
+  const label = (standards?.doc_labels && standards.doc_labels[docType]) || docType
+  return (
+    <div className="doc-result-item">
+      <div>
+        <div style={{ fontWeight: 600, fontSize: 13 }}>{label}</div>
+        {result.error && (
+          <div style={{ color: 'var(--red-600)', fontSize: 12 }}>{result.error}</div>
+        )}
+        {result.certification_decision && (
+          <div style={{ fontSize: 11, color: 'var(--gray-600)', marginTop: 2 }}>
+            Decision: <strong>{result.certification_decision}</strong>
+            {result.conditions?.length > 0 && (
+              <span style={{ color: 'var(--orange-600)' }}>
+                {' '}({result.conditions.length} condition{result.conditions.length > 1 ? 's' : ''})
+              </span>
+            )}
+          </div>
+        )}
+        {result.total_sections > 0 && (
+          <div style={{ fontSize: 11, color: 'var(--gray-600)' }}>
+            {result.total_sections} clauses assessed
+          </div>
+        )}
+        {result.findings_summary_preview && (
+          <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 2, fontStyle: 'italic' }}>
+            {result.findings_summary_preview}...
+          </div>
+        )}
+      </div>
+      {result.filename && (
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            className="btn btn-secondary"
+            style={{ padding: '6px 12px', fontSize: 12 }}
+            onClick={() => setPreview({ docType, label, result })}
+          >
+            Preview
+          </button>
+          <a
+            href={`${API}/download_doc/${jobId}/${docType}`}
+            className="btn btn-secondary"
+            style={{ padding: '6px 12px', fontSize: 12 }}
+          >
+            DOCX
+          </a>
+          {result.pdf_filename && (
+            <a
+              href={`${API}/download_doc/${jobId}/${docType}/pdf`}
+              className="btn btn-secondary"
+              style={{ padding: '6px 12px', fontSize: 12 }}
+            >
+              PDF
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Audit({ API, standards }) {
   const [step, setStep] = useState('upload')
   const [files, setFiles] = useState({ audit_notes: null, manday: null, template: null })
@@ -346,65 +407,34 @@ export default function Audit({ API, standards }) {
           )}
 
           <div className="doc-results">
-            {results && Object.entries(results).map(([docType, result]) => (
-              <div key={docType} className="doc-result-item">
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 13 }}>
-                    {standards.doc_labels[docType] || docType}
-                  </div>
-                  {result.error && (
-                    <div style={{ color: 'var(--red-600)', fontSize: 12 }}>{result.error}</div>
-                  )}
-                  {result.certification_decision && (
-                    <div style={{ fontSize: 11, color: 'var(--gray-600)', marginTop: 2 }}>
-                      Decision: <strong>{result.certification_decision}</strong>
-                      {result.conditions?.length > 0 && (
-                        <span style={{ color: 'var(--orange-600)' }}>
-                          {' '}({result.conditions.length} condition{result.conditions.length > 1 ? 's' : ''})
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {result.total_sections > 0 && (
-                    <div style={{ fontSize: 11, color: 'var(--gray-600)' }}>
-                      {result.total_sections} clauses assessed
-                    </div>
-                  )}
-                  {result.findings_summary_preview && (
-                    <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 2, fontStyle: 'italic' }}>
-                      {result.findings_summary_preview}...
-                    </div>
-                  )}
-                </div>
-                {result.filename && (
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: 12 }}
-                      onClick={() => setPreview({ docType, label: standards.doc_labels[docType] || docType, result })}
-                    >
-                      Preview
-                    </button>
-                    <a
-                      href={`${API}/download_doc/${jobId}/${docType}`}
-                      className="btn btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: 12 }}
-                    >
-                      DOCX
-                    </a>
-                    {result.pdf_filename && (
-                      <a
-                        href={`${API}/download_doc/${jobId}/${docType}/pdf`}
-                        className="btn btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: 12 }}
-                      >
-                        PDF
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+            {results && (() => {
+              const auditPackage = standards.audit_package_docs || [
+                'Audit_Plan_Stage_1','Audit_Plan_Stage_2','Participation_List',
+                'Audit_Report','ISO_Checklist','Certificate_Text','TNL','Certificate'
+              ]
+              const standalone = standards.standalone_docs || []
+              const auditItems = Object.entries(results).filter(([t]) => auditPackage.includes(t))
+              const standaloneItems = Object.entries(results).filter(([t]) => !auditPackage.includes(t))
+              return (<>
+                {auditItems.length > 0 && (<>
+                  <h4 style={{ marginBottom: 10, marginTop: 0, color: 'var(--gray-700)' }}>
+                    Audit Package ({auditItems.length})
+                  </h4>
+                  {auditItems.map(([docType, result]) => (
+                    <DocResultItem key={docType} docType={docType} result={result}
+                      standards={standards} API={API} jobId={jobId} setPreview={setPreview} />
+                  ))}
+                  <hr style={{ margin: '20px 0', border: 'none', borderTop: '1px solid var(--gray-200)' }} />
+                </>)}
+                <h4 style={{ marginBottom: 10, marginTop: 0, color: 'var(--gray-700)' }}>
+                  Standalone Documents ({standaloneItems.length})
+                </h4>
+                {standaloneItems.map(([docType, result]) => (
+                  <DocResultItem key={docType} docType={docType} result={result}
+                    standards={standards} API={API} jobId={jobId} setPreview={setPreview} />
+                ))}
+              </>)
+            })()}
           </div>
 
           <button className="btn btn-secondary" onClick={handleReset} style={{ marginTop: 20 }}>
