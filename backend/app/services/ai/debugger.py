@@ -3,6 +3,8 @@ import json
 import logging
 from typing import Any
 
+from .model_registry import FIELD_MIN_LENGTHS, FIELD_MIN_ITEMS
+
 logger = logging.getLogger(__name__)
 
 MAX_SELF_HEAL_RETRIES = 2
@@ -10,6 +12,8 @@ MAX_SELF_HEAL_RETRIES = 2
 PLACEHOLDER_PATTERNS = [
     '[Client Name]', '[TBD]', '[Insert', '[Company]',
     '[Name]', '[Date]', '[Location]', '[Address]',
+    'TBD', 'tbd', 'N/A', 'n/a', 'TODO', 'todo',
+    'lorem ipsum', 'Lorem Ipsum',
 ]
 
 REQUIRED_FIELDS = {
@@ -151,9 +155,133 @@ class Autodebugger:
         self._log('corrective_prompt', {'errors': errors})
         return original_prompt + correction
 
+    def validate_quality(self, result: dict) -> list[str]:
+        """Quality gate: check that output meets minimum content standards.
+
+        Different from validate_output():
+        - validate_output() checks STRUCTURE (fields present, correct types)
+        - validate_quality() checks CONTENT (not too short, not generic, enough items)
+
+        Errors here should trigger a RETRY WITH A BETTER MODEL.
+        """
+        errors: list[str] = []
+
+        # ── Field length checks ──────────────────────────────────────────
+        min_lengths = FIELD_MIN_LENGTHS.get(self.task_type, {})
+        for field, min_len in min_lengths.items():
+            val = result.get(field)
+            if isinstance(val, str) and len(val.strip()) < min_len:
+                errors.append(
+                    f"Quality: '{field}' too short ({len(val.strip())} chars, "
+                    f"min {min_len}). Likely generic/placeholder content."
+                )
+
+        # ── List item count checks ──────────────────────────────────────
+        min_items = FIELD_MIN_ITEMS.get(self.task_type, {})
+        for field, min_count in min_items.items():
+            val = result.get(field)
+            if isinstance(val, list) and len(val) < min_count:
+                errors.append(
+                    f"Quality: '{field}' has {len(val)} items, "
+                    f"minimum {min_count} expected for professional output."
+                )
+
+        # ── Nested quality: audit schedule entries must have detail ─────
+        if self.task_type in ('Audit_Plan_Stage_1', 'Audit_Plan_Stage_2'):
+            for i, entry in enumerate(result.get('daily_schedule', [])):
+                activity = entry.get('activity', '')
+                if activity and len(activity.strip()) < 20:
+                    errors.append(
+                        f"Quality: daily_schedule[{i}].activity too brief "
+                        f"('{activity}'). Needs specific task description."
+                    )
+                clause = entry.get('clause', '')
+                if clause and not any(c.isdigit() for c in clause):
+                    errors.append(
+                        f"Quality: daily_schedule[{i}].clause missing "
+                        f"clause reference ('{clause}'). Must include ISO clause number."
+                    )
+
+        # ── Audit Report: findings must be substantial paragraphs ──────
+        if self.task_type == 'Audit_Report':
+            summary = result.get('findings_summary', '')
+            if summary and summary.count('.') < 4:
+                errors.append(
+                    "Quality: findings_summary has fewer than 4 sentences. "
+                    "Must be 3-5 full paragraphs."
+                )
+            conclusion = result.get('conclusion', '')
+            if conclusion and conclusion.count('.') < 3:
+                errors.append(
+                    "Quality: conclusion has fewer than 3 sentences. "
+                    "Must be 2-3 full paragraphs."
+                )
+            methodology = result.get('methodology', {})
+            if isinstance(methodology, dict):
+                for sub in ('approach', 'sampling', 'criteria', 'methods'):
+                    val = methodology.get(sub, '')
+                    if val and len(val.strip()) < 30:
+                        errors.append(
+                            f"Quality: methodology.{sub} too brief ({len(val.strip())} chars). "
+                            f"Needs full paragraph."
+                        )
+
+        # ── ISO_Checklist: evidence must be detailed ────────────────────
+        if self.task_type == 'ISO_Checklist':
+            sections = result.get('sections', [])
+            short_evidence = 0
+            for s in sections:
+                ev = s.get('evidence', '')
+                if ev and len(ev.strip()) < 30:
+                    short_evidence += 1
+            if sections and short_evidence > len(sections) * 0.5:
+                errors.append(
+                    f"Quality: {short_evidence}/{len(sections)} checklist items "
+                    f"have brief evidence (< 30 chars). Output appears low-effort."
+                )
+
+        # ── TNL: descriptions must be detailed ─────────────────────────
+        if self.task_type == 'TNL':
+            for i, entry in enumerate(result.get('entries', [])):
+                desc = entry.get('description', '')
+                if desc and len(desc.strip()) < 40:
+                    errors.append(
+                        f"Quality: TNL entry[{i}].description too brief. "
+                        f"Must be 2-3 detailed sentences."
+                    )
+
+        if not errors:
+            self._log('quality_gate_passed', {})
+        else:
+            self._log('quality_gate_failed', {'errors': errors})
+
+        return errors
+
+    def build_quality_retry_prompt(self, original_prompt: str, errors: list[str]) -> str:
+        """Build a forceful retry prompt for quality failures.
+        Used when switching to a better model after quality gate failure."""
+        correction = "\n\n[QUALITY RETRY — Previous model produced substandard output.\n"
+        correction += "Produce a PROFESSIONAL-GRADE document. Issues:\n"
+        for err in errors:
+            correction += f"  - {err}\n"
+        correction += "\nRules:\n"
+        correction += "  - Every evidence/description: 2-3 FULL sentences with specific observations.\n"
+        correction += "  - No generic filler. All content must be document-specific and detailed.\n"
+        correction += "  - Paragraphs must have 3+ sentences each.\n"
+        correction += "  - Return ONLY valid JSON with COMPLETE content.]"
+        self._log('quality_retry_prompt', {'errors': errors})
+        return original_prompt + correction
+
     def call_with_self_heal(self, provider_fn, prompt: str,
                             system_prompt: str | None = None,
                             **kwargs) -> dict[str, Any]:
+        """Two-phase validation with quality-aware retry.
+
+        Phase 1: Structure (validate_output) → same-model self-heal retry
+        Phase 2: Quality (validate_quality) → flags for model upgrade
+
+        Caller should check for '_quality_errors' and retry with next provider.
+        """
         input_errors = self.validate_input(prompt, system_prompt=system_prompt, **kwargs)
         if input_errors:
             return {'error': '; '.join(input_errors), '_audit': self.audit_log}
@@ -171,6 +299,16 @@ class Autodebugger:
 
             output_errors = self.validate_output(result)
             if not output_errors:
+                # Structure passed → now check quality
+                quality_errors = self.validate_quality(result)
+                if not quality_errors:
+                    result['_audit'] = self.audit_log
+                    return result
+                # Quality failed → return with _quality_errors for model upgrade
+                if attempt < MAX_SELF_HEAL_RETRIES:
+                    current_prompt = self.build_quality_retry_prompt(prompt, quality_errors)
+                    continue
+                result['_quality_errors'] = quality_errors
                 result['_audit'] = self.audit_log
                 return result
 

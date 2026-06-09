@@ -100,4 +100,4 @@ class TestInitialization:
             from app.services.ai.openrouter_provider import OpenRouterProvider
             p = OpenRouterProvider()
             assert p.api_key == 'sk-or-test'
-            assert p.base_url == 'https://openrouter.ai/api/v1'
+            assert p.model == 'openrouter/free'  # default model for 'openrouter' name
