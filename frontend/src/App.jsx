@@ -9,6 +9,7 @@ import AuditPlan from './pages/AuditPlan'
 import Templates from './pages/Templates'
 import History from './pages/History'
 import Analytics from './pages/Analytics'
+import Surveillance from './pages/Surveillance'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const API = '/api'
@@ -92,6 +93,7 @@ const NAV_ITEMS = [
   { id: 'audit_plan', label: 'Audit Plan', icon: 'audit' },
   { id: 'audit_program', label: 'Audit Execution', icon: 'projects' },
   { id: 'analytics', label: 'Analytics', icon: 'analytics' },
+  { id: 'surveillance', label: 'Surveillance', icon: 'projects' },
 ]
 
 function App() {
@@ -165,6 +167,7 @@ function App() {
           {page === 'audit_plan' && <AuditPlan API={API} />}
           {page === 'audit_program' && <AuditProgram API={API} />}
           {page === 'analytics' && <Analytics API={API} />}
+          {page === 'surveillance' && <Surveillance API={API} />}
         </ErrorBoundary>
       </main>
     </div>
