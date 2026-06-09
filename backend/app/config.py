@@ -85,6 +85,7 @@ STANDARD_FAMILIES = {
 }
 
 OUTPUT_DOCUMENTS = [
+    # ── Audit Package (8 core certification audit docs) ──
     'Audit_Plan_Stage_1',
     'Audit_Plan_Stage_2',
     'Participation_List',
@@ -93,6 +94,7 @@ OUTPUT_DOCUMENTS = [
     'Certificate_Text',
     'TNL',
     'Certificate',
+    # ── Standalone / Non-Audit Documents (14 management system docs) ──
     'Management_Review_Minutes',
     'Corrective_Action_Report',
     'Gap_Analysis_Report',
@@ -107,6 +109,20 @@ OUTPUT_DOCUMENTS = [
     'Energy_Review',
     'Compliance_Obligations_Register',
     'Service_Portfolio',
+]
+
+AUDIT_PACKAGE_DOCS = [
+    'Audit_Plan_Stage_1', 'Audit_Plan_Stage_2', 'Participation_List',
+    'Audit_Report', 'ISO_Checklist', 'Certificate_Text', 'TNL', 'Certificate',
+]
+
+STANDALONE_DOCS = [
+    'Management_Review_Minutes', 'Corrective_Action_Report', 'Gap_Analysis_Report',
+    'Statement_of_Applicability', 'Business_Impact_Analysis',
+    'Records_of_Processing_Activities', 'Risk_Treatment_Plan',
+    'Incident_Investigation_Report', 'Internal_Audit_Program',
+    'Environmental_Aspect_Register', 'Hazard_Identification_Register',
+    'Energy_Review', 'Compliance_Obligations_Register', 'Service_Portfolio',
 ]
 
 DOC_LABELS = {

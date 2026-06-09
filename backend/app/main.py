@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 
 from app.config import (
     UPLOAD_FOLDER, OUTPUT_FOLDER, ISO_STANDARDS,
-    OUTPUT_DOCUMENTS, DOC_LABELS, STANDARD_CATEGORIES
+    OUTPUT_DOCUMENTS, DOC_LABELS, STANDARD_CATEGORIES,
+    AUDIT_PACKAGE_DOCS, STANDALONE_DOCS
 )
 from app.utils import sanitize_filename, validate_job_id
 from app.services.client_config import get_client, list_clients, get_doc_code, validate_client_data
@@ -341,6 +342,8 @@ def get_standards():
         'categories': STANDARD_CATEGORIES,
         'documents': OUTPUT_DOCUMENTS,
         'doc_labels': DOC_LABELS,
+        'audit_package_docs': AUDIT_PACKAGE_DOCS,
+        'standalone_docs': STANDALONE_DOCS,
     }
 
 
