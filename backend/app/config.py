@@ -109,6 +109,17 @@ OUTPUT_DOCUMENTS = [
     'Energy_Review',
     'Compliance_Obligations_Register',
     'Service_Portfolio',
+    # ── ISO 20000-1:2018 Service Management Documents (10 new) ──
+    'Service_Catalogue',
+    'Supplier_Agreement_Register',
+    'Business_Relationship_Register',
+    'Capacity_Management_Plan',
+    'Change_Management_Register',
+    'Release_Deployment_Plan',
+    'Incident_Management_Log',
+    'Problem_Management_Register',
+    'Service_Continuity_Plan',
+    'Availability_Management_Report',
 ]
 
 AUDIT_PACKAGE_DOCS = [
@@ -123,6 +134,10 @@ STANDALONE_DOCS = [
     'Incident_Investigation_Report', 'Internal_Audit_Program',
     'Environmental_Aspect_Register', 'Hazard_Identification_Register',
     'Energy_Review', 'Compliance_Obligations_Register', 'Service_Portfolio',
+    'Service_Catalogue', 'Supplier_Agreement_Register', 'Business_Relationship_Register',
+    'Capacity_Management_Plan', 'Change_Management_Register', 'Release_Deployment_Plan',
+    'Incident_Management_Log', 'Problem_Management_Register', 'Service_Continuity_Plan',
+    'Availability_Management_Report',
 ]
 
 DOC_LABELS = {
@@ -148,6 +163,16 @@ DOC_LABELS = {
     'Energy_Review': 'Energy Review + EnB + EnPI',
     'Compliance_Obligations_Register': 'Compliance Obligations Register',
     'Service_Portfolio': 'Service Portfolio & SLAs',
+    'Service_Catalogue': 'Service Catalogue',
+    'Supplier_Agreement_Register': 'Supplier Agreement Register',
+    'Business_Relationship_Register': 'Business Relationship Register',
+    'Capacity_Management_Plan': 'Capacity Management Plan',
+    'Change_Management_Register': 'Change Management Register',
+    'Release_Deployment_Plan': 'Release & Deployment Plan',
+    'Incident_Management_Log': 'Incident Management Log',
+    'Problem_Management_Register': 'Problem Management Register',
+    'Service_Continuity_Plan': 'Service Continuity Plan',
+    'Availability_Management_Report': 'Availability Management Report',
 }
 
 DEFAULT_LOGO_PATH = os.path.join(BASE_DIR, 'static', 'tuv_logo.png')

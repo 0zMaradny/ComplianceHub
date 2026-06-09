@@ -188,7 +188,18 @@ def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data
               'hazards', 'associated_risk', 'existing_controls', 'additional_controls', 'hierarchy_of_control',
               'energy_sources', 'review_period', 'significant_uses', 'enpi', 'baseline', 'current_performance',
               'obligations', 'obligation_type', 'compliance_status', 'evidence',
-              'services', 'portfolio_manager', 'sla_uptime', 'sla_response_time', 'sla_resolution_time'):
+              'services', 'portfolio_manager', 'sla_uptime', 'sla_response_time', 'sla_resolution_time',
+              'catalogue_owner', 'catalogue_version',
+              'register_owner', 'agreements', 'supplier_name',
+              'relationship_manager', 'customers',
+              'capacity_manager', 'review_period', 'components',
+              'change_manager', 'changes',
+              'release_manager', 'releases',
+              'incident_manager', 'incidents',
+              'problem_manager', 'problems',
+              'plan_owner', 'last_review_date', 'next_review_date',
+              'report_owner', 'reporting_period',
+              'overall_availability'):
         if k in doc_data:
             doc_info[k] = doc_data[k]
     return doc_info
@@ -610,6 +621,46 @@ def get_status(job_id: str):
                 cleaned['summary'] = data.get('summary', {})
             elif doc_type == 'Service_Portfolio':
                 cleaned['total_services'] = len(data.get('services', []))
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Service_Catalogue':
+                cleaned['total_services'] = len(data.get('services', []))
+                cleaned['catalogue_owner'] = data.get('catalogue_owner', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Supplier_Agreement_Register':
+                cleaned['total_agreements'] = len(data.get('agreements', []))
+                cleaned['register_owner'] = data.get('register_owner', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Business_Relationship_Register':
+                cleaned['total_customers'] = len(data.get('customers', []))
+                cleaned['relationship_manager'] = data.get('relationship_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Capacity_Management_Plan':
+                cleaned['total_components'] = len(data.get('components', []))
+                cleaned['capacity_manager'] = data.get('capacity_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Change_Management_Register':
+                cleaned['total_changes'] = len(data.get('changes', []))
+                cleaned['change_manager'] = data.get('change_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Release_Deployment_Plan':
+                cleaned['total_releases'] = len(data.get('releases', []))
+                cleaned['release_manager'] = data.get('release_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Incident_Management_Log':
+                cleaned['total_incidents'] = len(data.get('incidents', []))
+                cleaned['incident_manager'] = data.get('incident_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Problem_Management_Register':
+                cleaned['total_problems'] = len(data.get('problems', []))
+                cleaned['problem_manager'] = data.get('problem_manager', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Service_Continuity_Plan':
+                cleaned['total_services'] = len(data.get('services', []))
+                cleaned['plan_owner'] = data.get('plan_owner', '')
+                cleaned['summary'] = data.get('summary', {})
+            elif doc_type == 'Availability_Management_Report':
+                cleaned['total_services'] = len(data.get('services', []))
+                cleaned['report_owner'] = data.get('report_owner', '')
                 cleaned['summary'] = data.get('summary', {})
             cleaned_results[doc_type] = cleaned
 

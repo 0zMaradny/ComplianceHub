@@ -166,7 +166,7 @@ class TestExcelExport:
 class TestDocumentGenerators:
     def test_all_generators_import(self):
         from app.services.document_generator import GENERATORS
-        assert len(GENERATORS) == 22
+        assert len(GENERATORS) == 32
 
     def test_all_generators_have_client_key(self):
         import inspect

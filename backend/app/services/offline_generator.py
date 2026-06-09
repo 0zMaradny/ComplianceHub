@@ -1596,6 +1596,452 @@ def generate_service_portfolio(data: dict) -> dict:
     }
 
 
+# ── ISO 20000-1 Service Management Generators ─────────────────────────────
+
+def generate_service_catalogue(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    services = [
+        {'id': 'CAT-001', 'name': 'IT Help Desk', 'desc': 'Single point of contact for all IT incidents and service requests. Provides first-line support, triage, and escalation management.', 'type': 'Customer', 'status': 'Live', 'features': '24/7 ticket submission, self-service portal, knowledge base, SLA-based prioritisation, real-time status tracking', 'contact': 'IT Support Manager', 'hours': '24x7'},
+        {'id': 'CAT-002', 'name': 'Corporate Email & Collaboration', 'desc': 'Enterprise email, calendaring, instant messaging, and video conferencing services for all employees.', 'type': 'Business', 'status': 'Live', 'features': '50GB mailbox, shared calendars, Teams/Slack integration, mobile sync, encryption in transit/at rest', 'contact': 'IT Support Manager', 'hours': '24x7'},
+        {'id': 'CAT-003', 'name': 'Network Connectivity', 'desc': 'Corporate LAN, WAN, VPN, and WiFi services connecting all sites and remote workers.', 'type': 'Infrastructure', 'status': 'Live', 'features': 'Site-to-site VPN, SD-WAN, guest WiFi, traffic shaping, network monitoring, DDoS protection', 'contact': 'Network Manager', 'hours': '24x7'},
+        {'id': 'CAT-004', 'name': 'ERP System Hosting', 'desc': 'Hosting, administration, and support for the enterprise resource planning system.', 'type': 'Business', 'status': 'Live', 'features': '99.7% uptime SLA, daily backups, patch management, user administration, custom report development', 'contact': 'Applications Manager', 'hours': 'Business Hours (08:00-18:00)'},
+        {'id': 'CAT-005', 'name': 'Cybersecurity Monitoring', 'desc': 'Security operations monitoring, threat detection, vulnerability management, and incident response.', 'type': 'Infrastructure', 'status': 'Live', 'features': '24/7 SOC, SIEM platform, endpoint protection, phishing simulation, vulnerability scanning, threat intelligence feeds', 'contact': 'CISO', 'hours': '24x7'},
+        {'id': 'CAT-006', 'name': 'Cloud Backup & Disaster Recovery', 'desc': 'Automated backup of critical systems and data with off-site replication and DR orchestration.', 'type': 'Infrastructure', 'status': 'Live', 'features': 'Automated daily backups, 30-day retention, off-site replication, DR runbook testing, RTO 4 hrs / RPO 1 hr', 'contact': 'Infrastructure Manager', 'hours': '24x7'},
+        {'id': 'CAT-007', 'name': 'Legacy System Migration Service', 'desc': 'Assessment, planning, and execution of workload migration from legacy systems to modern platforms.', 'type': 'Customer', 'status': 'Under Review', 'features': 'Application discovery, dependency mapping, migration planning, cutover management, post-migration validation', 'contact': 'Cloud Architect', 'hours': 'Business Hours'},
+        {'id': 'CAT-008', 'name': 'Managed Print Services', 'desc': 'Printer fleet management, print server administration, consumables replenishment, cost tracking.', 'type': 'Customer', 'status': 'Deprecated', 'features': 'Centralized print management, follow-me printing, print quota enforcement, automatic toner replenishment', 'contact': 'Facilities Manager', 'hours': 'Business Hours'},
+    ]
+
+    statuses = {'Live': 0, 'Deprecated': 0, 'Under Review': 0}
+    for s in services:
+        st = s['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'catalogue_owner': 'IT Service Delivery Manager',
+        'catalogue_version': '2.1 — March 2026',
+        'services': [
+            {'service_id': s['id'], 'service_name': s['name'], 'description': s['desc'],
+             'service_type': s['type'], 'status': s['status'], 'features': s['features'],
+             'contact': s['contact'], 'service_hours': s['hours']}
+            for s in services
+        ],
+        'summary': {
+            'total_services': len(services),
+            'live': statuses['Live'],
+            'deprecated': statuses['Deprecated'],
+            'under_review': statuses['Under Review'],
+        },
+    }
+
+
+def generate_supplier_agreement_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    agreements = [
+        {'id': 'SAR-001', 'supplier': 'CloudServe Technologies', 'service': 'Cloud infrastructure hosting — IaaS and PaaS services for production systems', 'type': 'SLA', 'start': (today_dt - timedelta(days=180)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=545)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Satisfactory', 'contacts': 'CloudServe Account Manager + CloudOps Lead'},
+        {'id': 'SAR-002', 'supplier': 'SecureNet Ltd', 'service': 'Managed firewall, intrusion detection, and DDoS protection services', 'type': 'Contract', 'start': (today_dt - timedelta(days=365)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=730)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Excellent', 'contacts': 'SecureNet support portal + CISO'},
+        {'id': 'SAR-003', 'supplier': 'DataGuard Backup', 'service': 'Off-site backup storage, DR replication, and recovery testing', 'type': 'SLA', 'start': (today_dt - timedelta(days=90)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=275)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Satisfactory', 'contacts': 'DataGuard Support + Infrastructure Manager'},
+        {'id': 'SAR-004', 'supplier': 'TelecomCorp', 'service': 'WAN connectivity, MPLS links, and internet leased lines', 'type': 'Contract', 'start': (today_dt - timedelta(days=730)).strftime('%d/%m/%Y'), 'renewal': (today_dt - timedelta(days=30)).strftime('%d/%m/%Y'), 'status': 'Under Negotiation', 'rating': 'Needs Improvement', 'contacts': 'TelecomCorp Account Manager + Network Manager'},
+        {'id': 'SAR-005', 'supplier': 'SoftwareLicence Pro', 'service': 'Enterprise software licensing — Microsoft, Oracle, Adobe', 'type': 'Partnership', 'start': (today_dt - timedelta(days=365)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=700)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Excellent', 'contacts': 'Licensing portal + Procurement Manager'},
+        {'id': 'SAR-006', 'supplier': 'HelpDesk Pro', 'service': 'ITSM platform — incident, problem, change management system', 'type': 'SLA', 'start': (today_dt - timedelta(days=180)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=185)).strftime('%d/%m/%Y'), 'status': 'Terminated', 'rating': 'Needs Improvement', 'contacts': 'N/A — contract terminated. Migration to in-house solution completed.'},
+    ]
+
+    statuses = {'Active': 0, 'Expired': 0, 'Under Negotiation': 0, 'Terminated': 0}
+    for a in agreements:
+        st = a['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'register_owner': 'Procurement Manager',
+        'agreements': [
+            {'agreement_id': a['id'], 'supplier_name': a['supplier'], 'service_provided': a['service'],
+             'agreement_type': a['type'], 'start_date': a['start'], 'renewal_date': a['renewal'],
+             'status': a['status'], 'performance_rating': a['rating'], 'key_contacts': a['contacts']}
+            for a in agreements
+        ],
+        'summary': {
+            'total_agreements': len(agreements),
+            'active': statuses['Active'],
+            'expired': statuses['Expired'],
+            'under_negotiation': statuses['Under Negotiation'],
+            'terminated': statuses['Terminated'],
+        },
+    }
+
+
+def generate_business_relationship_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    customers = [
+        {'id': 'BRR-001', 'name': 'Manufacturing Division — HQ', 'mgr': 'Account Director A', 'svcs': 'IT Help Desk, Email, Network, ERP, Backup, Cybersecurity', 'sat': '9.2/10', 'complaints': 1, 'last': (today_dt - timedelta(days=45)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=320)).strftime('%d/%m/%Y'), 'status': 'Active'},
+        {'id': 'BRR-002', 'name': 'R&D Lab Facility', 'mgr': 'Account Director A', 'svcs': 'Network, Cloud Backup, Cybersecurity Monitoring', 'sat': '8.8/10', 'complaints': 0, 'last': (today_dt - timedelta(days=90)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=275)).strftime('%d/%m/%Y'), 'status': 'Active'},
+        {'id': 'BRR-003', 'name': 'Regional Warehouse — North', 'mgr': 'Account Director B', 'svcs': 'IT Help Desk, Network, Managed Print', 'sat': '6.5/10', 'complaints': 3, 'last': (today_dt - timedelta(days=30)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=60)).strftime('%d/%m/%Y'), 'status': 'At Risk'},
+        {'id': 'BRR-004', 'name': 'Sales Office — West', 'mgr': 'Account Director B', 'svcs': 'Email, VPN, VoIP', 'sat': '7.8/10', 'complaints': 1, 'last': (today_dt - timedelta(days=120)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=245)).strftime('%d/%m/%Y'), 'status': 'Active'},
+        {'id': 'BRR-005', 'name': 'Remote Workers Cohort', 'mgr': 'IT Support Manager', 'svcs': 'VPN, Email, Collaboration Tools, Endpoint Security', 'sat': '8.0/10', 'complaints': 2, 'last': (today_dt - timedelta(days=60)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=305)).strftime('%d/%m/%Y'), 'status': 'Active'},
+    ]
+
+    statuses = {'Active': 0, 'On Hold': 0, 'At Risk': 0, 'Inactive': 0}
+    score_sum = 0
+    for c in customers:
+        st = c['status']
+        if st in statuses:
+            statuses[st] += 1
+        sat_str = c['sat'].split('/')[0]
+        score_sum += float(sat_str)
+
+    avg_sat = f'{score_sum / len(customers):.1f}/10'
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'relationship_manager': 'Head of Service Delivery',
+        'customers': [
+            {'customer_id': c['id'], 'customer_name': c['name'], 'account_manager': c['mgr'],
+             'services_used': c['svcs'], 'satisfaction_score': c['sat'], 'complaints': c['complaints'],
+             'last_review': c['last'], 'next_review': c['next'], 'status': c['status']}
+            for c in customers
+        ],
+        'summary': {
+            'total_customers': len(customers),
+            'active': statuses['Active'],
+            'on_hold': statuses['On Hold'],
+            'at_risk': statuses['At Risk'],
+            'inactive': statuses['Inactive'],
+            'avg_satisfaction': avg_sat,
+        },
+    }
+
+
+def generate_capacity_management_plan(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    components = [
+        {'id': 'CMP-001', 'comp': 'Primary Application Servers (Cluster-A)', 'cur': '16 vCPU, 64 GB RAM, 2 TB SSD', 'demand': 'avg 55% CPU, 62% RAM, 40% storage', 'util': '55%', 'thresh': '80%', 'forecast': 'Expected 15% growth over 12 months', 'upgrade': 'Add 2 nodes in Q3 2026. Estimated cost: $45K', 'status': 'Green'},
+        {'id': 'CMP-002', 'comp': 'Database Servers (SQL Cluster)', 'cur': '32 vCPU, 128 GB RAM, 4 TB NVMe', 'demand': 'avg 68% CPU, 74% RAM, 55% storage', 'util': '74%', 'thresh': '80%', 'forecast': 'Expected 20% growth from new ERP modules', 'upgrade': 'Add 64 GB RAM in Q2 2026. Evaluate storage expansion.', 'status': 'Amber'},
+        {'id': 'CMP-003', 'comp': 'SAN Storage Array', 'cur': '120 TB raw (96 TB usable)', 'demand': '78 TB used (81% utilization)', 'util': '81%', 'thresh': '80%', 'forecast': 'Growth ~2 TB/month', 'upgrade': 'URGENT: Add 40 TB shelf ordered. Expected delivery: 2 weeks.', 'status': 'Red'},
+        {'id': 'CMP-004', 'comp': 'Network Backbone (10 Gbps)', 'cur': '10 Gbps core, 1 Gbps access', 'demand': 'Peak 6.2 Gbps (62%), avg 3.8 Gbps (38%)', 'util': '62%', 'thresh': '75%', 'forecast': 'Expected 25% growth with new site connection', 'upgrade': 'Plan core upgrade to 25 Gbps in Q4 2026.', 'status': 'Green'},
+        {'id': 'CMP-005', 'comp': 'Internet Bandwidth (500 Mbps)', 'cur': '500 Mbps symmetrical', 'demand': 'Peak 420 Mbps (84%), avg 280 Mbps (56%)', 'util': '84%', 'thresh': '80%', 'forecast': 'WAN optimization being deployed', 'upgrade': 'Upgrade to 1 Gbps planned. Supplier quote received: $1,200/month.', 'status': 'Red'},
+        {'id': 'CMP-006', 'comp': 'Backup Storage', 'cur': '200 TB raw capacity', 'demand': '165 TB used (82.5%)', 'util': '83%', 'thresh': '85%', 'forecast': 'Growth ~3 TB/month', 'upgrade': 'Deduplication appliance upgrade in progress. Expected completion: 1 month.', 'status': 'Amber'},
+    ]
+
+    counts = {'Green': 0, 'Amber': 0, 'Red': 0}
+    for c in components:
+        st = c['status']
+        if st in counts:
+            counts[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'capacity_manager': 'Infrastructure Manager',
+        'review_period': 'Monthly — next review: 15th of each month',
+        'scope': 'All IT infrastructure components supporting ISO 20000-1:2018 scope. Includes servers, storage, network, backup, and internet connectivity.',
+        'components': [
+            {'component_id': c['id'], 'component': c['comp'], 'current_capacity': c['cur'],
+             'current_demand': c['demand'], 'utilization': c['util'], 'threshold': c['thresh'],
+             'forecast_demand': c['forecast'], 'planned_upgrade': c['upgrade'], 'status': c['status']}
+            for c in components
+        ],
+        'summary': {
+            'total_components': len(components),
+            'green': counts['Green'],
+            'amber': counts['Amber'],
+            'red': counts['Red'],
+        },
+    }
+
+
+def generate_change_management_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    changes = [
+        {'id': 'CHG-001', 'title': 'ERP System Upgrade v4.2 to v5.0', 'desc': 'Major version upgrade of ERP including database schema changes, new UI, and API updates. Requires full regression testing.', 'type': 'Normal', 'priority': 'High', 'risk': 'High', 'impact': 'ERP unavailable for 8 hours during cutover. All business units affected.', 'rollback': 'Full database restore from pre-upgrade backup. Revert application binaries. Estimated rollback time: 4 hours.', 'cab': (today_dt - timedelta(days=14)).strftime('%d/%m/%Y'), 'sched': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y'), 'req': 'IT Applications Manager', 'status': 'Approved'},
+        {'id': 'CHG-002', 'title': 'Firewall Rule Update — New Office Location', 'desc': 'Add firewall rules for new branch office. Open ports for VPN, file sharing, and business applications.', 'type': 'Standard', 'priority': 'Medium', 'risk': 'Low', 'impact': 'No impact. Pre-approved change type following standard template.', 'rollback': 'Remove added rules. Revert to previous config. Time: 30 minutes.', 'cab': 'N/A — Standard change', 'sched': (today_dt - timedelta(days=5)).strftime('%d/%m/%Y'), 'req': 'Network Engineer', 'status': 'Implemented'},
+        {'id': 'CHG-003', 'title': 'Emergency Security Patch — Critical CVE', 'desc': 'Apply out-of-band security patch for critical vulnerability in web server software (CVE-2026-1234).', 'type': 'Emergency', 'priority': 'Critical', 'risk': 'Medium', 'impact': 'Brief service interruption during patch application. Estimated downtime: 15 minutes.', 'rollback': 'Restore pre-patch snapshot. Time: 10 minutes.', 'cab': 'Emergency CAB convened', 'sched': (today_dt - timedelta(days=2)).strftime('%d/%m/%Y'), 'req': 'Security Operations Lead', 'status': 'Implemented'},
+        {'id': 'CHG-004', 'title': 'SAN Storage Expansion', 'desc': 'Add 40 TB storage shelf to primary SAN. Requires scheduled downtime for storage controller firmware update.', 'type': 'Normal', 'priority': 'High', 'risk': 'Medium', 'impact': 'Storage performance may be degraded during firmware update. Expected window: 2 hours.', 'rollback': 'Keep old shelf online. Revert firmware if incompatibility detected.', 'cab': (today_dt - timedelta(days=7)).strftime('%d/%m/%Y'), 'sched': (today_dt + timedelta(days=14)).strftime('%d/%m/%Y'), 'req': 'Infrastructure Manager', 'status': 'Approved'},
+        {'id': 'CHG-005', 'title': 'Desktop Image Update — Windows 11', 'desc': 'Deploy updated Windows 11 desktop image including latest security patches and application versions.', 'type': 'Normal', 'priority': 'Medium', 'risk': 'Low', 'impact': 'User impact managed via phased rollout. Pilot group: 50 users, then full rollout.', 'rollback': 'Restore previous image version via SCCM. Time: 2 hours per site.', 'cab': (today_dt - timedelta(days=21)).strftime('%d/%m/%Y'), 'sched': (today_dt + timedelta(days=7)).strftime('%d/%m/%Y'), 'req': 'Desktop Support Lead', 'status': 'Approved'},
+        {'id': 'CHG-006', 'title': 'Power Supply Replacement — UPS Battery', 'desc': 'Replace end-of-life UPS battery units in main data center. Requires scheduled power-down of non-critical systems.', 'type': 'Normal', 'priority': 'Low', 'risk': 'Low', 'impact': 'Non-critical systems powered down for 1 hour. Critical systems on redundant UPS.', 'rollback': 'Keep old batteries until new ones verified. Contingency generator on standby.', 'cab': 'N/A — CAB approved via email', 'sched': (today_dt + timedelta(days=45)).strftime('%d/%m/%Y'), 'req': 'Facilities Manager', 'status': 'Requested'},
+    ]
+
+    statuses = {'Requested': 0, 'Approved': 0, 'In Progress': 0, 'Implemented': 0, 'Closed': 0, 'Rolled Back': 0}
+    for c in changes:
+        st = c['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'change_manager': 'IT Change Manager',
+        'changes': [
+            {'change_id': c['id'], 'title': c['title'], 'description': c['desc'],
+             'change_type': c['type'], 'priority': c['priority'], 'risk_level': c['risk'],
+             'impact_assessment': c['impact'], 'rollback_plan': c['rollback'],
+             'cab_date': c['cab'], 'scheduled_date': c['sched'], 'requestor': c['req'],
+             'status': c['status']}
+            for c in changes
+        ],
+        'summary': {
+            'total_changes': len(changes),
+            'requested': statuses['Requested'],
+            'approved': statuses['Approved'],
+            'in_progress': statuses['In Progress'],
+            'implemented': statuses['Implemented'],
+            'closed': statuses['Closed'],
+            'rolled_back': statuses['Rolled Back'],
+        },
+    }
+
+
+def generate_release_deployment_plan(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    releases = [
+        {'id': 'REL-001', 'name': 'ERP v5.0 Major Release', 'scope': 'Complete ERP system upgrade including database migration, new UI framework, API v2, and reporting engine overhaul.', 'type': 'Major', 'planned': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y'), 'window': '22:00 Saturday – 06:00 Sunday', 'rollback': 'Database restore + application binary rollback. Validated in DR test environment. Estimated: 4 hours.', 'status': 'Planned'},
+        {'id': 'REL-002', 'name': 'Security Patch Bundle — April 2026', 'scope': 'Monthly security patches for Windows servers, Linux servers, network devices, and endpoints.', 'type': 'Patches', 'planned': (today_dt + timedelta(days=7)).strftime('%d/%m/%Y'), 'window': '20:00–00:00 Friday', 'rollback': 'WSUS rollback via group policy. Time: 1 hour.', 'status': 'Planned'},
+        {'id': 'REL-003', 'name': 'VPN Gateway Upgrade', 'scope': 'Replace VPN gateway hardware. New appliance supports 2x throughput and modern encryption standards.', 'type': 'Minor', 'planned': (today_dt - timedelta(days=45)).strftime('%d/%m/%Y'), 'window': '22:00–02:00', 'rollback': 'Fail back to old gateway. Config already exported. Time: 30 min.', 'status': 'Deployed'},
+        {'id': 'REL-004', 'name': 'Emergency TLS 1.2 Deprecation', 'scope': 'Emergency release to disable TLS 1.0/1.1 on all public-facing services. Required by compliance deadline.', 'type': 'Emergency', 'planned': (today_dt - timedelta(days=10)).strftime('%d/%m/%Y'), 'window': 'Immediate — rolling deployment across server groups', 'rollback': 'Re-enable TLS 1.1 via registry/config push. Time: 15 minutes per server group.', 'status': 'Deployed'},
+        {'id': 'REL-005', 'name': 'Desktop Image v2026.1', 'scope': 'Updated Windows 11 desktop image with new application versions, security baseline, and driver updates.', 'type': 'Minor', 'planned': (today_dt + timedelta(days=14)).strftime('%d/%m/%Y'), 'window': 'Deploy via SCCM during business hours. Pilot: 50 users. Phased over 2 weeks.', 'rollback': 'Re-publish previous image version. Force reinstall on affected machines.', 'status': 'In Progress'},
+        {'id': 'REL-006', 'name': 'SAN Firmware Update v7.2', 'scope': 'Critical firmware update for SAN controllers. Fixes known IO latency issue and security vulnerability.', 'type': 'Patches', 'planned': (today_dt + timedelta(days=21)).strftime('%d/%m/%Y'), 'window': '09:00–11:00 Sunday (maintenance window)', 'rollback': 'Boot from secondary controller with old firmware. Time: 15 minutes.', 'status': 'Planned'},
+    ]
+
+    statuses = {'Planned': 0, 'In Progress': 0, 'Deployed': 0, 'Rolled Back': 0, 'Cancelled': 0}
+    for r in releases:
+        st = r['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'release_manager': 'IT Release Manager',
+        'releases': [
+            {'release_id': r['id'], 'release_name': r['name'], 'scope': r['scope'],
+             'release_type': r['type'], 'planned_date': r['planned'], 'deployment_window': r['window'],
+             'rollback_procedure': r['rollback'], 'status': r['status']}
+            for r in releases
+        ],
+        'summary': {
+            'total_releases': len(releases),
+            'planned': statuses['Planned'],
+            'in_progress': statuses['In Progress'],
+            'deployed': statuses['Deployed'],
+            'rolled_back': statuses['Rolled Back'],
+            'cancelled': statuses['Cancelled'],
+        },
+    }
+
+
+def generate_incident_management_log(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    def fmt_dt(d):
+        return d.strftime('%d/%m/%Y %H:%M')
+
+    incidents = [
+        {'id': 'INC-001', 'summary': 'ERP system unresponsive — all users unable to access finance and procurement modules', 'sev': 'P1 Critical', 'reported': fmt_dt(today_dt - timedelta(hours=4)), 'resolved': 'Open', 'svc': 'ERP System Hosting', 'res': 'Root cause identified as database lock contention. Rollback of bulk data import in progress.', 'status': 'In Progress'},
+        {'id': 'INC-002', 'summary': 'Email delivery delay — messages queued for 30+ minutes', 'sev': 'P2 High', 'reported': fmt_dt(today_dt - timedelta(days=1, hours=3)), 'resolved': fmt_dt(today_dt - timedelta(days=1)), 'svc': 'Corporate Email', 'res': 'Mail queue cleared. Anti-spam filter rule corrected. Service restored within 45 minutes.', 'status': 'Resolved'},
+        {'id': 'INC-003', 'summary': 'VPN service intermittently dropping connections', 'sev': 'P2 High', 'reported': fmt_dt(today_dt - timedelta(days=2)), 'resolved': fmt_dt(today_dt - timedelta(days=1, hours=12)), 'svc': 'Network Connectivity', 'res': 'VPN concentrator license limit reached. Additional licenses installed. Connection limit increased.', 'status': 'Resolved'},
+        {'id': 'INC-004', 'summary': 'Single user unable to access file shares — permission error', 'sev': 'P4 Low', 'reported': fmt_dt(today_dt - timedelta(hours=2)), 'resolved': 'Open', 'svc': 'IT Help Desk', 'res': 'Assigned to IT Support Technician. Password reset and group membership refresh in progress.', 'status': 'New'},
+        {'id': 'INC-005', 'summary': 'Backup job failed — SAN snapshot timeout', 'sev': 'P3 Medium', 'reported': fmt_dt(today_dt - timedelta(days=1)), 'resolved': fmt_dt(today_dt - timedelta(hours=6)), 'svc': 'Cloud Backup & DR', 'res': 'SAN controller firmware timeout issue. Backup window extended. Job re-ran successfully.', 'status': 'Closed'},
+        {'id': 'INC-006', 'summary': 'Suspicious login attempts detected on admin portal', 'sev': 'P1 Critical', 'reported': fmt_dt(today_dt - timedelta(days=3)), 'resolved': fmt_dt(today_dt - timedelta(days=2, hours=18)), 'svc': 'Cybersecurity Monitoring', 'res': 'Source IP blocked. Credential reset for affected accounts. Investigation ongoing for data exfiltration.', 'status': 'Escalated'},
+    ]
+
+    sev_counts = {'P1 Critical': 0, 'P2 High': 0, 'P3 Medium': 0, 'P4 Low': 0}
+    status_counts = {'New': 0, 'In Progress': 0, 'Resolved': 0, 'Closed': 0, 'Escalated': 0}
+    resolved_times = []
+
+    for inc in incidents:
+        sv = inc['sev']
+        if sv in sev_counts:
+            sev_counts[sv] += 1
+        st = inc['status']
+        if st in status_counts:
+            status_counts[st] += 1
+        if inc['resolved'] != 'Open':
+            try:
+                r = datetime.strptime(inc['resolved'], '%d/%m/%Y %H:%M')
+                rp = datetime.strptime(inc['reported'], '%d/%m/%Y %H:%M')
+                resolved_times.append((r - rp).total_seconds() / 3600)
+            except Exception:
+                pass
+
+    avg_res = f'{sum(resolved_times) / len(resolved_times):.1f} hrs' if resolved_times else 'N/A'
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'incident_manager': 'IT Service Desk Manager',
+        'incidents': [
+            {'incident_id': i['id'], 'incident_summary': i['summary'], 'severity': i['sev'],
+             'reported_date': i['reported'], 'resolved_date': i['resolved'],
+             'affected_service': i['svc'], 'resolution': i['res'], 'status': i['status']}
+            for i in incidents
+        ],
+        'summary': {
+            'total_incidents': len(incidents),
+            'critical': sev_counts['P1 Critical'],
+            'high': sev_counts['P2 High'],
+            'medium': sev_counts['P3 Medium'],
+            'low': sev_counts['P4 Low'],
+            'open': status_counts['New'] + status_counts['In Progress'],
+            'resolved': status_counts['Resolved'] + status_counts['Closed'],
+            'avg_resolution_time': avg_res,
+        },
+    }
+
+
+def generate_problem_management_register(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    problems = [
+        {'id': 'PRB-001', 'inc_refs': 'INC-001, INC-009', 'summary': 'ERP database lock contention causing intermittent system unavailability during peak batch processing windows', 'rc': 'Inadequate indexing on key transaction tables combined with inefficient query patterns in the new procurement module. Root cause confirmed via SQL Profiler analysis.', 'wa': 'Manual kill of blocking sessions. Schedule batch jobs outside peak hours as temporary measure.', 'fix': 'Query optimization patch for procurement module. Index rebuild on top 10 contended tables. Deployment planned with ERP v5.0 upgrade.', 'cat': 'Application', 'pri': 'Critical', 'status': 'Under Investigation'},
+        {'id': 'PRB-002', 'inc_refs': 'INC-006, INC-012, INC-018', 'summary': 'Repeated brute-force login attempts targeting administrative interfaces', 'rc': 'Public-facing admin portals without IP rate limiting. Credential stuffing attack using previously compromised credentials from third-party data breaches.', 'wa': 'IP-based rate limiting implemented. Geo-blocking for non-operational regions.', 'fix': 'Deploy WAF with bot detection. Implement CAPTCHA on login pages. Enforce hardware MFA for all admin accounts.', 'cat': 'Security', 'pri': 'Critical', 'status': 'Known Error'},
+        {'id': 'PRB-003', 'inc_refs': 'INC-003', 'summary': 'VPN concentrator reaching license limit during peak remote working hours', 'rc': 'Underestimated concurrent connection requirements. License pool was sized for 60% of workforce; actual remote usage is 85%.', 'wa': 'Temporary license addition (10 extra slots) while permanent solution is implemented.', 'fix': 'Upgrade VPN concentrator to higher-capacity model. Transition to cloud-based ZTNA solution for long-term scalability.', 'cat': 'Infrastructure', 'pri': 'High', 'status': 'Resolved'},
+        {'id': 'PRB-004', 'inc_refs': 'INC-005', 'summary': 'SAN snapshot timeout causing backup job failures', 'rc': 'SAN controller firmware version has a known timeout issue when snapshot sizes exceed 500 GB. No workaround in current firmware.', 'wa': 'Split large volume backups into multiple smaller jobs. Extend backup window by 2 hours.', 'fix': 'SAN firmware upgrade to v7.2 (scheduled). Addresses timeout issue and improves snapshot performance by 40%.', 'cat': 'Infrastructure', 'pri': 'High', 'status': 'Known Error'},
+        {'id': 'PRB-005', 'inc_refs': 'INC-015', 'summary': 'Print server memory leak causing weekly service restarts', 'rc': 'Legacy printer driver has known memory leak in spooler service. Vendor confirmed issue — no fix available for current driver version.', 'wa': 'Weekly scheduled restart of print spooler service. Script deployed to automate restart during low-usage periods.', 'fix': 'Replace affected printers with models supporting modern driver architecture. Migration plan approved.', 'cat': 'Process', 'pri': 'Medium', 'status': 'Known Error'},
+        {'id': 'PRB-006', 'inc_refs': 'INC-020', 'summary': 'Intermittent WiFi disconnections on mobile devices in Building B', 'rc': 'AP density insufficient in high-occupancy areas. Channel overlap detected on 2.4 GHz band. Roaming settings suboptimal for mixed-vendor client devices.', 'wa': 'Reduce AP broadcast power to force client distribution. Enable band steering to 5 GHz.', 'fix': 'Add 4 additional APs in Building B conference areas. Site survey completed. Procurement in progress.', 'cat': 'Infrastructure', 'pri': 'Medium', 'status': 'Under Investigation'},
+    ]
+
+    pri_counts = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+    status_counts = {'Identified': 0, 'Under Investigation': 0, 'Known Error': 0, 'Resolved': 0, 'Closed': 0}
+    for p in problems:
+        pr = p['pri']
+        if pr in pri_counts:
+            pri_counts[pr] += 1
+        st = p['status']
+        if st in status_counts:
+            status_counts[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'problem_manager': 'Problem Management Lead',
+        'problems': [
+            {'problem_id': p['id'], 'incident_refs': p['inc_refs'], 'problem_summary': p['summary'],
+             'root_cause': p['rc'], 'workaround': p['wa'], 'permanent_fix': p['fix'],
+             'category': p['cat'], 'priority': p['pri'], 'status': p['status']}
+            for p in problems
+        ],
+        'summary': {
+            'total_problems': len(problems),
+            'critical': pri_counts['Critical'],
+            'high': pri_counts['High'],
+            'medium': pri_counts['Medium'],
+            'low': pri_counts['Low'],
+            'identified': status_counts['Identified'] + status_counts['Under Investigation'],
+            'resolved': status_counts['Resolved'] + status_counts['Closed'],
+        },
+    }
+
+
+def generate_service_continuity_plan(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+
+    services = [
+        {'id': 'SCP-001', 'name': 'Corporate Email & Collaboration', 'crit': 'Critical', 'rto': '2 hours', 'rpo': '15 minutes', 'strat': 'Active-active geographically redundant email servers. Automatic failover between data centers.', 'alt': 'Webmail access via secondary ISP. Mobile access via ActiveSync. Emergency comms via Teams mobile app.', 'test': (today_dt - timedelta(days=30)).strftime('%d/%m/%Y'), 'result': 'Pass', 'status': 'Ready'},
+        {'id': 'SCP-002', 'name': 'ERP System', 'crit': 'Critical', 'rto': '4 hours', 'rpo': '1 hour', 'strat': 'Active-passive cluster with database replication. Manual failover to DR site. Validated quarterly.', 'alt': 'Manual order processing forms (paper-based). Offline Excel invoicing. Batch upload when system restored.', 'test': (today_dt - timedelta(days=60)).strftime('%d/%m/%Y'), 'result': 'Pass', 'status': 'Ready'},
+        {'id': 'SCP-003', 'name': 'Network Infrastructure', 'crit': 'Critical', 'rto': '1 hour', 'rpo': 'N/A', 'strat': 'Redundant network paths. SD-WAN with automatic failover. LTE backup at key sites.', 'alt': '4G/5G failover via cellular routers. VPN concentrator at DR site. Pre-configured backup routers.', 'test': (today_dt - timedelta(days=90)).strftime('%d/%m/%Y'), 'result': 'Partial', 'status': 'Needs Review'},
+        {'id': 'SCP-004', 'name': 'Data Backup & Recovery', 'crit': 'Critical', 'rto': '4 hours (restore)', 'rpo': '1 hour (backup frequency)', 'strat': 'Automated daily backups with off-site replication to geographically separate data center. Weekly DR test.', 'alt': 'Tape backups stored in fireproof safe (last resort). Restore times: 24 hours for full system.', 'test': (today_dt - timedelta(days=7)).strftime('%d/%m/%Y'), 'result': 'Pass', 'status': 'Ready'},
+        {'id': 'SCP-005', 'name': 'IT Help Desk', 'crit': 'High', 'rto': '4 hours', 'rpo': 'N/A', 'strat': 'Cloud-based ITSM platform (no on-prem dependency). Agents can work remotely via VPN. Phone system auto-reroutes.', 'alt': 'Manual ticket logging via Excel. Emergency phone tree for critical issues. SMS-based status updates.', 'test': (today_dt - timedelta(days=45)).strftime('%d/%m/%Y'), 'result': 'Fail', 'status': 'Remediation Required'},
+        {'id': 'SCP-006', 'name': 'Cybersecurity Operations', 'crit': 'Critical', 'rto': '30 minutes', 'rpo': 'Real-time', 'strat': '24/7 SOC with geographically distributed teams. SIEM platform with hot-hot architecture. Threat intel feeds from multiple sources.', 'alt': 'Manual log review procedures (reduced capability). Emergency contacts activated via phone tree.', 'test': (today_dt - timedelta(days=14)).strftime('%d/%m/%Y'), 'result': 'Pass', 'status': 'Ready'},
+    ]
+
+    statuses = {'Ready': 0, 'Needs Review': 0, 'Remediation Required': 0}
+    for s in services:
+        st = s['status']
+        if st in statuses:
+            statuses[st] += 1
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'plan_owner': 'IT Continuity Manager',
+        'last_review_date': (today_dt - timedelta(days=30)).strftime('%d/%m/%Y'),
+        'next_review_date': (today_dt + timedelta(days=335)).strftime('%d/%m/%Y'),
+        'services': [
+            {'service_id': s['id'], 'service_name': s['name'], 'criticality': s['crit'],
+             'rto': s['rto'], 'rpo': s['rpo'], 'recovery_strategy': s['strat'],
+             'alternative_arrangements': s['alt'], 'last_test_date': s['test'],
+             'test_result': s['result'], 'status': s['status']}
+            for s in services
+        ],
+        'summary': {
+            'total_services': len(services),
+            'ready': statuses['Ready'],
+            'needs_review': statuses['Needs Review'],
+            'remediation': statuses['Remediation Required'],
+        },
+    }
+
+
+def generate_availability_management_report(data: dict) -> dict:
+    standard_label = data.get('standard', 'ISO 20000-1:2018')
+    client = data.get('client_name', 'Client')
+    date = data.get('audit_date', TODAY_STR)
+
+    services = [
+        {'id': 'AMR-001', 'name': 'Corporate Email & Collaboration', 'target': '99.9%', 'actual': '99.95%', 'downtime': '0.44 hours', 'outages': 1, 'mtbf': '720 hours', 'mttr': '0.44 hours', 'breach': 'No', 'notes': 'Single brief outage due to database maintenance. Exceeded target.'},
+        {'id': 'AMR-002', 'name': 'ERP System', 'target': '99.7%', 'actual': '99.65%', 'downtime': '3.07 hours', 'outages': 2, 'mtbf': '360 hours', 'mttr': '1.53 hours', 'breach': 'Yes', 'notes': 'Two incidents: database lock contention (2.5 hrs) and scheduled patch overrun (0.57 hrs). SLA breached by 0.05% points.'},
+        {'id': 'AMR-003', 'name': 'Network Infrastructure (Core)', 'target': '99.95%', 'actual': '99.98%', 'downtime': '0.18 hours', 'outages': 0, 'mtbf': 'N/A', 'mttr': 'N/A', 'breach': 'No', 'notes': 'No core network outages. Single BGP flap caused minor latency spike. Within SLA.'},
+        {'id': 'AMR-004', 'name': 'Internet Connectivity', 'target': '99.8%', 'actual': '99.75%', 'downtime': '2.19 hours', 'outages': 3, 'mtbf': '240 hours', 'mttr': '0.73 hours', 'breach': 'Yes', 'notes': 'ISP-side routing issue caused 2 major outages. Secondary link activated. SLA credit claimed.'},
+        {'id': 'AMR-005', 'name': 'IT Help Desk — Phone Service', 'target': '99.5%', 'actual': '99.8%', 'downtime': '1.75 hours', 'outages': 1, 'mtbf': 'N/A', 'mttr': '1.75 hours', 'breach': 'No', 'notes': 'VoIP provider maintenance. Call auto-routed to mobile backup within SLA.'},
+        {'id': 'AMR-006', 'name': 'Cloud Backup Service', 'target': '99.9%', 'actual': '99.5%', 'downtime': '4.38 hours', 'outages': 2, 'mtbf': '360 hours', 'mttr': '2.19 hours', 'breach': 'Yes', 'notes': 'SAN snapshot timeout (3 hrs) and backup window overrun (1.38 hrs). Storage team engaged.'},
+    ]
+
+    met = sum(1 for s in services if s['breach'] == 'No')
+    breached = sum(1 for s in services if s['breach'] == 'Yes')
+
+    actual_vals = [float(s['actual'].rstrip('%')) for s in services]
+    overall = f'{sum(actual_vals) / len(actual_vals):.2f}%'
+
+    return {
+        'client_name': client, 'date': date, 'standard': standard_label,
+        'report_owner': 'Service Assurance Manager',
+        'reporting_period': 'March 2026 (monthly)',
+        'services': [
+            {'service_id': s['id'], 'service_name': s['name'],
+             'target_availability': s['target'], 'actual_availability': s['actual'],
+             'downtime_hours': s['downtime'], 'number_of_outages': s['outages'],
+             'mtbf': s['mtbf'], 'mttr': s['mttr'], 'sla_breached': s['breach'], 'notes': s['notes']}
+            for s in services
+        ],
+        'summary': {
+            'total_services': len(services),
+            'sla_met': met,
+            'sla_breached': breached,
+            'overall_availability': overall,
+        },
+    }
+
+
 OFFLINE_GENERATORS = {
     'Audit_Plan_Stage_1': lambda d: generate_audit_plan_stage(d, 'Stage 1 - Readiness Review'),
     'Audit_Plan_Stage_2': lambda d: generate_audit_plan_stage(d, 'Stage 2 - Certification Audit'),
@@ -1619,6 +2065,18 @@ OFFLINE_GENERATORS = {
     'Energy_Review': generate_energy_review,
     'Compliance_Obligations_Register': generate_compliance_obligations_register,
     'Service_Portfolio': generate_service_portfolio,
+
+    # ── ISO 20000-1 Service Management (10 new) ────────────────
+    'Service_Catalogue': generate_service_catalogue,
+    'Supplier_Agreement_Register': generate_supplier_agreement_register,
+    'Business_Relationship_Register': generate_business_relationship_register,
+    'Capacity_Management_Plan': generate_capacity_management_plan,
+    'Change_Management_Register': generate_change_management_register,
+    'Release_Deployment_Plan': generate_release_deployment_plan,
+    'Incident_Management_Log': generate_incident_management_log,
+    'Problem_Management_Register': generate_problem_management_register,
+    'Service_Continuity_Plan': generate_service_continuity_plan,
+    'Availability_Management_Report': generate_availability_management_report,
 }
 
 

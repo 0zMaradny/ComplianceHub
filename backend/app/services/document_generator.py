@@ -1829,6 +1829,417 @@ def generate_service_portfolio(data, output_path, client_key: str = None):
     return output_path
 
 
+# ── ISO 20000-1 Service Management DOCX builders (10 new) ──────────────────
+
+def generate_service_catalogue(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Service Catalogue',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Catalogue Owner', client_key=client_key)
+    add_body_text(doc, data.get('catalogue_owner', 'N/A'), client_key=client_key)
+    add_body_text(doc, f"Version: {data.get('catalogue_version', 'N/A')}", client_key=client_key)
+
+    services = data.get('services', [])
+    if services:
+        add_section_heading(doc, 'Service Catalogue', client_key=client_key)
+        table = doc.add_table(rows=1, cols=7)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Service ID', 'Service Name', 'Description', 'Type', 'Status', 'Features', 'Contact', 'Service Hours'], client_key=client_key)
+        for s in services:
+            st = s.get('status', '')
+            rc = RGBColor(0xCC, 0x7A, 0x00) if st == 'Under Review' else (RGBColor(0x99, 0x99, 0x99) if st == 'Deprecated' else None)
+            add_data_row(table, [
+                s.get('service_id', ''), s.get('service_name', ''), s.get('description', ''),
+                s.get('service_type', ''), st, s.get('features', ''), s.get('contact', ''),
+                s.get('service_hours', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Services', 'total_services'), ('Live', 'live'),
+                      ('Deprecated', 'deprecated'), ('Under Review', 'under_review')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_supplier_agreement_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Supplier Agreement Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Register Owner', client_key=client_key)
+    add_body_text(doc, data.get('register_owner', 'N/A'), client_key=client_key)
+
+    agreements = data.get('agreements', [])
+    if agreements:
+        add_section_heading(doc, 'Supplier Agreements', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Agreement ID', 'Supplier', 'Service', 'Type', 'Start Date', 'Renewal Date',
+                               'Status', 'Performance', 'Key Contacts'], client_key=client_key)
+        for a in agreements:
+            st = a.get('status', '')
+            rc = TUV_RED if st in ('Expired', 'Terminated') else (RGBColor(0xCC, 0x7A, 0x00) if st == 'Under Negotiation' else None)
+            add_data_row(table, [
+                a.get('agreement_id', ''), a.get('supplier_name', ''), a.get('service_provided', ''),
+                a.get('agreement_type', ''), a.get('start_date', ''), a.get('renewal_date', ''),
+                st, a.get('performance_rating', ''), a.get('key_contacts', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Agreements', 'total_agreements'), ('Active', 'active'),
+                      ('Expired', 'expired'), ('Under Negotiation', 'under_negotiation'), ('Terminated', 'terminated')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_business_relationship_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Business Relationship Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Relationship Manager', client_key=client_key)
+    add_body_text(doc, data.get('relationship_manager', 'N/A'), client_key=client_key)
+
+    customers = data.get('customers', [])
+    if customers:
+        add_section_heading(doc, 'Customer Accounts', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Customer ID', 'Customer Name', 'Account Manager', 'Services Used',
+                               'Satisfaction Score', 'Complaints', 'Last Review', 'Next Review', 'Status'], client_key=client_key)
+        for c in customers:
+            st = c.get('status', '')
+            rc = TUV_RED if st == 'At Risk' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'On Hold' else RGBColor(0x99, 0x99, 0x99) if st == 'Inactive' else None)
+            add_data_row(table, [
+                c.get('customer_id', ''), c.get('customer_name', ''), c.get('account_manager', ''),
+                c.get('services_used', ''), c.get('satisfaction_score', ''),
+                str(c.get('complaints', 0)), c.get('last_review', ''), c.get('next_review', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Customers', 'total_customers'), ('Active', 'active'), ('On Hold', 'on_hold'),
+                      ('At Risk', 'at_risk'), ('Inactive', 'inactive')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+        add_body_text(doc, f"Average Satisfaction: {summary.get('avg_satisfaction', 'N/A')}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_capacity_management_plan(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Capacity Management Plan',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Capacity Manager', client_key=client_key)
+    add_body_text(doc, data.get('capacity_manager', 'N/A'), client_key=client_key)
+    add_body_text(doc, f"Review Period: {data.get('review_period', 'N/A')}", client_key=client_key)
+    add_body_text(doc, f"Scope: {data.get('scope', 'N/A')}", client_key=client_key)
+
+    components = data.get('components', [])
+    if components:
+        add_section_heading(doc, 'Capacity Components', client_key=client_key)
+        table = doc.add_table(rows=1, cols=9)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Component ID', 'Component', 'Current Capacity', 'Current Demand',
+                               'Utilization', 'Threshold', 'Forecast Demand', 'Planned Upgrade', 'Status'], client_key=client_key)
+        for c in components:
+            st = c.get('status', '')
+            rc = TUV_RED if st == 'Red' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'Amber' else None)
+            add_data_row(table, [
+                c.get('component_id', ''), c.get('component', ''), c.get('current_capacity', ''),
+                c.get('current_demand', ''), c.get('utilization', ''), c.get('threshold', ''),
+                c.get('forecast_demand', ''), c.get('planned_upgrade', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Components', 'total_components'), ('Green', 'green'),
+                      ('Amber', 'amber'), ('Red', 'red')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_change_management_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Change Management Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Change Manager', client_key=client_key)
+    add_body_text(doc, data.get('change_manager', 'N/A'), client_key=client_key)
+
+    changes = data.get('changes', [])
+    if changes:
+        add_section_heading(doc, 'Change Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=11)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Change ID', 'Title', 'Description', 'Type', 'Priority', 'Risk Level',
+                               'Impact Assessment', 'Rollback Plan', 'CAB Date', 'Scheduled Date', 'Requestor', 'Status'], client_key=client_key)
+        for ch in changes:
+            st = ch.get('status', '')
+            pr = ch.get('priority', '')
+            rc = TUV_RED if pr == 'Critical' else (RGBColor(0xCC, 0x7A, 0x00) if pr == 'High' else None)
+            if st == 'Rolled Back':
+                rc = TUV_RED
+            add_data_row(table, [
+                ch.get('change_id', ''), ch.get('title', ''), ch.get('description', ''),
+                ch.get('change_type', ''), pr, ch.get('risk_level', ''),
+                ch.get('impact_assessment', ''), ch.get('rollback_plan', ''),
+                ch.get('cab_date', ''), ch.get('scheduled_date', ''), ch.get('requestor', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Changes', 'total_changes'), ('Requested', 'requested'), ('Approved', 'approved'),
+                      ('In Progress', 'in_progress'), ('Implemented', 'implemented'),
+                      ('Closed', 'closed'), ('Rolled Back', 'rolled_back')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_release_deployment_plan(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Release & Deployment Plan',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Release Manager', client_key=client_key)
+    add_body_text(doc, data.get('release_manager', 'N/A'), client_key=client_key)
+
+    releases = data.get('releases', [])
+    if releases:
+        add_section_heading(doc, 'Release Schedule', client_key=client_key)
+        table = doc.add_table(rows=1, cols=7)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Release ID', 'Release Name', 'Scope', 'Type', 'Planned Date',
+                               'Deployment Window', 'Rollback Procedure', 'Status'], client_key=client_key)
+        for r in releases:
+            st = r.get('status', '')
+            rc = TUV_RED if st == 'Rolled Back' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'In Progress' else RGBColor(0x99, 0x99, 0x99) if st == 'Cancelled' else None)
+            add_data_row(table, [
+                r.get('release_id', ''), r.get('release_name', ''), r.get('scope', ''),
+                r.get('release_type', ''), r.get('planned_date', ''), r.get('deployment_window', ''),
+                r.get('rollback_procedure', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Releases', 'total_releases'), ('Planned', 'planned'),
+                      ('In Progress', 'in_progress'), ('Deployed', 'deployed'),
+                      ('Rolled Back', 'rolled_back'), ('Cancelled', 'cancelled')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_incident_management_log(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Incident Management Log',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Incident Manager', client_key=client_key)
+    add_body_text(doc, data.get('incident_manager', 'N/A'), client_key=client_key)
+
+    incidents = data.get('incidents', [])
+    if incidents:
+        add_section_heading(doc, 'Incident Log', client_key=client_key)
+        table = doc.add_table(rows=1, cols=7)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Incident ID', 'Summary', 'Severity', 'Reported Date', 'Resolved Date',
+                               'Affected Service', 'Resolution', 'Status'], client_key=client_key)
+        for inc in incidents:
+            sev = inc.get('severity', '')
+            st = inc.get('status', '')
+            rc = TUV_RED if sev == 'P1 Critical' else (RGBColor(0xCC, 0x7A, 0x00) if sev == 'P2 High' else None)
+            add_data_row(table, [
+                inc.get('incident_id', ''), inc.get('incident_summary', ''), sev,
+                inc.get('reported_date', ''), inc.get('resolved_date', ''),
+                inc.get('affected_service', ''), inc.get('resolution', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Incidents', 'total_incidents'), ('Critical', 'critical'),
+                      ('High', 'high'), ('Medium', 'medium'), ('Low', 'low'),
+                      ('Open', 'open'), ('Resolved', 'resolved')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+        add_body_text(doc, f"Avg Resolution Time: {summary.get('avg_resolution_time', 'N/A')}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_problem_management_register(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Problem Management Register',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Problem Manager', client_key=client_key)
+    add_body_text(doc, data.get('problem_manager', 'N/A'), client_key=client_key)
+
+    problems = data.get('problems', [])
+    if problems:
+        add_section_heading(doc, 'Problem Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=8)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Problem ID', 'Incident Refs', 'Summary', 'Root Cause', 'Workaround',
+                               'Permanent Fix', 'Category', 'Priority', 'Status'], client_key=client_key)
+        for p in problems:
+            pr = p.get('priority', '')
+            rc = TUV_RED if pr == 'Critical' else (RGBColor(0xCC, 0x7A, 0x00) if pr == 'High' else None)
+            add_data_row(table, [
+                p.get('problem_id', ''), p.get('incident_refs', ''), p.get('problem_summary', ''),
+                p.get('root_cause', ''), p.get('workaround', ''), p.get('permanent_fix', ''),
+                p.get('category', ''), pr, p.get('status', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Problems', 'total_problems'), ('Critical', 'critical'),
+                      ('High', 'high'), ('Medium', 'medium'), ('Low', 'low'),
+                      ('Identified', 'identified'), ('Resolved', 'resolved')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_service_continuity_plan(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Service Continuity Plan',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Plan Owner', client_key=client_key)
+    add_body_text(doc, data.get('plan_owner', 'N/A'), client_key=client_key)
+    add_body_text(doc, f"Last Review: {data.get('last_review_date', 'N/A')}", client_key=client_key)
+    add_body_text(doc, f"Next Review: {data.get('next_review_date', 'N/A')}", client_key=client_key)
+
+    services = data.get('services', [])
+    if services:
+        add_section_heading(doc, 'Service Continuity Register', client_key=client_key)
+        table = doc.add_table(rows=1, cols=9)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Service ID', 'Service Name', 'Criticality', 'RTO', 'RPO',
+                               'Recovery Strategy', 'Alternative Arrangements', 'Last Test', 'Test Result', 'Status'], client_key=client_key)
+        for s in services:
+            st = s.get('status', '')
+            rc = TUV_RED if st == 'Remediation Required' else (RGBColor(0xCC, 0x7A, 0x00) if st == 'Needs Review' else None)
+            add_data_row(table, [
+                s.get('service_id', ''), s.get('service_name', ''), s.get('criticality', ''),
+                s.get('rto', ''), s.get('rpo', ''), s.get('recovery_strategy', ''),
+                s.get('alternative_arrangements', ''), s.get('last_test_date', ''),
+                s.get('test_result', ''), st,
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Services', 'total_services'), ('Ready', 'ready'),
+                      ('Needs Review', 'needs_review'), ('Remediation Required', 'remediation')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
+def generate_availability_management_report(data, output_path, client_key: str = None):
+    client, lang, rtl, header_color = _resolve_client(client_key)
+    doc = Document()
+    setup_document(doc, landscape=True, client_key=client_key)
+    add_cover_page(doc, 'Availability Management Report',
+                   data.get('client_name', 'N/A'), data.get('standard', 'N/A'),
+                   data.get('date', 'N/A'), client_key=client_key)
+
+    add_section_heading(doc, 'Report Owner', client_key=client_key)
+    add_body_text(doc, data.get('report_owner', 'N/A'), client_key=client_key)
+    add_body_text(doc, f"Reporting Period: {data.get('reporting_period', 'N/A')}", client_key=client_key)
+
+    services = data.get('services', [])
+    if services:
+        add_section_heading(doc, 'Availability Metrics', client_key=client_key)
+        table = doc.add_table(rows=1, cols=9)
+        table.style = 'Table Grid'
+        add_header_row(table, ['Service ID', 'Service Name', 'Target Avail.', 'Actual Avail.',
+                               'Downtime (hrs)', 'Outages', 'MTBF', 'MTTR', 'SLA Breached', 'Notes'], client_key=client_key)
+        for s in services:
+            sla = s.get('sla_breached', '')
+            rc = TUV_RED if sla == 'Yes' else None
+            add_data_row(table, [
+                s.get('service_id', ''), s.get('service_name', ''), s.get('target_availability', ''),
+                s.get('actual_availability', ''), s.get('downtime_hours', ''),
+                str(s.get('number_of_outages', 0)), s.get('mtbf', ''), s.get('mttr', ''),
+                sla, s.get('notes', ''),
+            ], color=rc, client_key=client_key)
+
+    summary = data.get('summary', {})
+    if summary:
+        doc.add_paragraph()
+        add_section_heading(doc, 'Summary', client_key=client_key)
+        for k, v in [('Total Services', 'total_services'), ('SLA Met', 'sla_met'),
+                      ('SLA Breached', 'sla_breached')]:
+            add_body_text(doc, f'{k}: {summary.get(v, 0)}', client_key=client_key)
+        add_body_text(doc, f"Overall Availability: {summary.get('overall_availability', 'N/A')}", client_key=client_key)
+
+    doc.save(output_path)
+    return output_path
+
+
 # ── Generator registry ─────────────────────────────────────────────────────
 
 GENERATORS = {
@@ -1854,6 +2265,16 @@ GENERATORS = {
     'Energy_Review': generate_energy_review,
     'Compliance_Obligations_Register': generate_compliance_obligations_register,
     'Service_Portfolio': generate_service_portfolio,
+    'Service_Catalogue': generate_service_catalogue,
+    'Supplier_Agreement_Register': generate_supplier_agreement_register,
+    'Business_Relationship_Register': generate_business_relationship_register,
+    'Capacity_Management_Plan': generate_capacity_management_plan,
+    'Change_Management_Register': generate_change_management_register,
+    'Release_Deployment_Plan': generate_release_deployment_plan,
+    'Incident_Management_Log': generate_incident_management_log,
+    'Problem_Management_Register': generate_problem_management_register,
+    'Service_Continuity_Plan': generate_service_continuity_plan,
+    'Availability_Management_Report': generate_availability_management_report,
 }
 
 

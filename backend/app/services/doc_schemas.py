@@ -545,6 +545,299 @@ DOCUMENT_CONTRACTS = {
             'planned': 'int',
         },
     },
+
+    # ── Service Catalogue (ISO 20000-1 Clause 7.2) ─────────────────────
+    'Service_Catalogue': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'catalogue_owner': 'str',
+        'catalogue_version': 'str',
+        'services': [
+            {
+                'service_id': 'str — e.g. CAT-001',
+                'service_name': 'str',
+                'description': 'str — brief description',
+                'service_type': 'str — Business/Customer/Infrastructure',
+                'status': 'str — Live/Deprecated/Under Review',
+                'features': 'str — key features of the service',
+                'contact': 'str — service owner or support contact',
+                'service_hours': 'str — e.g. 24x7 or Business Hours',
+            },
+        ],
+        'summary': {
+            'total_services': 'int',
+            'live': 'int',
+            'deprecated': 'int',
+            'under_review': 'int',
+        },
+    },
+
+    # ── Supplier Agreement Register (ISO 20000-1 Clause 8.4.2) ─────────
+    'Supplier_Agreement_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'register_owner': 'str',
+        'agreements': [
+            {
+                'agreement_id': 'str — e.g. SAR-001',
+                'supplier_name': 'str',
+                'service_provided': 'str',
+                'agreement_type': 'str — Contract/SLA/Partnership/Letter of Agreement',
+                'start_date': 'str DD/MM/YYYY',
+                'renewal_date': 'str DD/MM/YYYY',
+                'status': 'str — Active/Expired/Under Negotiation/Terminated',
+                'performance_rating': 'str — Excellent/Satisfactory/Needs Improvement',
+                'key_contacts': 'str',
+            },
+        ],
+        'summary': {
+            'total_agreements': 'int',
+            'active': 'int',
+            'expired': 'int',
+            'under_negotiation': 'int',
+            'terminated': 'int',
+        },
+    },
+
+    # ── Business Relationship Register (ISO 20000-1 Clause 8.4.3) ──────
+    'Business_Relationship_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'relationship_manager': 'str',
+        'customers': [
+            {
+                'customer_id': 'str — e.g. BRR-001',
+                'customer_name': 'str',
+                'account_manager': 'str',
+                'services_used': 'str — summary of services consumed',
+                'satisfaction_score': 'str — e.g. 8.5/10',
+                'complaints': 'int',
+                'last_review': 'str DD/MM/YYYY',
+                'next_review': 'str DD/MM/YYYY',
+                'status': 'str — Active/On Hold/At Risk/Inactive',
+            },
+        ],
+        'summary': {
+            'total_customers': 'int',
+            'active': 'int',
+            'on_hold': 'int',
+            'at_risk': 'int',
+            'inactive': 'int',
+            'avg_satisfaction': 'str',
+        },
+    },
+
+    # ── Capacity Management Plan (ISO 20000-1 Clause 8.5.2) ────────────
+    'Capacity_Management_Plan': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'capacity_manager': 'str',
+        'review_period': 'str',
+        'scope': 'str',
+        'components': [
+            {
+                'component_id': 'str — e.g. CMP-001',
+                'component': 'str — server, network, storage, etc.',
+                'current_capacity': 'str',
+                'current_demand': 'str',
+                'utilization': 'str — percentage',
+                'threshold': 'str — e.g. 80%',
+                'forecast_demand': 'str',
+                'planned_upgrade': 'str — upgrade plan or timeline',
+                'status': 'str — Green/Amber/Red',
+            },
+        ],
+        'summary': {
+            'total_components': 'int',
+            'green': 'int',
+            'amber': 'int',
+            'red': 'int',
+        },
+    },
+
+    # ── Change Management Register (ISO 20000-1 Clause 8.6.2) ──────────
+    'Change_Management_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'change_manager': 'str',
+        'changes': [
+            {
+                'change_id': 'str — e.g. CHG-001',
+                'title': 'str',
+                'description': 'str',
+                'change_type': 'str — Standard/Normal/Emergency',
+                'priority': 'str — Low/Medium/High/Critical',
+                'risk_level': 'str — Low/Medium/High',
+                'impact_assessment': 'str',
+                'rollback_plan': 'str',
+                'cab_date': 'str DD/MM/YYYY or N/A',
+                'scheduled_date': 'str DD/MM/YYYY',
+                'requestor': 'str',
+                'status': 'str — Requested/Approved/In Progress/Implemented/Closed/Rolled Back',
+            },
+        ],
+        'summary': {
+            'total_changes': 'int',
+            'requested': 'int',
+            'approved': 'int',
+            'in_progress': 'int',
+            'implemented': 'int',
+            'closed': 'int',
+            'rolled_back': 'int',
+        },
+    },
+
+    # ── Release & Deployment Plan (ISO 20000-1 Clause 8.6.4) ───────────
+    'Release_Deployment_Plan': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'release_manager': 'str',
+        'releases': [
+            {
+                'release_id': 'str — e.g. REL-001',
+                'release_name': 'str',
+                'scope': 'str',
+                'release_type': 'str — Major/Minor/Patches/Emergency',
+                'planned_date': 'str DD/MM/YYYY',
+                'deployment_window': 'str — e.g. 22:00-06:00',
+                'rollback_procedure': 'str',
+                'status': 'str — Planned/In Progress/Deployed/Rolled Back/Cancelled',
+            },
+        ],
+        'summary': {
+            'total_releases': 'int',
+            'planned': 'int',
+            'in_progress': 'int',
+            'deployed': 'int',
+            'rolled_back': 'int',
+            'cancelled': 'int',
+        },
+    },
+
+    # ── Incident Management Log (ISO 20000-1 Clause 8.7.2) ──────────────
+    'Incident_Management_Log': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'incident_manager': 'str',
+        'incidents': [
+            {
+                'incident_id': 'str — e.g. INC-001',
+                'incident_summary': 'str',
+                'severity': 'str — P1 Critical/P2 High/P3 Medium/P4 Low',
+                'reported_date': 'str DD/MM/YYYY HH:MM',
+                'resolved_date': 'str DD/MM/YYYY HH:MM or Open',
+                'affected_service': 'str',
+                'resolution': 'str',
+                'status': 'str — New/In Progress/Resolved/Closed/Escalated',
+            },
+        ],
+        'summary': {
+            'total_incidents': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+            'open': 'int',
+            'resolved': 'int',
+            'avg_resolution_time': 'str',
+        },
+    },
+
+    # ── Problem Management Register (ISO 20000-1 Clause 8.7.3) ─────────
+    'Problem_Management_Register': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'problem_manager': 'str',
+        'problems': [
+            {
+                'problem_id': 'str — e.g. PRB-001',
+                'incident_refs': 'str — related incident IDs',
+                'problem_summary': 'str',
+                'root_cause': 'str',
+                'workaround': 'str or None',
+                'permanent_fix': 'str or None',
+                'category': 'str — Infrastructure/Application/Process/Security/Third-Party',
+                'priority': 'str — Low/Medium/High/Critical',
+                'status': 'str — Identified/Under Investigation/Known Error/Resolved/Closed',
+            },
+        ],
+        'summary': {
+            'total_problems': 'int',
+            'critical': 'int',
+            'high': 'int',
+            'medium': 'int',
+            'low': 'int',
+            'identified': 'int',
+            'resolved': 'int',
+        },
+    },
+
+    # ── Service Continuity Plan (ISO 20000-1 Clause 8.8.2) ──────────────
+    'Service_Continuity_Plan': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'plan_owner': 'str',
+        'last_review_date': 'str DD/MM/YYYY',
+        'next_review_date': 'str DD/MM/YYYY',
+        'services': [
+            {
+                'service_id': 'str — e.g. SCP-001',
+                'service_name': 'str',
+                'criticality': 'str — Critical/High/Medium/Low',
+                'rto': 'str',
+                'rpo': 'str',
+                'recovery_strategy': 'str',
+                'alternative_arrangements': 'str',
+                'last_test_date': 'str DD/MM/YYYY',
+                'test_result': 'str — Pass/Fail/Partial',
+                'status': 'str — Ready/Needs Review/Remediation Required',
+            },
+        ],
+        'summary': {
+            'total_services': 'int',
+            'ready': 'int',
+            'needs_review': 'int',
+            'remediation': 'int',
+        },
+    },
+
+    # ── Availability Management Report (ISO 20000-1 Clause 8.8.3) ──────
+    'Availability_Management_Report': {
+        'client_name': 'str',
+        'date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'report_owner': 'str',
+        'reporting_period': 'str',
+        'services': [
+            {
+                'service_id': 'str — e.g. AMR-001',
+                'service_name': 'str',
+                'target_availability': 'str — e.g. 99.9%',
+                'actual_availability': 'str — e.g. 99.85%',
+                'downtime_hours': 'str',
+                'number_of_outages': 'int',
+                'mtbf': 'str — Mean Time Between Failures',
+                'mttr': 'str — Mean Time To Recover',
+                'sla_breached': 'str — Yes/No',
+                'notes': 'str',
+            },
+        ],
+        'summary': {
+            'total_services': 'int',
+            'sla_met': 'int',
+            'sla_breached': 'int',
+            'overall_availability': 'str',
+        },
+    },
 }
 
 

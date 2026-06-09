@@ -647,6 +647,204 @@ Return JSON with:
 - portfolio_manager: string
 - services: list of {{service_id: string, service_name: string, description: string, category: string ("Core"/"Support"/"Enabling"), status: string ("Active"/"In Development"/"Retired"/"Planned"), sla_uptime: string, sla_response_time: string, sla_resolution_time: string, service_owner: string}} — include 6-10 services covering IT support, network, applications, security, backup, cloud
 - summary: {{total_services: int, active: int, in_development: int, retired: int, planned: int}}""",
+
+        # ── ISO 20000-1 Service Management (10 new prompts) ─────────────
+
+        'Service_Catalogue': f"""Generate a Service Catalogue for ISO 20000-1:2018 Clause 7.2. Lists all live services with features, contacts, and service hours. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- catalogue_owner: string
+- catalogue_version: string
+- services: list of {{service_id: string, service_name: string, description: string, service_type: string ("Business"/"Customer"/"Infrastructure"), status: string ("Live"/"Deprecated"/"Under Review"), features: string, contact: string, service_hours: string}} — include 6-10 services covering IT support, email, network, ERP, security, backup, etc.
+- summary: {{total_services: int, live: int, deprecated: int, under_review: int}}""",
+
+        'Supplier_Agreement_Register': f"""Generate a Supplier Agreement Register for ISO 20000-1:2018 Clause 8.4.2. Documents external provider agreements, performance, and renewal dates. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- register_owner: string
+- agreements: list of {{agreement_id: string, supplier_name: string, service_provided: string, agreement_type: string ("Contract"/"SLA"/"Partnership"/"Letter of Agreement"), start_date: string, renewal_date: string, status: string ("Active"/"Expired"/"Under Negotiation"/"Terminated"), performance_rating: string ("Excellent"/"Satisfactory"/"Needs Improvement"), key_contacts: string}} — include 5-8 agreements
+- summary: {{total_agreements: int, active: int, expired: int, under_negotiation: int, terminated: int}}""",
+
+        'Business_Relationship_Register': f"""Generate a Business Relationship Register for ISO 20000-1:2018 Clause 8.4.3. Tracks customer accounts, satisfaction scores, complaints, and review schedules. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- relationship_manager: string
+- customers: list of {{customer_id: string, customer_name: string, account_manager: string, services_used: string, satisfaction_score: string, complaints: int, last_review: string, next_review: string, status: string ("Active"/"On Hold"/"At Risk"/"Inactive")}} — include 4-6 customer accounts
+- summary: {{total_customers: int, active: int, on_hold: int, at_risk: int, inactive: int, avg_satisfaction: string}}""",
+
+        'Capacity_Management_Plan': f"""Generate a Capacity Management Plan for ISO 20000-1:2018 Clause 8.5.2. Documents infrastructure capacity, utilization, forecasts, and upgrades. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- capacity_manager: string
+- review_period: string
+- scope: string
+- components: list of {{component_id: string, component: string, current_capacity: string, current_demand: string, utilization: string, threshold: string, forecast_demand: string, planned_upgrade: string, status: string ("Green"/"Amber"/"Red")}} — include 5-8 components covering servers, storage, network, backup, internet
+- summary: {{total_components: int, green: int, amber: int, red: int}}""",
+
+        'Change_Management_Register': f"""Generate a Change Management Register for ISO 20000-1:2018 Clause 8.6.2. Documents all changes with CAB minutes, risk/impact assessment, rollback plans. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- change_manager: string
+- changes: list of {{change_id: string, title: string, description: string, change_type: string ("Standard"/"Normal"/"Emergency"), priority: string ("Low"/"Medium"/"High"/"Critical"), risk_level: string ("Low"/"Medium"/"High"), impact_assessment: string, rollback_plan: string, cab_date: string, scheduled_date: string, requestor: string, status: string ("Requested"/"Approved"/"In Progress"/"Implemented"/"Closed"/"Rolled Back")}} — include 5-8 changes
+- summary: {{total_changes: int, requested: int, approved: int, in_progress: int, implemented: int, closed: int, rolled_back: int}}""",
+
+        'Release_Deployment_Plan': f"""Generate a Release & Deployment Plan for ISO 20000-1:2018 Clause 8.6.4. Documents release schedule, deployment packages, and back-out plans. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- release_manager: string
+- releases: list of {{release_id: string, release_name: string, scope: string, release_type: string ("Major"/"Minor"/"Patches"/"Emergency"), planned_date: string, deployment_window: string, rollback_procedure: string, status: string ("Planned"/"In Progress"/"Deployed"/"Rolled Back"/"Cancelled")}} — include 4-7 releases
+- summary: {{total_releases: int, planned: int, in_progress: int, deployed: int, rolled_back: int, cancelled: int}}""",
+
+        'Incident_Management_Log': f"""Generate an Incident Management Log for ISO 20000-1:2018 Clause 8.7.2. Documents major incidents, SLA breach tracking, resolution times. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- incident_manager: string
+- incidents: list of {{incident_id: string, incident_summary: string, severity: string ("P1 Critical"/"P2 High"/"P3 Medium"/"P4 Low"), reported_date: string, resolved_date: string, affected_service: string, resolution: string, status: string ("New"/"In Progress"/"Resolved"/"Closed"/"Escalated")}} — include 5-8 incidents
+- summary: {{total_incidents: int, critical: int, high: int, medium: int, low: int, open: int, resolved: int, avg_resolution_time: string}}""",
+
+        'Problem_Management_Register': f"""Generate a Problem Management Register for ISO 20000-1:2018 Clause 8.7.3. Documents known errors, root cause, workarounds, and permanent fixes. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- problem_manager: string
+- problems: list of {{problem_id: string, incident_refs: string, problem_summary: string, root_cause: string, workaround: string, permanent_fix: string, category: string ("Infrastructure"/"Application"/"Process"/"Security"/"Third-Party"), priority: string ("Low"/"Medium"/"High"/"Critical"), status: string ("Identified"/"Under Investigation"/"Known Error"/"Resolved"/"Closed")}} — include 4-7 problems
+- summary: {{total_problems: int, critical: int, high: int, medium: int, low: int, identified: int, resolved: int}}""",
+
+        'Service_Continuity_Plan': f"""Generate a Service Continuity Plan for ISO 20000-1:2018 Clause 8.8.2. Documents continuity of services during disruption with RTO/RPO, recovery strategies, and test results. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- plan_owner: string
+- last_review_date: string
+- next_review_date: string
+- services: list of {{service_id: string, service_name: string, criticality: string ("Critical"/"High"/"Medium"/"Low"), rto: string, rpo: string, recovery_strategy: string, alternative_arrangements: string, last_test_date: string, test_result: string ("Pass"/"Fail"/"Partial"), status: string ("Ready"/"Needs Review"/"Remediation Required")}} — include 5-8 services
+- summary: {{total_services: int, ready: int, needs_review: int, remediation: int}}""",
+
+        'Availability_Management_Report': f"""Generate an Availability Management Report for ISO 20000-1:2018 Clause 8.8.3. Documents availability metrics, downtime analysis, MTBF, MTTR, and SLA compliance. COMPLETE output.
+
+ISO Standard(s): {standards_str}
+
+{ctx_str}
+Audit Notes:
+{notes_text}
+
+Manday Data:
+{manday_text_full}
+
+Return JSON with:
+- client_name: string
+- date: string (DD/MM/YYYY)
+- standard: string
+- report_owner: string
+- reporting_period: string
+- services: list of {{service_id: string, service_name: string, target_availability: string, actual_availability: string, downtime_hours: string, number_of_outages: int, mtbf: string, mttr: string, sla_breached: string ("Yes"/"No"), notes: string}} — include 5-8 services
+- summary: {{total_services: int, sla_met: int, sla_breached: int, overall_availability: string}}""",
     }
     return prompts.get(doc_type, prompts['Audit_Report'])
 
