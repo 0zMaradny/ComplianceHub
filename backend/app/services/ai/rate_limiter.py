@@ -15,19 +15,16 @@ PROVIDER_LIMITS = {
     'agentrouter': 60,
     # Local
     'local': 30,
-    # OpenRouter free-tier models (shared rate limit pool)
+    # OpenRouter models (shared rate limit pool)
     'fusion': 20,
     'auto': 20,
     'nemotron_ultra': 20,
     'nemotron_super': 20,
     'qwen3_coder': 20,
-    'qwen3_next': 20,
+    'gemma_31b': 20,
     'llama_70b': 20,
     'gpt_oss_120b': 20,
-    'gpt_oss_20b': 20,
     'kimi_k26': 20,
-    'glm_45': 20,
-    'hermes_405b': 20,
 }
 
 

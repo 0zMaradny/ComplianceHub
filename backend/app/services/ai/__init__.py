@@ -39,13 +39,10 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         'nemotron_ultra': ('.openrouter_provider', 'OpenRouterProvider'),
         'nemotron_super': ('.openrouter_provider', 'OpenRouterProvider'),
         'qwen3_coder': ('.openrouter_provider', 'OpenRouterProvider'),
-        'qwen3_next': ('.openrouter_provider', 'OpenRouterProvider'),
+        'gemma_31b': ('.openrouter_provider', 'OpenRouterProvider'),
         'llama_70b': ('.openrouter_provider', 'OpenRouterProvider'),
         'gpt_oss_120b': ('.openrouter_provider', 'OpenRouterProvider'),
-        'gpt_oss_20b': ('.openrouter_provider', 'OpenRouterProvider'),
         'kimi_k26': ('.openrouter_provider', 'OpenRouterProvider'),
-        'glm_45': ('.openrouter_provider', 'OpenRouterProvider'),
-        'hermes_405b': ('.openrouter_provider', 'OpenRouterProvider'),
     }
     mod_path, cls_name = providers.get(name, providers['gemini'])
     import importlib

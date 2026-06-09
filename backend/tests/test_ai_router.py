@@ -31,8 +31,7 @@ class TestModelRegistry:
         expected = [
             'nemotron_ultra', 'qwen3_coder',
             'nemotron_super', 'llama_70b', 'gpt_oss_120b',
-            'kimi_k26', 'qwen3_next', 'glm_45', 'hermes_405b',
-            'gpt_oss_20b',
+            'kimi_k26', 'gemma_31b',
             'fusion', 'auto',
             'local',
         ]

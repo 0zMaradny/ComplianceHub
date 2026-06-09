@@ -4,7 +4,7 @@ Architecture:
   Tier 1: AgentRouter (paid, highest quality) — if key available
   Tier 2: Frontier free models (nemotron_ultra, qwen3_coder) — best per task
   Tier 3: Strong free models (llama_70b, gpt_oss_120b, etc.) — fallback
-  Tier 4: Basic free / paid (gpt_oss_20b, auto) — last resort
+  Tier 4: Paid (fusion, auto) — last resort
   Tier 5: Local AI — offline fallback
 
 Quality-aware: each tier's output is validated for content quality.
