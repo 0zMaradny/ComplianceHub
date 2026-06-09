@@ -13,8 +13,11 @@ If quality is insufficient, the router upgrades to the next tier.
 
 import os
 import time
+import json
 import hashlib
 import logging
+import threading
+from pathlib import Path
 from typing import Any
 
 from . import create_provider
@@ -23,6 +26,104 @@ from .rate_limiter import ProviderRateLimiter
 from .model_registry import ALL_MODELS, get_task_chain
 
 logger = logging.getLogger(__name__)
+
+# ── Model performance tracking ─────────────────────────────────────────────
+_PERF_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "model_performance.json"
+_PERF_LOCK = threading.Lock()
+_model_perf: dict[str, dict] = {}
+
+
+def _load_perf():
+    global _model_perf
+    if _PERF_FILE.exists():
+        try:
+            with open(_PERF_FILE) as f:
+                _model_perf = json.load(f)
+        except (json.JSONDecodeError, IOError):
+            _model_perf = {}
+
+
+def _save_perf():
+    _PERF_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with _PERF_LOCK:
+        with open(_PERF_FILE, "w") as f:
+            json.dump(_model_perf, f, indent=2)
+
+
+def record_model_result(provider_name: str, task_type: str, success: bool,
+                        response_time_ms: int, quality_score: float = 0.0):
+    """Record a model invocation result for performance tracking."""
+    _load_perf()
+    with _PERF_LOCK:
+        if provider_name not in _model_perf:
+            _model_perf[provider_name] = {
+                "total_uses": 0, "total_failures": 0,
+                "total_quality_score": 0.0, "quality_samples": 0,
+                "total_response_ms": 0, "tasks": {},
+            }
+        p = _model_perf[provider_name]
+        p["total_uses"] += 1
+        if not success:
+            p["total_failures"] += 1
+        if quality_score > 0:
+            p["total_quality_score"] += quality_score
+            p["quality_samples"] += 1
+        p["total_response_ms"] += response_time_ms
+        # Per-task tracking
+        if task_type not in p["tasks"]:
+            p["tasks"][task_type] = {"uses": 0, "failures": 0, "avg_quality": 0.0}
+        p["tasks"][task_type]["uses"] += 1
+        if not success:
+            p["tasks"][task_type]["failures"] += 1
+        if quality_score > 0:
+            t = p["tasks"][task_type]
+            t["avg_quality"] = (t["avg_quality"] * (t["uses"] - 1) + quality_score) / t["uses"]
+    _save_perf()
+
+
+def get_model_performance() -> dict:
+    """Return performance data for all models."""
+    _load_perf()
+    result = {}
+    for name, p in _model_perf.items():
+        uses = p["total_uses"] or 1
+        avg_quality = (p["total_quality_score"] / p["quality_samples"]) if p["quality_samples"] > 0 else 0.0
+        avg_ms = p["total_response_ms"] // uses
+        result[name] = {
+            "total_uses": p["total_uses"],
+            "total_failures": p["total_failures"],
+            "failure_rate_pct": round(p["total_failures"] / uses * 100, 1),
+            "avg_quality_score": round(avg_quality, 1),
+            "avg_response_time_ms": avg_ms,
+            "tasks": p.get("tasks", {}),
+        }
+    return result
+
+
+def get_model_recommendation(task_type: str) -> dict:
+    """Recommend the best model for a task based on historical performance."""
+    _load_perf()
+    candidates = []
+    for name, p in _model_perf.items():
+        task_data = p.get("tasks", {}).get(task_type, {})
+        if task_data.get("uses", 0) >= 2:  # need minimum samples
+            candidates.append({
+                "name": name,
+                "uses": task_data["uses"],
+                "avg_quality": task_data.get("avg_quality", 0),
+                "failure_rate": task_data.get("failures", 0) / task_data["uses"],
+            })
+    if candidates:
+        # Sort by quality desc, then failure rate asc
+        candidates.sort(key=lambda c: (-c["avg_quality"], c["failure_rate"]))
+        return {"recommended": candidates[0]["name"], "candidates": candidates}
+    # Fallback to registry chain
+    chain = get_task_chain(task_type)
+    return {"recommended": chain[0] if chain else "local", "candidates": []}
+
+
+# Load performance data on import
+_load_perf()
 
 # ── Rate limiter (per-provider sliding window) ─────────────────────────────
 _rate_limiter = ProviderRateLimiter()
@@ -202,10 +303,13 @@ def _try_provider(
         )
         elapsed = time.perf_counter() - _ts
 
+        elapsed_ms = int((time.perf_counter() - _ts) * 1000)
+
         if 'error' in result and result['error'] is not None:
             logger.warning('Provider %s failed %s in %.2fs: %s',
                            provider_name, task_type, elapsed, result['error'])
             _mark_provider_failure(provider_name)
+            record_model_result(provider_name, task_type, False, elapsed_ms)
             return None, result['error']
 
         # Check quality errors — triggers MODEL UPGRADE
@@ -214,23 +318,36 @@ def _try_provider(
             logger.warning('Provider %s quality-failed %s in %.2fs: %s',
                            provider_name, task_type, elapsed, quality_errors[:2])
             _mark_provider_failure(provider_name)
+            record_model_result(provider_name, task_type, False, elapsed_ms, quality_score=3.0)
             return None, f'Quality insufficient: {"; ".join(str(e) for e in quality_errors[:2])}'
 
         if validation_errors:
             logger.warning('Provider %s validation-failed %s in %.2fs',
                            provider_name, task_type, elapsed)
             _mark_provider_failure(provider_name)
+            record_model_result(provider_name, task_type, False, elapsed_ms)
             return None, f"Validation failed: {'; '.join(validation_errors)}"
 
-        logger.info('PROFILE %s via %s in %.2fs', task_type, provider_name, elapsed)
+        # Success — compute quality score for tracking
+        _debugger = Autodebugger(task_type)
+        _, quality_issues = _debugger.validate_quality(result)
+        quality_score = max(0, 10 - len(quality_issues) * 1.5)  # rough score
+
+        logger.info('PROFILE %s via %s in %.2fs (q=%.1f)', task_type, provider_name, elapsed, quality_score)
         _mark_provider_success(provider_name)
+        record_model_result(provider_name, task_type, True, elapsed_ms, quality_score)
+        # Attach metadata to result for upstream use
+        result['_model_used'] = provider_name
+        result['_quality_score'] = round(quality_score, 1)
+        result['_response_time_ms'] = elapsed_ms
         return result, None
 
     except Exception as e:
-        elapsed = time.perf_counter() - _ts
+        elapsed_ms = int((time.perf_counter() - _ts) * 1000)
         logger.warning('Provider %s exception %s in %.2fs: %s',
                        provider_name, task_type, elapsed, e)
         _mark_provider_failure(provider_name)
+        record_model_result(provider_name, task_type, False, elapsed_ms)
         return None, str(e)
 
 
