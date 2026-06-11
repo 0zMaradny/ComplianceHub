@@ -25,6 +25,7 @@ STANDARD_LABEL_MAP = {
     'iso_30401': 'ISO 30401:2018',
     'iso_27701': 'ISO 27701:2025',
     'iso_31000': 'ISO 31000:2018',
+    'iso_13485': 'ISO 13485:2016',
     'iso_10002': 'ISO 10002:2018',
 }
 
@@ -42,6 +43,7 @@ FAMILY_LABEL_MAP = {
     'iso_30401': 'Knowledge Management',
     'iso_27701': 'Privacy Information Management',
     'iso_31000': 'Risk Management',
+    'iso_13485': 'Medical Devices Quality Management',
     'iso_10002': 'Complaints Handling',
 }
 
@@ -56,6 +58,7 @@ def _key_for_standard(standard_label: str) -> str:
                          ('ISO 22301', 'iso_22301'), ('ISO 37301', 'iso_37301'),
                          ('ISO 42001', 'iso_42001'), ('ISO 30401', 'iso_30401'),
                          ('ISO 27701', 'iso_27701'), ('ISO 31000', 'iso_31000'),
+                         ('ISO 13485', 'iso_13485'),
                          ('ISO 10002', 'iso_10002')]:
         if prefix in standard_label:
             return key

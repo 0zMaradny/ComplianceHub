@@ -526,6 +526,77 @@ CLAUSE_8 = {
             'Data breach notification timeline not aligned with regulatory requirements',
         ],
     },
+    'iso_13485': {
+        'title': 'Operation',
+        'sub_clauses': {
+            '8.1': {
+                'title': 'Operational planning and control',
+                'sub_clauses': {
+                    '8.1.1': 'General',
+                    '8.1.2': 'Validation of processes for production and service provision',
+                    '8.1.3': 'Control of production and service provision',
+                },
+            },
+            '8.2': {
+                'title': 'Design and development',
+                'sub_clauses': {
+                    '8.2.1': 'Design and development planning',
+                    '8.2.2': 'Design and development inputs',
+                    '8.2.3': 'Design and development outputs',
+                    '8.2.4': 'Design and development review',
+                    '8.2.5': 'Design and development verification',
+                    '8.2.6': 'Design and development validation',
+                    '8.2.7': 'Design and development transfer',
+                    '8.2.8': 'Control of design and development changes',
+                    '8.2.9': 'Design and development files',
+                },
+            },
+            '8.3': {
+                'title': 'Purchasing',
+                'sub_clauses': {
+                    '8.3.1': 'Purchasing process',
+                    '8.3.2': 'Purchasing information',
+                    '8.3.3': 'Verification of purchased product',
+                },
+            },
+            '8.4': 'Customer communication',
+            '8.5': {
+                'title': 'Control of production and service provision',
+                'sub_clauses': {
+                    '8.5.1': 'Control of production and service provision',
+                    '8.5.2': 'Cleanliness and contamination control',
+                    '8.5.3': 'Installation and servicing activities',
+                    '8.5.4': 'Sterilization process validation',
+                    '8.5.5': 'Identification and traceability',
+                    '8.5.6': 'Property belonging to customers or external providers',
+                    '8.5.7': 'Preservation of product',
+                },
+            },
+            '8.6': 'Control of monitoring and measuring equipment',
+            '8.7': {
+                'title': 'Nonconforming product',
+                'sub_clauses': {
+                    '8.7.1': 'Nonconforming product control',
+                    '8.7.2': 'Rework',
+                },
+            },
+        },
+        'evidence': [
+            'Reviewed design and development files for compliance with ISO 13485 requirements',
+            'Examined validation records for production and sterilization processes',
+            'Verified traceability system for medical device identification',
+            'Assessed purchasing controls and supplier qualification records',
+            'Reviewed monitoring and measuring equipment calibration records',
+            'Examined nonconforming product disposition and rework authorization records',
+            'Verified customer communication records including complaint handling',
+        ],
+        'typical_findings': [
+            'Design validation records incomplete regarding clinical evaluation',
+            'Sterilization process validation not revalidated after equipment change',
+            'Supplier qualification records missing for critical component providers',
+            'Customer complaint handling process does not meet regulatory reporting timelines',
+        ],
+    },
 }
 
 
@@ -1119,6 +1190,13 @@ SUPPORTING_STANDARDS_EVIDENCE = {
         'ISO 10001:2018': 'Reviewed codes of conduct for customer satisfaction per ISO 10001',
         'ISO 10003:2018': 'Examined external dispute resolution mechanisms per ISO 10003',
         'ISO 10004:2018': 'Verified customer satisfaction monitoring per ISO 10004',
+    },
+    'iso_13485': {
+        'ISO 14971:2019': 'Reviewed risk management file alignment with ISO 14971 requirements',
+        'ISO 13408:2024': 'Verified aseptic processing validation per ISO 13408',
+        'ISO 11137:2015': 'Examined radiation sterilization validation per ISO 11137',
+        'ISO 10993:2023': 'Reviewed biological evaluation of medical devices per ISO 10993',
+        'ISO 19011:2018': 'Confirmed audit programme methodology aligned with ISO 19011',
     },
 }
 

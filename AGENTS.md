@@ -1,33 +1,29 @@
 # ComplianceHub — Agent Instructions
 
-## AI Provider Architecture (4-Tier Fallback)
+## AI Provider Architecture (3-Tier Fallback, 9 Models)
 
 ```
 generate() / extract_structured()
   ├─ Cache check (md5, 1h TTL)
-  ├─ Tier 1: AgentRouter (single, paid, highest quality)
-  │   └─ fail → Tier 2: ThreadPoolExecutor(Groq, OpenRouter, HF) — first valid JSON wins
-  │       └─ all fail → Tier 3: local AI (qwen-0.5b)
+  ├─ Tier 1: Frontier OpenRouter (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha 1M) — parallel batch=2
+  │   └─ all fail → Tier 2: Strong OpenRouter (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B) — parallel batch=2
+  │       └─ all fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s) — independent API endpoint
   │           └─ fail → return error
 ```
 
-| Tier | Provider | Model | Cost | Speed | Quality |
-|------|----------|-------|------|-------|---------|
-| **1** | AgentRouter | agentrouter/claude-sonnet-4-20250514 | Paid (key in .env) | Fast | Best |
-| **2a** | Groq | llama-3.3-70b-versatile | **Free** (~800 t/s) | Fastest | Good |
-| **2b** | OpenRouter | mistral-small-3.1-24b → openrouter/free fallback | Cheap → **Free** | Fast | Good |
-| **2c** | HuggingFace | meta-llama/Meta-Llama-3-8B-Instruct | **Free** tier | Medium | Good |
-| **3** | Local AI | qwen-0.5b (469MB) | $0 | Slow (~20s/doc) | OK |
+| Tier | Provider | Models | Cost | Context | Speed |
+|------|----------|--------|------|---------|-------|
+| **1** | OpenRouter | Nemotron 3 Ultra 550B, Qwen3 Coder 480B, Kimi K2.6, **Owl Alpha** | **Free** | Up to 1M | Good |
+| **2** | OpenRouter | Nemotron 3 Super 120B, Llama 3.3 70B, Qwen3 Next 80B, Hermes 405B | **Free** | Up to 1M | Good |
+| **3** | Groq | Llama 3.3 70B Versatile | **Free** (~800 t/s) | 131k | **Fastest** |
 | **Offline** | Template engine | Static generation | $0 | Instant (3.2s/8docs) | Professional |
 
 ### API Key Setup
-- `.env` keys: `AGENTROUTER_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `HF_API_KEY`
-- AgentRouter: https://agentrouter.org
-- Groq: https://console.groq.com/keys (free, no CC)
+- `.env` keys: `OPENROUTER_API_KEY`, `GROQ_API_KEY`
 - OpenRouter: https://openrouter.ai/keys (free tier available)
-- HF: https://huggingface.co/settings/tokens (free, enable Inference Providers)
+- Groq: https://console.groq.com/keys (free, no CC)
 
-## Supported Standards (13 total)
+## Supported Standards (14 total)
 
 | Key | Standard | Structure | Annex |
 |-----|----------|-----------|-------|
@@ -35,6 +31,7 @@ generate() / extract_structured()
 | `iso_14001` | ISO 14001:2015 — Environmental | HLS Clause 1-10 | — |
 | `iso_45001` | ISO 45001:2018 — OH&S | HLS Clause 1-10 | — |
 | `iso_50001` | ISO 50001:2018 — Energy | HLS Clause 1-10 | — |
+| `iso_13485` | ISO 13485:2016 — Medical Devices | HLS Clause 1-10 | — |
 | `iso_27001` | ISO 27001:2022 — InfoSec | HLS + Annex A (4 themes, grouped) | A.5–A.8 (93 controls) |
 | `iso_20000` | ISO 20000-1:2018 — Service Mgmt | HLS Clause 1-10 | — |
 | `iso_22301` | ISO 22301:2019 — Business Continuity | HLS Clause 1-10 | — |
@@ -50,12 +47,11 @@ generate() / extract_structured()
 - **`app/services/clause_data.py`**: Data-driven clause database. Contains `HLS_CORE` (shared Clauses 1-3, 4-7, 9-10), `CLAUSE_8` (per-standard variants with sub-sub-clauses), `ANNEX_A_27001` (4 grouped themes), `ANNEX_A_42001` (9 control objectives), `PIMS_27701` (stand-alone privacy clauses), `FRAMEWORK_31000` and `FRAMEWORK_10002` (framework sections), `SUPPORTING_STANDARDS_EVIDENCE` (cross-references). Helper functions: `get_clause_data()`, `get_annex_a_data()`, `flatten_clauses()`, `get_evidence_for_clause()`.
 - **`app/services/offline_generator.py`**: Uses `clause_data` module to generate dynamic standard-specific checklists and evidence. No hardcoded ISO 9001 sections — all standards get proper clause coverage.
 - **`app/services/ai_pipeline.py`**: Injects standard family context (main + supporting standards) and Annex A structure into all AI prompts. Includes few-shot evidence examples for all doc types. Accepts `manday_info` — injects `{manday_summary}` block (audit type, total days, per-standard breakdown, team, IMS reduction) before raw manday text in every prompt.
-- **`app/services/manday_calculator.py`**: IAF MD 5 reference tables for all 13 standards, audit type multipliers (initial=1.0, surv=1/3, recert=2/3, transfer=2/3), IAF MD 11 IMS reduction matrix (15 per-pair reductions, max 20%), `compute_mandays()`, `detect_audit_type()`, `compute_ims_reduction()`, `compute_audit_team()`, `lookup_base_mandays()`.
-- **`app/services/template_manager.py`**: Maps doc types to TÜV template files. `CHECKLIST_TEMPLATES` covers 8 standards (iso_9001, 14001, 45001, 50001, 20000, 22301, 27001 via Excel); remaining 5 standards generate from scratch.
-- **`app/services/ai/router.py`**: 4-tier fallback architecture — AgentRouter (Tier 1) → parallel free tier: Groq+OpenRouter+HF (Tier 2) → local qwen-0.5b (Tier 3) → error. Uses `ThreadPoolExecutor` with future cancellation for parallel execution. Rate limiter, health tracking, and autodebugger self-healing integrated per provider.
-- **`app/services/ai/agentrouter_provider.py`**: OpenAI-compatible client for AgentRouter gateway (`agentrouter.org/v1`). Model: `agentrouter/claude-sonnet-4-20250514`.
-- **`app/services/ai/groq_provider.py`**: OpenAI-compatible client for Groq (`api.groq.com/openai/v1`). Model: `llama-3.3-70b-versatile`. Fastest free inference (~800 t/s).
-- **`app/services/ai/openrouter_provider.py`**: OpenAI-compatible client for OpenRouter (`openrouter.ai/api/v1`). Two-tier: try `mistralai/mistral-small-3.1-24b-instruct` (paid) → fallback to `openrouter/free`.
+- **`app/services/manday_calculator.py`**: IAF MD 5 reference tables for all 14 standards, audit type multipliers (initial=1.0, surv=1/3, recert=2/3, transfer=2/3), IAF MD 11 IMS reduction matrix (15 per-pair reductions, max 20%), `compute_mandays()`, `detect_audit_type()`, `compute_ims_reduction()`, `compute_audit_team()`, `lookup_base_mandays()`.
+- **`app/services/template_manager.py`**: Maps doc types to TÜV template files. `CHECKLIST_TEMPLATES` covers 8 standards (iso_9001, 14001, 45001, 50001, 20000, 22301, 27001 via Excel); remaining 7 standards generate from scratch.
+- **`app/services/ai/router.py`**: 3-tier fallback architecture — Frontier OpenRouter (4 free frontier models) → Strong OpenRouter (4 free strong models) → Groq (Llama 3.3 70B, ~800 t/s). Uses `ThreadPoolExecutor` with future cancellation for parallel execution. Peak-hours awareness: weekdays 12-18 UTC, low-priority tasks skip OpenRouter, go direct to Groq. Rate limiter, health tracking, quality scoring, response cache, and autodebugger self-healing integrated per provider.
+- **`app/services/ai/groq_provider.py`**: OpenAI-compatible client for Groq (`api.groq.com/openai/v1`). Model: `llama-3.3-70b-versatile`. Fastest free inference (~800 t/s). Tier 3 fallback.
+- **`app/services/ai/openrouter_provider.py`**: OpenAI-compatible client for OpenRouter (`openrouter.ai/api/v1`). Handles Tier 1 (frontier) and Tier 2 (strong) free models.
 - **`frontend/src/components/MandayForm.jsx`**: Collapsible form — audit type dropdown, employee/site inputs, per-standard risk/complexity table, IMS reduction %, real-time calculation preview (total, per-standard, team). Auto-fills from `mandayExtracted`.
 - **`generate_document_file`** in `document_generator.py`: `safe_name` capped to 60 chars with regex sanitization to prevent 500+ char filenames. Merged-cell tables handled gracefully in `set_col_widths` and `_inject_into_template_table`.
 
@@ -123,7 +119,7 @@ generate() / extract_structured()
 - Upload volume persists across restarts via `uploads` named volume
 
 ### Tests
-- `cd backend && python -m pytest tests/ -v` — Run 181 tests (136 unit + 45 integration)
+- `cd backend && python -m pytest tests/ -v` — Run 285 tests (unit + integration)
 - `cd backend && python -m pytest tests/ --coverage` — With coverage report
 - Test files: `tests/test_manday_calculator.py` (55 tests), `tests/test_offline_generator.py` (25 tests), `tests/test_template_manager.py` (16 tests)
 
@@ -136,7 +132,7 @@ generate() / extract_structured()
 
 ### Checklist Template Coverage
 - 8 standards with template injection: iso_9001, iso_14001, iso_45001, iso_50001, iso_20000, iso_22301, iso_27001 (Excel), iso_45001/50001 (shared combined template)
-- 5 standards from scratch: iso_37301, iso_42001, iso_30401, iso_27701, iso_31000, iso_10002
+- 7 standards from scratch: iso_37301, iso_42001, iso_30401, iso_27701, iso_31000, iso_10002, iso_13485
 - **iso_22301 fix**: table with merged cells (`no 'tc' element`) — graceful fallback to from-scratch generation
 
 ### Provider Rate Limiting

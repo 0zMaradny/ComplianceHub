@@ -1,13 +1,29 @@
+import os
+import re
+import shutil
+import subprocess
+
+import arabic_reshaper
+from bidi.algorithm import get_display
 from fpdf import FPDF
-import os, re
 
 FONT_DIR = '/usr/share/fonts/truetype/liberation'
+ARABIC_FONT_DIR = '/usr/share/fonts/truetype/noto'
 LOGO_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'tuv_logo.png')
 
 FONT_REGULAR = os.path.join(FONT_DIR, 'LiberationSans-Regular.ttf')
 FONT_BOLD = os.path.join(FONT_DIR, 'LiberationSans-Bold.ttf')
 FONT_ITALIC = os.path.join(FONT_DIR, 'LiberationSans-Italic.ttf')
 FONT_BI = os.path.join(FONT_DIR, 'LiberationSans-BoldItalic.ttf')
+
+ARABIC_FONT_REGULAR = os.path.join(ARABIC_FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
+ARABIC_FONT_BOLD = os.path.join(ARABIC_FONT_DIR, 'NotoNaskhArabic-Bold.ttf')
+
+ARABIC_RANGE = set(range(0x0600, 0x06FF + 1)) | set(range(0x0750, 0x077F + 1)) | set(range(0x08A0, 0x08FF + 1)) | set(range(0xFE70, 0xFEFF + 1)) | set(range(0xFB50, 0xFDFF + 1))
+
+
+def _has_arabic(text: str) -> bool:
+    return any(ord(c) in ARABIC_RANGE for c in text)
 
 TUV_BLUE = (0, 61, 122)
 TUV_RED = (183, 18, 52)
@@ -26,6 +42,34 @@ class AuditPDF(FPDF):
         self.add_font('Sans', 'B', FONT_BOLD)
         self.add_font('Sans', 'I', FONT_ITALIC)
         self.add_font('Sans', 'BI', FONT_BI)
+        self.add_font('Arabic', '', ARABIC_FONT_REGULAR)
+        self.add_font('Arabic', 'B', ARABIC_FONT_BOLD)
+        self._arabic_mode = False
+
+    def _switch_font_ar(self, style='', size=10):
+        self.set_font('Arabic', style, size)
+        self._arabic_mode = True
+
+    def _font_for(self, text, style='', size=10):
+        if _has_arabic(str(text)):
+            self._switch_font_ar(style, size)
+        else:
+            self.set_font('Sans', style, size)
+            self._arabic_mode = False
+
+    def _prepare_text(self, text):
+        s = str(text)
+        if _has_arabic(s):
+            return get_display(arabic_reshaper.reshape(s))
+        return s
+
+    def multi_cell(self, w, h, text, *a, **kw):
+        self._font_for(text)
+        super().multi_cell(w, h, self._prepare_text(text), *a, **kw)
+
+    def cell(self, w, h=0, text='', *a, **kw):
+        self._font_for(text)
+        super().cell(w, h, self._prepare_text(text), *a, **kw)
 
     def header(self):
         if self.page_no() == 1:
@@ -515,4 +559,44 @@ def generate_pdf_file(doc_type, data, output_dir, standard_key=None):
         result = generator(data, output_path)
         if result and os.path.exists(result):
             return result
+    return None
+
+
+# ── DOCX → PDF Converter ────────────────────────────────────────────────────
+
+PDF_AVAILABLE = False
+PDF_ENGINE = None
+
+if shutil.which('libreoffice') or shutil.which('soffice'):
+    PDF_AVAILABLE = True
+    PDF_ENGINE = 'libreoffice'
+elif shutil.which('docx2pdf'):
+    try:
+        __import__('docx2pdf')
+        PDF_AVAILABLE = True
+        PDF_ENGINE = 'docx2pdf'
+    except ImportError:
+        pass
+
+
+def convert_to_pdf(docx_path: str) -> str | None:
+    if not PDF_AVAILABLE:
+        return None
+    pdf_path = docx_path.rsplit('.', 1)[0] + '.pdf'
+    out_dir = os.path.dirname(docx_path)
+    try:
+        if PDF_ENGINE == 'libreoffice':
+            subprocess.run(
+                ['libreoffice', '--headless', '--convert-to', 'pdf',
+                 '--outdir', out_dir, docx_path],
+                capture_output=True, timeout=60, check=True,
+                env={**os.environ, 'HOME': '/tmp'},
+            )
+        elif PDF_ENGINE == 'docx2pdf':
+            from docx2pdf import convert as _convert
+            _convert(docx_path, pdf_path)
+        if os.path.exists(pdf_path):
+            return pdf_path
+    except Exception:
+        pass
     return None

@@ -19,11 +19,12 @@ ISO_STANDARDS = {
     'iso_30401': 'ISO 30401:2018 — Knowledge Management',
     'iso_27701': 'ISO 27701:2025 — Privacy Information Management',
     'iso_31000': 'ISO 31000:2018 — Risk Management — Guidelines',
+    'iso_13485': 'ISO 13485:2016 — Medical Devices Quality Management',
     'iso_10002': 'ISO 10002:2018 — Customer Satisfaction — Complaints Handling',
 }
 
 STANDARD_CATEGORIES = [
-    {'id': 'core', 'label': 'Core Management Systems', 'standards': ['iso_9001', 'iso_14001', 'iso_45001', 'iso_50001']},
+    {'id': 'core', 'label': 'Core Management Systems', 'standards': ['iso_9001', 'iso_14001', 'iso_45001', 'iso_50001', 'iso_13485']},
     {'id': 'security', 'label': 'Security, Continuity & Service', 'standards': ['iso_27001', 'iso_22301', 'iso_20000', 'iso_27701']},
     {'id': 'specialized', 'label': 'Specialized Standards', 'standards': ['iso_37301', 'iso_30401', 'iso_42001']},
     {'id': 'frameworks', 'label': 'Guidelines & Frameworks', 'standards': ['iso_31000', 'iso_10002']},
@@ -77,6 +78,10 @@ STANDARD_FAMILIES = {
     'iso_31000': {
         'main': 'ISO 31000:2018 — Risk Management Guidelines',
         'supporting': ['ISO 31010:2019', 'ISO 31030:2021', 'ISO Guide 73:2009'],
+    },
+    'iso_13485': {
+        'main': 'ISO 13485:2016 — Medical Devices Quality Management',
+        'supporting': ['ISO 14971:2019', 'ISO 13408:2024', 'ISO 11137:2015', 'ISO 10993:2023', 'ISO 19011:2018'],
     },
     'iso_10002': {
         'main': 'ISO 10002:2018 — Complaints Handling',
