@@ -1992,7 +1992,7 @@ def generate_business_relationship_register(data, output_path, client_key: str =
     customers = data.get('customers', [])
     if customers:
         add_section_heading(doc, 'Customer Accounts', client_key=client_key)
-        table = doc.add_table(rows=1, cols=8)
+        table = doc.add_table(rows=1, cols=9)
         table.style = 'Table Grid'
         add_header_row(table, ['Customer ID', 'Customer Name', 'Account Manager', 'Services Used',
                                'Satisfaction Score', 'Complaints', 'Last Review', 'Next Review', 'Status'], client_key=client_key)

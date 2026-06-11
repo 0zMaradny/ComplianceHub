@@ -287,71 +287,74 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
 
     def process_doc(doc_type):
         nonlocal offline_cache, client_name, _offline_timer
+        try:
+            _t_start = time.perf_counter()
+            with _progress_lock:
+                if job_id in progress_store:
+                    progress_store[job_id]['doc_progress'][doc_type] = 'generating'
 
-        _t_start = time.perf_counter()
-        with _progress_lock:
-            if job_id in progress_store:
-                progress_store[job_id]['doc_progress'][doc_type] = 'generating'
+            doc_data = None
+            ai_error = None
+            _ai_attempted = False
 
-        doc_data = None
-        ai_error = None
-        _ai_attempted = False
-
-        # 1) Try AI pipeline (router → local/cloud provider)
-        if api_key and api_key.strip().lower() not in ('', 'local'):
-            _ai_attempted = True
-            try:
-                ai_result = ai_generate(
-                    api_key, notes_text, manday_text,
-                    standards_full, doc_type, shared_context,
-                    client_key=client_key, manday_info=manday_info
-                )
-                if 'error' not in ai_result:
-                    doc_data = ai_result
-                else:
-                    ai_error = ai_result['error']
-            except Exception as e:
-                ai_error = str(e)
-
-        # 2) If AI failed or no key, fall back to offline generator
-        if doc_data is None:
-            with _nonlocal_lock:
-                if _offline_timer is None:
-                    _offline_timer = time.perf_counter()
-                if offline_cache is None:
-                    _ts = time.perf_counter()
-                    offline_cache = offline_generate_all(
-                        notes_text, manday_text,
-                        standards_full, selected_standards
+            # 1) Try AI pipeline (router → local/cloud provider)
+            if api_key and api_key.strip().lower() not in ('', 'local'):
+                _ai_attempted = True
+                try:
+                    ai_result = ai_generate(
+                        api_key, notes_text, manday_text,
+                        standards_full, doc_type, shared_context,
+                        client_key=client_key, manday_info=manday_info
                     )
-                    logger.info('JOB %s offline_generate_all took %.2fs', job_id, time.perf_counter() - _ts)
-            doc_data = offline_cache.get(doc_type, {})
-            if 'error' in doc_data:
-                ai_error = ai_error or doc_data['error']
-                doc_data = None
+                    if 'error' not in ai_result:
+                        doc_data = ai_result
+                    else:
+                        ai_error = ai_result['error']
+                except Exception as e:
+                    ai_error = str(e)
 
-        # 3) Generate the DOCX + PDF from whatever data we have
-        if doc_data:
-            if client_key:
-                doc_data['client_key'] = client_key
-            doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=client_key)
-            if doc_info:
+            # 2) If AI failed or no key, fall back to offline generator
+            if doc_data is None:
                 with _nonlocal_lock:
-                    if client_name == 'Client':
-                        client_name = doc_data.get('client_name', 'Client')
-                doc_info['_data'] = doc_data
-                with _progress_lock:
-                    if job_id in progress_store:
-                        progress_store[job_id]['doc_progress'][doc_type] = 'done'
-                dt = time.perf_counter() - _t_start
-                logger.info('JOB %s doc %s completed in %.2fs (source=%s)', job_id, doc_type, dt, 'ai' if _ai_attempted and ai_error is None else 'offline')
-                return doc_type, doc_info
+                    if _offline_timer is None:
+                        _offline_timer = time.perf_counter()
+                    if offline_cache is None:
+                        _ts = time.perf_counter()
+                        offline_cache = offline_generate_all(
+                            notes_text, manday_text,
+                            standards_full, selected_standards
+                        )
+                        logger.info('JOB %s offline_generate_all took %.2fs', job_id, time.perf_counter() - _ts)
+                doc_data = offline_cache.get(doc_type, {})
+                if 'error' in doc_data:
+                    ai_error = ai_error or doc_data['error']
+                    doc_data = None
 
-        with _progress_lock:
-            if job_id in progress_store:
-                progress_store[job_id]['doc_progress'][doc_type] = 'error'
-        logger.warning('JOB %s doc %s FAILED after %.2fs', job_id, doc_type, time.perf_counter() - _t_start)
-        return doc_type, {'error': ai_error or 'Document generation failed'}
+            # 3) Generate the DOCX + PDF from whatever data we have
+            if doc_data:
+                if client_key:
+                    doc_data['client_key'] = client_key
+                doc_info = _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=client_key)
+                if doc_info:
+                    with _nonlocal_lock:
+                        if client_name == 'Client':
+                            client_name = doc_data.get('client_name', 'Client')
+                    doc_info['_data'] = doc_data
+                    with _progress_lock:
+                        if job_id in progress_store:
+                            progress_store[job_id]['doc_progress'][doc_type] = 'done'
+                    dt = time.perf_counter() - _t_start
+                    logger.info('JOB %s doc %s completed in %.2fs (source=%s)', job_id, doc_type, dt, 'ai' if _ai_attempted and ai_error is None else 'offline')
+                    return doc_type, doc_info
+
+            with _progress_lock:
+                if job_id in progress_store:
+                    progress_store[job_id]['doc_progress'][doc_type] = 'error'
+            logger.warning('JOB %s doc %s FAILED after %.2fs', job_id, doc_type, time.perf_counter() - _t_start)
+            return doc_type, {'error': ai_error or 'Document generation failed'}
+        except Exception as e:
+            logger.error('JOB %s doc %s CRASHED: %s', job_id, doc_type, e)
+            return doc_type, {'error': str(e)}
 
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {executor.submit(process_doc, dt): dt for dt in OUTPUT_DOCUMENTS}
@@ -359,7 +362,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             dt, result = future.result()
             results[dt] = result
             completed += 1
-            _update_progress(job_id, current_doc=DOC_LABELS.get(dt, dt),
+            _update_progress(job_id, status='generating', current_doc=DOC_LABELS.get(dt, dt),
                              progress=20 + int((completed / total) * 70))
 
     _update_progress(job_id, progress=95, current_doc='Creating package...')
