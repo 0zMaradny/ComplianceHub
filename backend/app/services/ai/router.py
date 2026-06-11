@@ -1,14 +1,17 @@
 """AI router — quality-aware multi-provider orchestration.
 
 Architecture:
-  Tier 1: AgentRouter (paid, highest quality) — if key available
-  Tier 2: Frontier free models (nemotron_ultra, qwen3_coder) — best per task
-  Tier 3: Strong free models (llama_70b, gpt_oss_120b, etc.) — fallback
-  Tier 4: Paid (fusion, auto) — last resort
-  Tier 5: Local AI — offline fallback
+  Tier 1: ALL frontier free models (nemotron_ultra, qwen3_coder, kimi_k26, owl_alpha) via OpenRouter
+          — run in parallel batches, first valid JSON wins
+  Tier 2: ALL strong free models (nemotron_super, llama_70b, qwen3_next, hermes_405b) via OpenRouter
+          — run in parallel batches, only if Tier 1 all fail
+  Tier 3: Groq (groq_llama — Llama 3.3 70B, ~800 t/s)
+          — single attempt, independent API endpoint, only if Tiers 1+2 fail
+  Tier 4: Local AI (local_qwen — Qwen2.5-0.5B, ~20s/doc)
+          — offline fallback, only if Tiers 1-3 fail
 
-Quality-aware: each tier's output is validated for content quality.
-If quality is insufficient, the router upgrades to the next tier.
+Quality-aware: each tier's output is scored (0-100). If below threshold,
+the router upgrades to the next tier.
 """
 
 import os
@@ -18,12 +21,13 @@ import hashlib
 import logging
 import threading
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from . import create_provider
 from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
-from .model_registry import ALL_MODELS, get_task_chain
+from .model_registry import FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +73,6 @@ def record_model_result(provider_name: str, task_type: str, success: bool,
             p["total_quality_score"] += quality_score
             p["quality_samples"] += 1
         p["total_response_ms"] += response_time_ms
-        # Per-task tracking
         if task_type not in p["tasks"]:
             p["tasks"][task_type] = {"uses": 0, "failures": 0, "avg_quality": 0.0}
         p["tasks"][task_type]["uses"] += 1
@@ -106,7 +109,7 @@ def get_model_recommendation(task_type: str) -> dict:
     candidates = []
     for name, p in _model_perf.items():
         task_data = p.get("tasks", {}).get(task_type, {})
-        if task_data.get("uses", 0) >= 2:  # need minimum samples
+        if task_data.get("uses", 0) >= 2:
             candidates.append({
                 "name": name,
                 "uses": task_data["uses"],
@@ -114,34 +117,44 @@ def get_model_recommendation(task_type: str) -> dict:
                 "failure_rate": task_data.get("failures", 0) / task_data["uses"],
             })
     if candidates:
-        # Sort by quality desc, then failure rate asc
         candidates.sort(key=lambda c: (-c["avg_quality"], c["failure_rate"]))
         return {"recommended": candidates[0]["name"], "candidates": candidates}
-    # Fallback to registry chain
-    chain = get_task_chain(task_type)
+    chain = FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
     return {"recommended": chain[0] if chain else "local", "candidates": []}
 
 
-# Load performance data on import
 _load_perf()
 
 # ── Rate limiter (per-provider sliding window) ─────────────────────────────
 _rate_limiter = ProviderRateLimiter()
 
-# ── Provider health tracking (skip after 3 consecutive fails) ──────────────
 _provider_health: dict[str, int] = {}
 _PROVIDER_DEGRADE_THRESHOLD = 3
 
-# ── Response cache (md5 hash, 1h TTL) ──────────────────────────────────────
 _response_cache: dict[str, tuple[float, dict]] = {}
 _CACHE_TTL = 3600
 
-# ── OpenRouter model mapping ───────────────────────────────────────────────
 OPENROUTER_MODELS = {
     m.openrouter_name: m.model_id
     for m in ALL_MODELS.values()
     if m.provider == "openrouter"
 }
+
+BATCH_SIZE = 2
+
+PEAK_HOURS_START = 12
+PEAK_HOURS_END = 18
+
+
+def _is_openrouter_peak_hours() -> bool:
+    """Weekdays 12:00-18:00 UTC — OpenRouter congestion hours."""
+    now = time.gmtime()
+    return now.tm_wday < 5 and PEAK_HOURS_START <= now.tm_hour < PEAK_HOURS_END
+
+
+def _skip_openrouter(task_type: str) -> bool:
+    """Skip OpenRouter tiers during peak hours for low-priority tasks."""
+    return _is_openrouter_peak_hours() and TASK_PRIORITY.get(task_type, 'high') == 'low'
 
 
 def resolve_chain(
@@ -150,38 +163,19 @@ def resolve_chain(
     api_key: str = '',
     client_key: str = '',
 ) -> list[str]:
-    """Return ordered provider chain for a task type.
-
-    Uses model_registry.get_task_chain() which picks the best model per tier.
-    Always ends with 'local' as final fallback.
-    """
     if override_provider:
-        chain = [override_provider]
-        fallback_str = os.environ.get('AI_FALLBACK_PROVIDERS', '').strip()
-        if fallback_str:
-            chain.extend(p.strip() for p in fallback_str.split(',') if p.strip())
-        if 'local' not in chain:
-            chain.append('local')
-        return chain
-
-    return get_task_chain(task_type)
+        return [override_provider]
+    return FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def set_api_key(provider_name: str, api_key: str):
-    """Set the correct env var for the given provider."""
     if not api_key:
         return
     model = ALL_MODELS.get(provider_name)
     if model and model.provider == 'openrouter':
         os.environ['OPENROUTER_API_KEY'] = api_key
-    elif provider_name in ('openrouter', 'openai'):
-        # Generic openrouter name or openai → set OpenRouter key
+    elif provider_name == 'openrouter':
         os.environ['OPENROUTER_API_KEY'] = api_key
-        if provider_name == 'openai':
-            os.environ['OPENAI_API_KEY'] = api_key
-    # Also handle legacy provider names
-    elif provider_name == 'agentrouter':
-        os.environ['AGENTROUTER_API_KEY'] = api_key
     elif provider_name == 'groq':
         os.environ['GROQ_API_KEY'] = api_key
 
@@ -218,34 +212,26 @@ def _mark_provider_failure(provider_name: str):
 
 
 def _get_model_id(provider_name: str) -> str:
-    """Get the OpenRouter model ID for a provider name."""
     model = ALL_MODELS.get(provider_name)
     if model:
         return model.model_id
-    # Fallback for providers not in registry
     return OPENROUTER_MODELS.get(provider_name, 'openrouter/auto')
 
 
 def _provider_has_key(provider_name: str) -> bool:
-    """Check if the API key for a provider is available."""
     env_map = {
-        'agentrouter': 'AGENTROUTER_API_KEY',
         'groq': 'GROQ_API_KEY',
         'openrouter': 'OPENROUTER_API_KEY',
-        'hf': 'HF_API_KEY',
-        'openai': 'OPENAI_API_KEY',
-        'gemini': 'GEMINI_API_KEY',
-        'claude': 'CLAUDE_API_KEY',
     }
-    # All OpenRouter free models use OPENROUTER_API_KEY
     model = ALL_MODELS.get(provider_name)
     if model and model.provider == 'openrouter':
         return bool(os.environ.get('OPENROUTER_API_KEY', '').strip())
+    if model and model.provider == 'local':
+        return True  # local server doesn't need an API key
     env = env_map.get(provider_name)
     if env:
         return bool(os.environ.get(env, '').strip())
-    # Local doesn't need a key
-    return provider_name == 'local'
+    return False
 
 
 def _call_with_debugger(
@@ -256,12 +242,6 @@ def _call_with_debugger(
     system_prompt: str | None = None,
     **kwargs,
 ) -> tuple[dict, list[str]]:
-    """Call a provider wrapped in Autodebugger self-healing.
-
-    Returns (result, errors) where errors may include:
-    - '_validation_errors': structure validation failures
-    - '_quality_errors': content quality failures (triggers model upgrade)
-    """
     debugger = Autodebugger(task_type)
     result = debugger.call_with_self_heal(
         provider_fn, prompt, system_prompt=system_prompt, **kwargs
@@ -279,12 +259,6 @@ def _try_provider(
     mode: str = 'generate',
     **kwargs,
 ) -> tuple[dict | None, str | None]:
-    """Try a single provider with full quality-aware validation.
-
-    Returns (result, None) on success, or (None, error_message) on failure.
-    On quality failure, returns (result, quality_error) with result containing
-    '_quality_errors' for the caller to handle.
-    """
     if not _rate_limiter.check(provider_name):
         return None, f'Provider {provider_name} exceeded rate limit'
     if not _is_provider_healthy(provider_name):
@@ -312,7 +286,6 @@ def _try_provider(
             record_model_result(provider_name, task_type, False, elapsed_ms)
             return None, result['error']
 
-        # Check quality errors — triggers MODEL UPGRADE
         quality_errors = result.pop('_quality_errors', [])
         if quality_errors:
             logger.warning('Provider %s quality-failed %s in %.2fs: %s',
@@ -351,6 +324,49 @@ def _try_provider(
         return None, str(e)
 
 
+def _try_providers_batched(
+    provider_names: list[str],
+    task_type: str,
+    prompt: str,
+    system_prompt: str | None = None,
+    api_key: str = '',
+    mode: str = 'generate',
+    batch_size: int = BATCH_SIZE,
+    **kwargs,
+) -> tuple[dict | None, str | None]:
+    """Try providers in parallel batches.
+
+    Runs up to `batch_size` providers concurrently via ThreadPoolExecutor.
+    On first successful result, cancels remaining futures and returns.
+    If all in a batch fail, moves to the next batch.
+    """
+    eligible = [p for p in provider_names if _provider_has_key(p)]
+    if not eligible:
+        return None, 'No eligible providers in batch'
+
+    last_error = None
+    for batch_start in range(0, len(eligible), batch_size):
+        batch = eligible[batch_start:batch_start + batch_size]
+        logger.debug('Trying batch %s', batch)
+
+        with ThreadPoolExecutor(max_workers=len(batch)) as ex:
+            futures = {
+                ex.submit(
+                    _try_provider, p, task_type, prompt, system_prompt,
+                    api_key, mode, **kwargs,
+                ): p for p in batch
+            }
+            for future in as_completed(futures):
+                result, err = future.result()
+                if result is not None:
+                    for f in futures:
+                        f.cancel()
+                    return result, None
+                last_error = err
+
+    return None, last_error
+
+
 def generate(
     task_type: str,
     prompt: str,
@@ -363,51 +379,129 @@ def generate(
     """Generate a document through the quality-aware provider chain.
 
     Strategy:
-    1. If override_provider: use that chain
-    2. If AgentRouter key available: try it first (paid, highest quality)
-    3. Try best frontier free model for this task
-    4. If quality fails → try next free model in chain
-    5. Last resort: openrouter/auto (paid) → local
+      1. Cache check
+      2. Tier 1: ALL frontier free models in parallel batches
+      3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
+      4. Tier 3: Groq (if Tiers 1+2 fail)
+      5. Return error if all exhausted
     """
     ck = _cache_key(task_type, prompt)
     cached = _check_cache(ck)
     if cached is not None:
         return cached
 
-    # Build provider chain
     if override_provider:
         chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
-    else:
-        chain: list[str] = []
-        # Tier 1: AgentRouter (if available)
-        if _provider_has_key('agentrouter'):
-            chain.append('agentrouter')
-        # Tiers 2-4: model registry chain (frontier → strong → basic → paid)
-        chain.extend(get_task_chain(task_type))
-        # Deduplicate while preserving order
-        seen: set[str] = set()
-        deduped: list[str] = []
-        for p in chain:
-            if p not in seen:
-                deduped.append(p)
-                seen.add(p)
-        chain = deduped
+        for provider_name in chain:
+            if not _provider_has_key(provider_name):
+                continue
+            result, err = _try_provider(
+                provider_name, task_type, prompt,
+                system_prompt, api_key, 'generate', **kwargs,
+            )
+            if result is not None:
+                _set_cache(ck, result)
+                return result
+        return {'error': f'Override provider exhausted. Last: {err}'}
 
-    last_error = None
-    for provider_name in chain:
-        if not _provider_has_key(provider_name):
-            continue
-
-        result, err = _try_provider(
-            provider_name, task_type, prompt,
+    if _skip_openrouter(task_type):
+        logger.info('PEAK: task_type=%s -> direct to Groq (Tier 3)', task_type)
+        result, last_error = _try_providers_batched(
+            GROQ_NAMES, task_type, prompt,
             system_prompt, api_key, 'generate', **kwargs,
         )
         if result is not None:
             _set_cache(ck, result)
             return result
-        last_error = err
+        return {'error': f'Groq exhausted. Last: {last_error}'}
+
+    result, _ = _try_providers_batched(
+        FRONTIER_NAMES, task_type, prompt,
+        system_prompt, api_key, 'generate', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        STRONG_NAMES, task_type, prompt,
+        system_prompt, api_key, 'generate', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        GROQ_NAMES, task_type, prompt,
+        system_prompt, api_key, 'generate', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        LOCAL_NAMES, task_type, prompt,
+        system_prompt, api_key, 'generate', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
 
     return {'error': f'All providers exhausted. Last: {last_error}'}
+
+
+def generate_stream(
+    task_type: str,
+    prompt: str,
+    system_prompt: str | None = None,
+    api_key: str = '',
+    override_provider: str | None = None,
+    client_key: str = '',
+    **kwargs,
+):
+    """Stream a response through the provider chain.
+
+    Tries providers sequentially (not in parallel, since streaming
+    requires a single active connection). Falls through tiers:
+    frontier → strong → groq → error.
+    """
+    if override_provider:
+        chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
+    elif _skip_openrouter(task_type):
+        logger.info('PEAK: task_type=%s streaming -> direct to Groq (Tier 3)', task_type)
+        chain = GROQ_NAMES[:]
+    else:
+        chain = FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+
+    for provider_name in chain:
+        if not _provider_has_key(provider_name):
+            continue
+        if not _rate_limiter.check(provider_name):
+            continue
+        if not _is_provider_healthy(provider_name):
+            continue
+
+        try:
+            set_api_key(provider_name, api_key)
+            provider = create_provider(provider_name)
+
+            collected = []
+            for token in provider.generate_stream(prompt, system_prompt=system_prompt, **kwargs):
+                collected.append(token)
+                yield token
+
+            full = ''.join(collected)
+            if full and not full.startswith('[Error:'):
+                _mark_provider_success(provider_name)
+                return
+            else:
+                _mark_provider_failure(provider_name)
+        except Exception as e:
+            _mark_provider_failure(provider_name)
+            yield f'[Error: {str(e)}]'
+            return
+
+    yield '[Error: All providers exhausted for streaming]'
 
 
 def extract_structured(
@@ -418,7 +512,14 @@ def extract_structured(
     client_key: str = '',
     **kwargs,
 ) -> dict[str, Any]:
-    """Route a structured extraction task through the quality-aware chain."""
+    """Route a structured extraction task through the quality-aware chain.
+
+    Strategy:
+      1. Cache check
+      2. Tier 1: ALL frontier free models in parallel batches
+      3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
+      4. Tier 3: Groq (if Tiers 1+2 fail)
+    """
     ck = _cache_key(task_type, prompt)
     cached = _check_cache(ck)
     if cached is not None:
@@ -426,31 +527,59 @@ def extract_structured(
 
     if override_provider:
         chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
-    else:
-        chain = []
-        if _provider_has_key('agentrouter'):
-            chain.append('agentrouter')
-        chain.extend(get_task_chain(task_type))
-        seen: set[str] = set()
-        deduped: list[str] = []
-        for p in chain:
-            if p not in seen:
-                deduped.append(p)
-                seen.add(p)
-        chain = deduped
+        for provider_name in chain:
+            if not _provider_has_key(provider_name):
+                continue
+            result, err = _try_provider(
+                provider_name, task_type, prompt,
+                None, api_key, 'extract', **kwargs,
+            )
+            if result is not None:
+                _set_cache(ck, result)
+                return result
+        return {'error': f'Override provider exhausted. Last: {err}'}
 
-    last_error = None
-    for provider_name in chain:
-        if not _provider_has_key(provider_name):
-            continue
-
-        result, err = _try_provider(
-            provider_name, task_type, prompt,
+    if _skip_openrouter(task_type):
+        logger.info('PEAK: task_type=%s extract -> direct to Groq (Tier 3)', task_type)
+        result, last_error = _try_providers_batched(
+            GROQ_NAMES, task_type, prompt,
             None, api_key, 'extract', **kwargs,
         )
         if result is not None:
             _set_cache(ck, result)
             return result
-        last_error = err
+        return {'error': f'Groq exhausted. Last: {last_error}'}
+
+    result, _ = _try_providers_batched(
+        FRONTIER_NAMES, task_type, prompt,
+        None, api_key, 'extract', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        STRONG_NAMES, task_type, prompt,
+        None, api_key, 'extract', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        GROQ_NAMES, task_type, prompt,
+        None, api_key, 'extract', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        LOCAL_NAMES, task_type, prompt,
+        None, api_key, 'extract', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
 
     return {'error': f'All providers exhausted. Last: {last_error}'}

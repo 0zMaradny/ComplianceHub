@@ -4,27 +4,20 @@ from collections import defaultdict
 
 
 PROVIDER_LIMITS = {
-    # Legacy providers
-    'hf': 10,
-    'gemini': 60,
-    'openai': 60,
-    'claude': 50,
-    'ollama': 30,
     'groq': 30,
+    'groq_llama': 30,
     'openrouter': 30,
-    'agentrouter': 60,
-    # Local
-    'local': 30,
-    # OpenRouter models (shared rate limit pool)
-    'fusion': 20,
-    'auto': 20,
+
     'nemotron_ultra': 20,
     'nemotron_super': 20,
     'qwen3_coder': 20,
     'gemma_31b': 20,
     'llama_70b': 20,
-    'gpt_oss_120b': 20,
     'kimi_k26': 20,
+    'hermes_405b': 20,
+    'owl_alpha': 20,
+    'local': 5,
+    'local_qwen': 5,
 }
 
 

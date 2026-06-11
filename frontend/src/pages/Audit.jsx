@@ -1,6 +1,22 @@
 import { useState, useRef, useEffect } from 'react'
 import MandayForm from '../components/MandayForm'
 
+const REFINABLE_FIELDS = {
+  Audit_Report: ['findings_summary', 'conclusion', 'scope', 'methodology'],
+  ISO_Checklist: ['sections', 'overall_assessment'],
+  Certificate_Text: ['scope', 'certification_decision'],
+  Certificate: ['scope', 'certification_decision', 'conditions'],
+  TNL: ['summary'],
+  Audit_Plan_Stage_1: ['audit_scope', 'audit_objectives', 'audit_criteria'],
+  Audit_Plan_Stage_2: ['audit_scope', 'audit_objectives', 'audit_criteria'],
+  Participation_List: ['notes'],
+}
+
+// Maps cleaned result field names to _data field names for inline editing
+const CLEANED_TO_DATA = {
+  findings_summary_preview: 'findings_summary',
+}
+
 function DocResultItem({ docType, result, standards, API, jobId, setPreview }) {
   const label = (standards?.doc_labels && standards.doc_labels[docType]) || docType
   return (
@@ -76,8 +92,78 @@ export default function Audit({ API, standards }) {
   const [error, setError] = useState(null)
   const [elapsed, setElapsed] = useState(0)
   const [preview, setPreview] = useState(null)
+  const [refineField, setRefineField] = useState('')
+  const [refineInstruction, setRefineInstruction] = useState('')
+  const [refining, setRefining] = useState(false)
+  const [refineResult, setRefineResult] = useState(null)
+  const [versions, setVersions] = useState(null)
+  const [loadingVersions, setLoadingVersions] = useState(false)
+  const [bulkRefining, setBulkRefining] = useState(false)
+  const [bulkResult, setBulkResult] = useState(null)
+  const [editingField, setEditingField] = useState(null)
+  const [editValue, setEditValue] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [diffView, setDiffView] = useState(null)
   const pollRef = useRef(null)
   const elapsedRef = useRef(null)
+
+  const dataFieldName = (cleanedField) => CLEANED_TO_DATA[cleanedField] || cleanedField
+
+  const startEdit = (cleanedField, currentValue) => {
+    const val = typeof currentValue === 'string' ? currentValue : (Array.isArray(currentValue) ? currentValue.join('\n') : String(currentValue || ''))
+    setEditValue(val)
+    setEditingField(cleanedField)
+  }
+
+  const cancelEdit = () => {
+    setEditingField(null)
+    setEditValue('')
+  }
+
+  const saveEdit = async () => {
+    if (!editingField || !preview) return
+    const beforeVal = preview.result[editingField]
+    setSavingEdit(true)
+    try {
+      const res = await fetch(`${API}/edit-field`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_id: jobId,
+          doc_type: preview.docType,
+          field: dataFieldName(editingField),
+          value: editValue,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPreview(prev => ({
+          ...prev,
+          result: { ...prev.result, [editingField]: editValue },
+        }))
+        if (String(beforeVal) !== String(editValue)) {
+          setDiffView({ field: editingField, before: String(beforeVal || ''), after: editValue })
+        }
+        setEditingField(null)
+        setEditValue('')
+      }
+    } catch {}
+    setSavingEdit(false)
+  }
+
+  const refineFromEdit = () => {
+    if (!editingField || !preview) return
+    const df = dataFieldName(editingField)
+    setRefineField(df)
+    setRefineInstruction(`Replace the current value with exactly:\n${editValue}`)
+    setEditingField(null)
+    setEditValue('')
+  }
+
+  const isEditable = (cleanedField) => {
+    if (!preview) return false
+    return (REFINABLE_FIELDS[preview.docType] || []).includes(dataFieldName(cleanedField))
+  }
 
   const handleFileSelect = (field, file) => {
     setFiles(prev => ({ ...prev, [field]: file }))
@@ -478,10 +564,23 @@ export default function Audit({ API, standards }) {
               {preview.result.certification_decision && (
                 <div className="field">
                   <div className="field-label">Decision</div>
-                  <div className="field-value">
-                    <span className={`status-badge ${preview.result.certification_decision === 'Certified' ? 'done' : 'error'}`}>
-                      {preview.result.certification_decision}
-                    </span>
+                  <div className="field-value" style={{ cursor: isEditable('certification_decision') ? 'pointer' : 'default' }}
+                    onClick={() => isEditable('certification_decision') && startEdit('certification_decision', preview.result.certification_decision)}>
+                    {editingField === 'certification_decision' ? (
+                      <div onClick={e => e.stopPropagation()}>
+                        <textarea value={editValue} onChange={e => setEditValue(e.target.value)} rows={2}
+                          style={{ width: '100%', padding: 6, fontSize: 13, border: '1px solid var(--blue-400)', borderRadius: 4 }} />
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                          <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={saveEdit} disabled={savingEdit}>Save</button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={refineFromEdit}>Refine with AI</button>
+                          <button style={{ padding: '4px 10px', fontSize: 11 }} onClick={cancelEdit}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className={`status-badge ${preview.result.certification_decision === 'Certified' ? 'done' : 'error'}`}>
+                        {preview.result.certification_decision}
+                      </span>
+                    )}
                   </div>
                 </div>
               )}
@@ -506,16 +605,42 @@ export default function Audit({ API, standards }) {
               {preview.result.findings_summary_preview && (
                 <div className="field">
                   <div className="field-label">Findings Summary</div>
-                  <div className="field-value">{preview.result.findings_summary_preview}</div>
+                  <div className="field-value" style={{ cursor: isEditable('findings_summary_preview') ? 'pointer' : 'default' }}
+                    onClick={() => isEditable('findings_summary_preview') && startEdit('findings_summary_preview', preview.result.findings_summary_preview)}>
+                    {editingField === 'findings_summary_preview' ? (
+                      <div onClick={e => e.stopPropagation()}>
+                        <textarea value={editValue} onChange={e => setEditValue(e.target.value)} rows={4}
+                          style={{ width: '100%', padding: 6, fontSize: 13, border: '1px solid var(--blue-400)', borderRadius: 4, resize: 'vertical' }} />
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                          <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={saveEdit} disabled={savingEdit}>Save</button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={refineFromEdit}>Refine with AI</button>
+                          <button style={{ padding: '4px 10px', fontSize: 11 }} onClick={cancelEdit}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <span>{preview.result.findings_summary_preview}</span>
+                    )}
+                  </div>
                 </div>
               )}
               {preview.result.conditions?.length > 0 && (
                 <div className="field">
                   <div className="field-label">Conditions ({preview.result.conditions.length})</div>
-                  <div className="field-value">
-                    {preview.result.conditions.map((c, i) => (
-                      <div key={i}>• {c}</div>
-                    ))}
+                  <div className="field-value" style={{ cursor: isEditable('conditions') ? 'pointer' : 'default' }}
+                    onClick={() => isEditable('conditions') && startEdit('conditions', preview.result.conditions.join('\n'))}>
+                    {editingField === 'conditions' ? (
+                      <div onClick={e => e.stopPropagation()}>
+                        <textarea value={editValue} onChange={e => setEditValue(e.target.value)} rows={4}
+                          style={{ width: '100%', padding: 6, fontSize: 13, border: '1px solid var(--blue-400)', borderRadius: 4, resize: 'vertical' }} />
+                        <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                          <button className="btn btn-primary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={saveEdit} disabled={savingEdit}>Save</button>
+                          <button className="btn btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={refineFromEdit}>Refine with AI</button>
+                          <button style={{ padding: '4px 10px', fontSize: 11 }} onClick={cancelEdit}>Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      preview.result.conditions.map((c, i) => <div key={i}>• {c}</div>)
+                    )}
                   </div>
                 </div>
               )}
@@ -525,6 +650,176 @@ export default function Audit({ API, standards }) {
                   <div className="field-value">{preview.result.total_sections}</div>
                 </div>
               )}
+
+              <details className="refine-section" style={{ marginTop: 16 }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: 13, color: 'var(--blue-600)' }}>
+                  ✨ Refine with AI
+                </summary>
+                <div style={{ padding: '8px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <select
+                    value={refineField}
+                    onChange={e => { setRefineField(e.target.value); setRefineResult(null) }}
+                    style={{ padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-300)', borderRadius: 4 }}
+                  >
+                    <option value="">Select field to refine...</option>
+                    {(REFINABLE_FIELDS[preview.docType] || []).map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                  <textarea
+                    placeholder="Describe the change... (e.g. 'Make it more detailed', 'Use formal language')"
+                    value={refineInstruction}
+                    onChange={e => setRefineInstruction(e.target.value)}
+                    rows={2}
+                    style={{ padding: '6px 8px', fontSize: 13, border: '1px solid var(--gray-300)', borderRadius: 4, resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '6px 14px', fontSize: 12 }}
+                      disabled={refining || !refineField || !refineInstruction}
+                      onClick={async () => {
+                        setRefining(true)
+                        setRefineResult(null)
+                        try {
+                          const res = await fetch(`${API}/refine`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              job_id: jobId,
+                              doc_type: preview.docType,
+                              field: refineField,
+                              instruction: refineInstruction,
+                              api_key: apiKey,
+                            }),
+                          })
+                          const data = await res.json()
+                          if (data.new_value) {
+                            setRefineResult({ success: true, value: data.new_value })
+                            if (data.previous_value !== undefined) {
+                              setDiffView({
+                                field: refineField,
+                                before: String(data.previous_value || ''),
+                                after: data.new_value,
+                              })
+                            }
+                          } else {
+                            setRefineResult({ success: false, error: data.error || 'Refinement failed' })
+                          }
+                        } catch (e) {
+                          setRefineResult({ success: false, error: 'Network error' })
+                        }
+                        setRefining(false)
+                      }}
+                    >
+                      {refining ? 'Regenerating...' : 'Regenerate'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '6px 14px', fontSize: 12 }}
+                      onClick={async () => {
+                        setLoadingVersions(true)
+                        setVersions(null)
+                        try {
+                          const res = await fetch(`${API}/refine/versions/${jobId}/${preview.docType}?field=${refineField}`)
+                          const data = await res.json()
+                          setVersions(data.versions || [])
+                        } catch {
+                          setVersions([])
+                        }
+                        setLoadingVersions(false)
+                      }}
+                    >
+                      {loadingVersions ? 'Loading...' : 'History'}
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '6px 14px', fontSize: 12 }}
+                      disabled={bulkRefining || !refineInstruction}
+                      onClick={async () => {
+                        setBulkRefining(true)
+                        setBulkResult(null)
+                        try {
+                          const res = await fetch(`${API}/refine/bulk/${jobId}/${preview.docType}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              instruction: refineInstruction,
+                              api_key: apiKey,
+                            }),
+                          })
+                          const data = await res.json()
+                          setBulkResult(data)
+                        } catch {
+                          setBulkResult({ error: 'Network error' })
+                        }
+                        setBulkRefining(false)
+                      }}
+                    >
+                      {bulkRefining ? 'Refining All...' : 'Refine All'}
+                    </button>
+                    {refineResult?.success && (
+                      <span style={{ fontSize: 12, color: 'var(--green-600)' }}>Done ✓</span>
+                    )}
+                    {refineResult && !refineResult.success && (
+                      <span style={{ fontSize: 12, color: 'var(--red-600)' }}>{refineResult.error}</span>
+                    )}
+                  </div>
+                  {refineResult?.success && (
+                    <div style={{ fontSize: 12, color: 'var(--gray-600)', background: 'var(--gray-100)', padding: 8, borderRadius: 4, maxHeight: 150, overflow: 'auto' }}>
+                      <strong>New value:</strong>
+                      <pre style={{ whiteSpace: 'pre-wrap', margin: '4px 0 0', fontSize: 11 }}>{refineResult.value}</pre>
+                      {diffView && diffView.field === refineField && (
+                        <button className="btn btn-secondary"
+                          style={{ padding: '4px 10px', fontSize: 11, marginTop: 6 }}
+                          onClick={() => setDiffView(prev => ({ ...prev, show: true }))}>
+                          View Diff
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {bulkResult && (
+                    <div style={{ fontSize: 12, color: 'var(--gray-600)', background: 'var(--gray-100)', padding: 8, borderRadius: 4 }}>
+                      <strong>Bulk Refine:</strong> {bulkResult.succeeded}/{bulkResult.total} fields succeeded
+                      {bulkResult.failed > 0 && <span style={{ color: 'var(--red-600)' }}>, {bulkResult.failed} failed</span>}
+                      {bulkResult.results?.map((r, i) => (
+                        <div key={i} style={{ marginTop: 4, padding: '4px 6px', background: '#fff', borderRadius: 3, fontSize: 11 }}>
+                          <strong>{r.field}</strong>: {r.error ? <span style={{ color: 'var(--red-600)' }}>{r.error}</span> : '✓ updated'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {versions && (
+                    <details style={{ fontSize: 12 }}>
+                      <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--gray-600)' }}>
+                        Version History ({versions.length})
+                      </summary>
+                      <div style={{ maxHeight: 200, overflow: 'auto', marginTop: 4 }}>
+                        {versions.length === 0 ? (
+                          <div style={{ color: 'var(--gray-500)', padding: 4 }}>No version history for this field</div>
+                        ) : (
+                          [...versions].reverse().map((v, i) => (
+                            <div key={i} style={{
+                              padding: '6px 8px',
+                              marginBottom: 4,
+                              background: i === 0 ? 'var(--blue-50, #eff6ff)' : 'transparent',
+                              border: '1px solid var(--gray-200)',
+                              borderRadius: 4,
+                            }}>
+                              <div style={{ color: 'var(--gray-500)', fontSize: 10, marginBottom: 2 }}>
+                                v{versions.length - i} — {new Date(v.timestamp * 1000).toLocaleString()} — {v.instruction || 'generated'}
+                              </div>
+                              <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 11, maxHeight: 80, overflow: 'hidden' }}>
+                                {typeof v.value === 'string' ? v.value.slice(0, 500) + (v.value.length > 500 ? '...' : '') : JSON.stringify(v.value).slice(0, 500)}
+                              </pre>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              </details>
             </div>
             <div className="modal-footer">
               <a href={`${API}/download_doc/${jobId}/${preview.docType}`} className="btn btn-primary" style={{ fontSize: 13, padding: '8px 16px' }}>
@@ -535,6 +830,39 @@ export default function Audit({ API, standards }) {
                   Download PDF
                 </a>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {diffView?.show && (
+        <div className="modal-overlay" onClick={() => setDiffView(null)}>
+          <div className="modal-content modal-diff" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Diff: {diffView.field}</h3>
+              <button className="modal-close" onClick={() => setDiffView(null)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <h4 style={{ color: 'var(--red-600)', margin: '0 0 8px', fontSize: 13 }}>Before</h4>
+                  <pre style={{
+                    whiteSpace: 'pre-wrap', fontSize: 12, lineHeight: 1.5,
+                    background: '#fef2f2', border: '1px solid #fecaca',
+                    padding: 12, borderRadius: 6, maxHeight: 400, overflow: 'auto',
+                    margin: 0,
+                  }}>{diffView.before || '(empty)'}</pre>
+                </div>
+                <div>
+                  <h4 style={{ color: 'var(--green-600)', margin: '0 0 8px', fontSize: 13 }}>After</h4>
+                  <pre style={{
+                    whiteSpace: 'pre-wrap', fontSize: 12, lineHeight: 1.5,
+                    background: '#f0fdf4', border: '1px solid #bbf7d0',
+                    padding: 12, borderRadius: 6, maxHeight: 400, overflow: 'auto',
+                    margin: 0,
+                  }}>{diffView.after}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>

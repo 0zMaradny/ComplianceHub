@@ -12,39 +12,46 @@ class AIProvider(ABC):
     def extract_structured(self, prompt: str, response_mime_type: str | None = None) -> dict[str, Any]:
         pass
 
+    def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
+        """Stream tokens from the provider. Yields str tokens.
+        
+        Default implementation returns a single token (the full response).
+        Override in subclasses that support streaming.
+        """
+        result = self.generate(prompt, system_prompt=system_prompt, **kwargs)
+        if 'error' in result:
+            yield result['error']
+            return
+        text = result.get('text', result.get('response', str(result)))
+        yield text
+
 
 _PROVIDER_CACHE: dict[str, AIProvider] = {}
 
 
 def create_provider(provider_name: str | None = None) -> AIProvider:
     """Factory: create AI provider by name (reads AI_PROVIDER env if None)."""
-    name = (provider_name or os.environ.get('AI_PROVIDER', 'gemini')).lower().strip()
+    name = (provider_name or os.environ.get('AI_PROVIDER', 'openrouter')).lower().strip()
     cached = _PROVIDER_CACHE.get(name)
     if cached is not None:
         return cached
 
     providers = {
-        'gemini': ('.gemini_provider', 'GeminiProvider'),
-        'openai': ('.openai_provider', 'OpenAIProvider'),
-        'claude': ('.claude_provider', 'ClaudeProvider'),
-        'hf': ('.hf_provider', 'HFProvider'),
-        'local': ('.local_provider', 'LocalProvider'),
-        'agentrouter': ('.agentrouter_provider', 'AgentRouterProvider'),
         'groq': ('.groq_provider', 'GroqProvider'),
-        'ollama': ('.ollama_provider', 'OllamaProvider'),
-        # OpenRouter models — all route through openrouter_provider.py
+        'groq_llama': ('.groq_provider', 'GroqProvider'),
         'openrouter': ('.openrouter_provider', 'OpenRouterProvider'),
-        'fusion': ('.openrouter_provider', 'OpenRouterProvider'),
-        'auto': ('.openrouter_provider', 'OpenRouterProvider'),
         'nemotron_ultra': ('.openrouter_provider', 'OpenRouterProvider'),
         'nemotron_super': ('.openrouter_provider', 'OpenRouterProvider'),
         'qwen3_coder': ('.openrouter_provider', 'OpenRouterProvider'),
         'gemma_31b': ('.openrouter_provider', 'OpenRouterProvider'),
         'llama_70b': ('.openrouter_provider', 'OpenRouterProvider'),
-        'gpt_oss_120b': ('.openrouter_provider', 'OpenRouterProvider'),
         'kimi_k26': ('.openrouter_provider', 'OpenRouterProvider'),
+        'hermes_405b': ('.openrouter_provider', 'OpenRouterProvider'),
+        'owl_alpha': ('.openrouter_provider', 'OpenRouterProvider'),
+        'local': ('.local_provider', 'LocalProvider'),
+        'local_qwen': ('.local_provider', 'LocalProvider'),
     }
-    mod_path, cls_name = providers.get(name, providers['gemini'])
+    mod_path, cls_name = providers.get(name, providers['openrouter'])
     import importlib
     mod = importlib.import_module(mod_path, __package__)
     cls = getattr(mod, cls_name)

@@ -196,7 +196,12 @@ export default function Dashboard({ API }) {
       {/* ── NC Trends + AI Usage ── */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
         <div className="card">
-          <h3>NC Trends (6 months)</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>NC Trends (6 months)</h3>
+            <a href={`${API}/export/csv?dataset=nc_trends&months=6`}
+               className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}
+               download="nc_trends.csv">CSV</a>
+          </div>
           {ncTrends ? (
             <BarChart
               data={ncTrends}
@@ -206,7 +211,12 @@ export default function Dashboard({ API }) {
           ) : <div className="empty-state">No NC data yet</div>}
         </div>
         <div className="card">
-          <h3>AI Usage</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>AI Usage</h3>
+            <a href={`${API}/export/csv?dataset=ai_usage`}
+               className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}
+               download="ai_usage.csv">CSV</a>
+          </div>
           {aiUsage?.by_provider && Object.keys(aiUsage.by_provider).length > 0 ? (
             <PieChart data={aiUsage.by_provider} />
           ) : <div className="empty-state">No AI usage data yet</div>}

@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any
 
-from .model_registry import FIELD_MIN_LENGTHS, FIELD_MIN_ITEMS
+from .model_registry import FIELD_MIN_LENGTHS, FIELD_MIN_ITEMS, MIN_SCORE_THRESHOLDS
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +57,135 @@ REQUIRED_FIELDS = {
         ('client_name', str), ('audit_date', str), ('standard', str),
         ('summary', dict),
     ],
+    'chat_query': [
+        ('response', str),
+    ],
+
+    'Management_Review_Minutes': [
+        ('client_name', str), ('review_date', str), ('standard', str),
+        ('chairperson', str), ('attendees', list), ('agenda_items', list),
+        ('decisions', list), ('action_items', list), ('review_inputs', str),
+        ('review_outputs', str), ('next_review_date', str), ('report_date', str),
+    ],
+    'Corrective_Action_Report': [
+        ('client_name', str), ('car_number', str), ('standard', str),
+        ('audit_date', str), ('nc_reference', str), ('clause', str),
+        ('severity', str), ('problem_description', str), ('root_cause', str),
+        ('containment_actions', list), ('corrective_actions', list),
+        ('preventive_actions', list), ('verification_method', str),
+        ('status', str), ('reviewed_by', str), ('closure_date', str),
+    ],
+    'Gap_Analysis_Report': [
+        ('client_name', str), ('assessment_date', str), ('standard', str),
+        ('assessor', str), ('methodology', str), ('sections', list),
+        ('summary', dict), ('overall_assessment', str),
+    ],
+    'Statement_of_Applicability': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('based_on_risk_assessment', str), ('controls', list),
+        ('summary', dict),
+    ],
+    'Business_Impact_Analysis': [
+        ('client_name', str), ('assessment_date', str), ('standard', str),
+        ('methodology', str), ('critical_activities', list),
+        ('summary', dict), ('overall_findings', str),
+    ],
+    'Records_of_Processing_Activities': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('data_controller', str), ('data_protection_officer', str),
+        ('processing_activities', list), ('summary', dict),
+    ],
+    'Risk_Treatment_Plan': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('risk_assessment_reference', str), ('risks', list),
+        ('summary', dict),
+    ],
+    'Incident_Investigation_Report': [
+        ('client_name', str), ('incident_date', str), ('report_date', str),
+        ('standard', str), ('incident_description', str), ('location', str),
+        ('incident_type', str), ('severity', str), ('investigation_team', list),
+        ('root_cause', str), ('immediate_actions', list),
+        ('corrective_actions', list), ('lessons_learned', list),
+        ('recommendations', list), ('status', str), ('reviewed_by', str),
+    ],
+    'Internal_Audit_Program': [
+        ('client_name', str), ('program_year', str), ('standard', str),
+        ('audit_manager', str), ('audits', list), ('summary', dict),
+    ],
+    'Environmental_Aspect_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('methodology', str), ('aspects', list), ('summary', dict),
+    ],
+    'Hazard_Identification_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('methodology', str), ('hazards', list), ('summary', dict),
+    ],
+    'Energy_Review': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('review_period', str), ('methodology', str),
+        ('energy_sources', list), ('significant_uses', list),
+        ('summary', dict),
+    ],
+    'Compliance_Obligations_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('methodology', str), ('obligations', list), ('summary', dict),
+    ],
+    'Service_Portfolio': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('portfolio_manager', str), ('services', list), ('summary', dict),
+    ],
+    'Service_Catalogue': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('catalogue_owner', str), ('catalogue_version', str),
+        ('services', list), ('summary', dict),
+    ],
+    'Supplier_Agreement_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('register_owner', str), ('agreements', list), ('summary', dict),
+    ],
+    'Business_Relationship_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('relationship_manager', str), ('customers', list),
+        ('summary', dict),
+    ],
+    'Capacity_Management_Plan': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('capacity_manager', str), ('review_period', str), ('scope', str),
+        ('components', list), ('summary', dict),
+    ],
+    'Change_Management_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('change_manager', str), ('changes', list), ('summary', dict),
+    ],
+    'Release_Deployment_Plan': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('release_manager', str), ('releases', list), ('summary', dict),
+    ],
+    'Incident_Management_Log': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('incident_manager', str), ('incidents', list), ('summary', dict),
+    ],
+    'Problem_Management_Register': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('problem_manager', str), ('problems', list), ('summary', dict),
+    ],
+    'Service_Continuity_Plan': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('plan_owner', str), ('last_review_date', str),
+        ('next_review_date', str), ('services', list), ('summary', dict),
+    ],
+    'Availability_Management_Report': [
+        ('client_name', str), ('date', str), ('standard', str),
+        ('report_owner', str), ('reporting_period', str),
+        ('services', list), ('summary', dict),
+    ],
 }
 
 SCHEDULE_FIELDS = {'day': int, 'date': str, 'time': str, 'activity': str, 'auditee': str, 'auditor': str, 'clause': str}
 PARTICIPANT_FIELDS = {'name': str, 'company': str, 'department': str}
 SECTION_FIELDS = {'clause': str, 'status': str, 'evidence': str}
+
+ISO_CLAUSE_PATTERN = r'\d+(?:\.\d+)*'
 
 
 class Autodebugger:
@@ -155,6 +279,128 @@ class Autodebugger:
         self._log('corrective_prompt', {'errors': errors})
         return original_prompt + correction
 
+    def _count_sentences(self, text: str) -> int:
+        if not text:
+            return 0
+        return max(1, text.count('.') + text.count('!') + text.count('?'))
+
+    def _check_prompt_regurgitation(self, result: dict, original_prompt: str) -> list[str]:
+        errors = []
+        prompt_lower = original_prompt.lower()
+        for key, value in result.items():
+            if isinstance(value, str) and len(value) > 100:
+                value_lower = value.lower()
+                overlap_words = set(value_lower.split()) & set(prompt_lower.split())
+                if value_lower.split() and len(overlap_words) / len(value_lower.split()) > 0.85:
+                    errors.append(f"Prompt regurgitation: '{key}' overlaps with input prompt >85%")
+                    break
+        return errors
+
+    def _check_iso_clause_refs(self, result: dict) -> list[str]:
+        errors = []
+        if self.task_type == 'ISO_Checklist':
+            sections = result.get('sections', [])
+            valid_clauses = 0
+            for s in sections:
+                clause = s.get('clause', '')
+                if clause and __import__('re').match(ISO_CLAUSE_PATTERN, clause.strip()):
+                    valid_clauses += 1
+            if sections and valid_clauses < len(sections) * 0.5:
+                errors.append(f"ISO clause validation: only {valid_clauses}/{len(sections)} sections have valid clause numbers")
+        if self.task_type in ('Audit_Plan_Stage_1', 'Audit_Plan_Stage_2'):
+            schedule = result.get('daily_schedule', [])
+            valid_refs = 0
+            for entry in schedule:
+                clause = entry.get('clause', '')
+                if clause and __import__('re').search(r'\d+\.\d+', clause):
+                    valid_refs += 1
+            if schedule and valid_refs < len(schedule) * 0.3:
+                errors.append(f"ISO clause validation: only {valid_refs}/{len(schedule)} schedule entries have clause references")
+        return errors
+
+    def score_quality(self, result: dict) -> dict:
+        """Score output quality on 0-100 scale across 4 dimensions.
+
+        Returns:
+            {'overall': int, 'fields': dict, 'pass': bool}
+        """
+        scores = {}
+
+        # 1) Completeness (0-40): required fields present and non-empty
+        req = REQUIRED_FIELDS.get(self.task_type, [])
+        present = 0
+        for field, expected_type in req:
+            val = result.get(field)
+            if val is not None:
+                if isinstance(val, str) and val.strip():
+                    present += 1
+                elif isinstance(val, (list, dict)) and val:
+                    present += 1
+                elif not isinstance(val, str):
+                    present += 1
+        scores['completeness'] = int((present / max(len(req), 1)) * 40)
+
+        # 2) Content depth (0-30): sentence count, field length
+        depth = 30
+        min_lengths = FIELD_MIN_LENGTHS.get(self.task_type, {})
+        for field, min_len in min_lengths.items():
+            val = result.get(field)
+            if isinstance(val, str):
+                sents = self._count_sentences(val)
+                if len(val.strip()) < min_len:
+                    depth -= 3
+                if sents < 2:
+                    depth -= 2
+        min_items = FIELD_MIN_ITEMS.get(self.task_type, {})
+        for field, min_count in min_items.items():
+            val = result.get(field)
+            if isinstance(val, list) and len(val) < min_count:
+                depth -= 3
+        scores['depth'] = max(0, depth)
+
+        # 3) Integrity (0-20): no placeholders, correct types
+        integrity = 20
+        for key, value in result.items():
+            if isinstance(value, str):
+                for pat in PLACEHOLDER_PATTERNS:
+                    if pat.lower() in value.lower():
+                        integrity -= 2
+                        break
+        scores['integrity'] = max(0, integrity)
+
+        # 4) Domain relevance (0-10): ISO clause refs, audit terminology
+        relevance = 10
+        if self.task_type == 'ISO_Checklist':
+            sections = result.get('sections', [])
+            clause_hits = sum(1 for s in sections if __import__('re').match(ISO_CLAUSE_PATTERN, s.get('clause', '').strip()))
+            if sections:
+                relevance = int((clause_hits / len(sections)) * 10)
+        elif self.task_type in ('Audit_Plan_Stage_1', 'Audit_Plan_Stage_2'):
+            schedule = result.get('daily_schedule', [])
+            ref_hits = sum(1 for e in schedule if __import__('re').search(r'\d+\.\d+', e.get('clause', '')))
+            if schedule:
+                relevance = int((ref_hits / len(schedule)) * 10)
+        elif self.task_type == 'Audit_Report':
+            conclusion = result.get('conclusion', '')
+            has_audit_terms = any(t in str(result).lower() for t in ['nonconformity', 'finding', 'clause', 'audit', 'evidence'])
+            if has_audit_terms:
+                relevance = 8
+            if conclusion and self._count_sentences(conclusion) >= 3:
+                relevance = min(10, relevance + 2)
+        scores['relevance'] = max(0, min(10, relevance))
+
+        overall = scores['completeness'] + scores['depth'] + scores['integrity'] + scores['relevance']
+        threshold = MIN_SCORE_THRESHOLDS.get(self.task_type, 60)
+        passed = overall >= threshold
+
+        self._log('score_quality', {
+            'overall': overall,
+            'threshold': threshold,
+            'pass': passed,
+            'scores': scores,
+        })
+        return {'overall': overall, 'fields': scores, 'pass': passed}
+
     def validate_quality(self, result: dict) -> list[str]:
         """Quality gate: check that output meets minimum content standards.
 
@@ -166,7 +412,6 @@ class Autodebugger:
         """
         errors: list[str] = []
 
-        # ── Field length checks ──────────────────────────────────────────
         min_lengths = FIELD_MIN_LENGTHS.get(self.task_type, {})
         for field, min_len in min_lengths.items():
             val = result.get(field)
@@ -176,7 +421,6 @@ class Autodebugger:
                     f"min {min_len}). Likely generic/placeholder content."
                 )
 
-        # ── List item count checks ──────────────────────────────────────
         min_items = FIELD_MIN_ITEMS.get(self.task_type, {})
         for field, min_count in min_items.items():
             val = result.get(field)
@@ -186,7 +430,6 @@ class Autodebugger:
                     f"minimum {min_count} expected for professional output."
                 )
 
-        # ── Nested quality: audit schedule entries must have detail ─────
         if self.task_type in ('Audit_Plan_Stage_1', 'Audit_Plan_Stage_2'):
             for i, entry in enumerate(result.get('daily_schedule', [])):
                 activity = entry.get('activity', '')
@@ -202,16 +445,15 @@ class Autodebugger:
                         f"clause reference ('{clause}'). Must include ISO clause number."
                     )
 
-        # ── Audit Report: findings must be substantial paragraphs ──────
         if self.task_type == 'Audit_Report':
             summary = result.get('findings_summary', '')
-            if summary and summary.count('.') < 4:
+            if summary and self._count_sentences(summary) < 4:
                 errors.append(
                     "Quality: findings_summary has fewer than 4 sentences. "
                     "Must be 3-5 full paragraphs."
                 )
             conclusion = result.get('conclusion', '')
-            if conclusion and conclusion.count('.') < 3:
+            if conclusion and self._count_sentences(conclusion) < 3:
                 errors.append(
                     "Quality: conclusion has fewer than 3 sentences. "
                     "Must be 2-3 full paragraphs."
@@ -226,7 +468,6 @@ class Autodebugger:
                             f"Needs full paragraph."
                         )
 
-        # ── ISO_Checklist: evidence must be detailed ────────────────────
         if self.task_type == 'ISO_Checklist':
             sections = result.get('sections', [])
             short_evidence = 0
@@ -240,7 +481,6 @@ class Autodebugger:
                     f"have brief evidence (< 30 chars). Output appears low-effort."
                 )
 
-        # ── TNL: descriptions must be detailed ─────────────────────────
         if self.task_type == 'TNL':
             for i, entry in enumerate(result.get('entries', [])):
                 desc = entry.get('description', '')
@@ -258,8 +498,6 @@ class Autodebugger:
         return errors
 
     def build_quality_retry_prompt(self, original_prompt: str, errors: list[str]) -> str:
-        """Build a forceful retry prompt for quality failures.
-        Used when switching to a better model after quality gate failure."""
         correction = "\n\n[QUALITY RETRY — Previous model produced substandard output.\n"
         correction += "Produce a PROFESSIONAL-GRADE document. Issues:\n"
         for err in errors:
@@ -275,10 +513,11 @@ class Autodebugger:
     def call_with_self_heal(self, provider_fn, prompt: str,
                             system_prompt: str | None = None,
                             **kwargs) -> dict[str, Any]:
-        """Two-phase validation with quality-aware retry.
+        """Three-phase validation with scoring and quality-aware retry.
 
         Phase 1: Structure (validate_output) → same-model self-heal retry
-        Phase 2: Quality (validate_quality) → flags for model upgrade
+        Phase 2: Quality (validate_quality + score_quality) → flags for model upgrade
+        Phase 3: Scoring → returns _score field with numeric quality score
 
         Caller should check for '_quality_errors' and retry with next provider.
         """
@@ -299,17 +538,40 @@ class Autodebugger:
 
             output_errors = self.validate_output(result)
             if not output_errors:
-                # Structure passed → now check quality
+                regurg_errors = self._check_prompt_regurgitation(result, prompt)
+                if regurg_errors:
+                    self._log('regurgitation_detected', {'errors': regurg_errors})
+                    if attempt < MAX_SELF_HEAL_RETRIES:
+                        current_prompt = self.build_corrective_prompt(prompt, regurg_errors)
+                        continue
+                    result['_quality_errors'] = regurg_errors
+                    result['_audit'] = self.audit_log
+                    result['_score'] = self.score_quality(result)
+                    return result
+
+                iso_errors = self._check_iso_clause_refs(result)
+                if iso_errors:
+                    self._log('iso_clause_validation', {'errors': iso_errors})
+
                 quality_errors = self.validate_quality(result)
                 if not quality_errors:
+                    score = self.score_quality(result)
+                    result['_score'] = score
                     result['_audit'] = self.audit_log
+                    if not score['pass']:
+                        msg = f"Score {score['overall']} below threshold {score['fields']}"
+                        result['_quality_errors'] = [msg]
+                        if attempt < MAX_SELF_HEAL_RETRIES:
+                            current_prompt = self.build_quality_retry_prompt(prompt, [msg] + quality_errors)
+                            continue
                     return result
-                # Quality failed → return with _quality_errors for model upgrade
+
                 if attempt < MAX_SELF_HEAL_RETRIES:
                     current_prompt = self.build_quality_retry_prompt(prompt, quality_errors)
                     continue
                 result['_quality_errors'] = quality_errors
                 result['_audit'] = self.audit_log
+                result['_score'] = self.score_quality(result)
                 return result
 
             if attempt < MAX_SELF_HEAL_RETRIES:
@@ -318,6 +580,7 @@ class Autodebugger:
                 self._log('self_heal_exhausted', {'errors': output_errors})
                 result['_validation_errors'] = output_errors
                 result['_audit'] = self.audit_log
+                result['_score'] = self.score_quality(result)
                 return result
 
         return {'error': 'Self-heal exhausted', '_audit': self.audit_log}

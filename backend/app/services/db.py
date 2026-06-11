@@ -41,8 +41,39 @@ def init_db():
         conn.execute('ALTER TABLE jobs ADD COLUMN standards TEXT DEFAULT \'[]\'')
     except Exception:
         logger.warning('ALTER TABLE jobs.standards skipped (column already exists or DB error)')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS compliance_assessments (
+            standard_key TEXT PRIMARY KEY,
+            assessments TEXT NOT NULL,
+            updated_at REAL NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
+
+
+def save_compliance_assessment(standard_key: str, assessments: dict):
+    conn = _get_conn()
+    conn.execute(
+        'INSERT OR REPLACE INTO compliance_assessments (standard_key, assessments, updated_at) VALUES (?, ?, ?)',
+        (standard_key, json.dumps(assessments), __import__('time').time()),
+    )
+    conn.commit()
+    conn.close()
+
+
+def load_compliance_assessment(standard_key: str) -> dict | None:
+    conn = _get_conn()
+    row = conn.execute(
+        'SELECT assessments FROM compliance_assessments WHERE standard_key=?', (standard_key,)
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return None
+    try:
+        return json.loads(row['assessments'])
+    except (json.JSONDecodeError, TypeError):
+        return None
 
 
 def set_job(job_id, **kwargs):

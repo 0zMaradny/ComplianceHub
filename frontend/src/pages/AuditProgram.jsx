@@ -191,7 +191,7 @@ function ProgramDetail({ API, program: initialProgram, onBack, onDelete }) {
 
   const [evForm, setEvForm] = useState({
     clause_ref: '', standard: '', evidence_type: 'document',
-    description: '', collected_by: '',
+    description: '', collected_by: '', file: null,
   })
 
   const refresh = async () => {
@@ -203,15 +203,19 @@ function ProgramDetail({ API, program: initialProgram, onBack, onDelete }) {
 
   const addEvidence = async () => {
     if (!evForm.description || !evForm.collected_by) return
-    const body = new URLSearchParams()
-    Object.entries(evForm).forEach(([k, v]) => body.append(k, v))
+    const body = new FormData()
+    body.append('clause_ref', evForm.clause_ref)
+    body.append('standard', evForm.standard)
+    body.append('evidence_type', evForm.evidence_type)
+    body.append('description', evForm.description)
+    body.append('collected_by', evForm.collected_by)
+    if (evForm.file) body.append('file', evForm.file)
     await fetch(`${API}/audit_programs/${program.program.id}/evidence`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body,
     })
     setShowAddEvidence(false)
-    setEvForm({ clause_ref: '', standard: '', evidence_type: 'document', description: '', collected_by: '' })
+    setEvForm({ clause_ref: '', standard: '', evidence_type: 'document', description: '', collected_by: '', file: null })
     refresh()
   }
 
@@ -391,6 +395,7 @@ function ProgramDetail({ API, program: initialProgram, onBack, onDelete }) {
               <div style={{ marginTop: 8 }}>
                 <label className="form-label">Description *</label>
                 <input className="form-input" value={evForm.description} onChange={e => setEvForm({ ...evForm, description: e.target.value })} placeholder="What evidence was collected..." />
+                <input type="file" className="form-input" onChange={e => setEvForm({ ...evForm, file: e.target.files[0] || null })} style={{ padding: 6 }} />
               </div>
               <div style={{ marginTop: 8 }}>
                 <label className="form-label">Collected By *</label>

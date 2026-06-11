@@ -15,6 +15,7 @@ from typing import Any
 
 from . import AIProvider
 from .model_registry import ALL_MODELS
+from .json_utils import extract_json
 
 
 class OpenRouterProvider(AIProvider):
@@ -78,17 +79,10 @@ class OpenRouterProvider(AIProvider):
                 except (KeyError, IndexError):
                     return {'error': 'No response from OpenRouter'}
 
-                # Strip code fences
-                if text.startswith('```'):
-                    text = text.split('\n', 1)[1] if '\n' in text else text[3:]
-                    if text.endswith('```'):
-                        text = text[:-3]
-                    text = text.strip()
-
-                try:
-                    return json.loads(text)
-                except json.JSONDecodeError:
-                    return {'text': text}
+                parsed = extract_json(text)
+                if parsed is not None:
+                    return parsed
+                return {'text': text}
 
             except urllib.error.HTTPError as e:
                 body = ''
@@ -127,3 +121,58 @@ class OpenRouterProvider(AIProvider):
     def extract_structured(self, prompt: str, response_mime_type: str | None = None) -> dict[str, Any]:
         messages = [{'role': 'user', 'content': prompt}]
         return self._call_with_retry(messages, temperature=0.1, max_tokens=4096)
+
+    def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
+        if not self.api_key:
+            yield 'OPENROUTER_API_KEY not set'
+            return
+        messages = []
+        if system_prompt:
+            messages.append({'role': 'system', 'content': system_prompt})
+        messages.append({'role': 'user', 'content': prompt})
+        payload = {
+            'model': self.model,
+            'messages': messages,
+            'temperature': kwargs.get('temperature', 0.3),
+            'max_tokens': kwargs.get('max_tokens', 4096),
+            'stream': True,
+        }
+        data = json.dumps(payload).encode()
+        try:
+            req = urllib.request.Request(
+                'https://openrouter.ai/api/v1/chat/completions', data=data,
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {self.api_key}',
+                    'HTTP-Referer': 'https://github.com/ComplianceHub',
+                    'X-Title': 'ComplianceHub',
+                    'Accept': 'text/event-stream',
+                },
+                method='POST',
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                buffer = ''
+                while True:
+                    chunk = resp.read(4096)
+                    if not chunk:
+                        break
+                    buffer += chunk.decode()
+                    while '\n' in buffer:
+                        line, buffer = buffer.split('\n', 1)
+                        line = line.strip()
+                        if line.startswith('data: '):
+                            data_str = line[6:]
+                            if data_str == '[DONE]':
+                                return
+                            try:
+                                ev = json.loads(data_str)
+                                choices = ev.get('choices', [])
+                                if choices:
+                                    delta = choices[0].get('delta', {})
+                                    content = delta.get('content', '')
+                                    if content:
+                                        yield content
+                            except json.JSONDecodeError:
+                                pass
+        except Exception as e:
+            yield f'[Error: {str(e)}]'

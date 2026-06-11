@@ -9,14 +9,32 @@ const STATUS_COLORS = {
   na: { bg: 'var(--gray-100)', color: 'var(--gray-500)' },
 }
 
-function loadAssessments() {
-  try {
-    return JSON.parse(localStorage.getItem('compliance_assessments') || '{}')
-  } catch { return {} }
+function loadLocal() {
+  try { return JSON.parse(localStorage.getItem('compliance_assessments') || '{}') }
+  catch { return {} }
 }
 
-function saveAssessments(assessments) {
+function saveLocal(assessments) {
   localStorage.setItem('compliance_assessments', JSON.stringify(assessments))
+}
+
+async function loadServer(API, stdKey) {
+  try {
+    const r = await fetch(`${API}/compliance/assessment/${stdKey}`)
+    if (!r.ok) return null
+    const data = await r.json()
+    return data.assessments || {}
+  } catch { return null }
+}
+
+async function saveServer(API, stdKey, assessments) {
+  try {
+    await fetch(`${API}/compliance/assessment/${stdKey}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assessments }),
+    })
+  } catch { /* server save failed, localStorage persisted as fallback */ }
 }
 
 export default function Compliance({ API }) {
@@ -25,7 +43,8 @@ export default function Compliance({ API }) {
   const [clauses, setClauses] = useState([])
   const [annex, setAnnex] = useState({})
   const [loading, setLoading] = useState(false)
-  const [assessments, setAssessments] = useState(loadAssessments)
+  const [assessments, setAssessments] = useState(loadLocal)
+  const [serverLoaded, setServerLoaded] = useState(false)
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
@@ -50,6 +69,17 @@ export default function Compliance({ API }) {
     const load = async () => {
       if (!selected) { setClauses([]); setAnnex({}); return }
       setLoading(true)
+
+      const serverData = await loadServer(API, selected)
+      if (!cancelled && serverData) {
+        const merged = { ...loadLocal(), [selected]: serverData }
+        saveLocal(merged)
+        setAssessments(merged)
+        setServerLoaded(true)
+      } else if (!cancelled) {
+        setAssessments(loadLocal())
+      }
+
       try {
         const r = await fetch(`${API}/compliance/standards/${selected}/clauses`)
         if (!r.ok) throw new Error('Failed')
@@ -68,11 +98,13 @@ export default function Compliance({ API }) {
   const setStatus = (clauseId, status) => {
     setAssessments(prev => {
       const next = { ...prev }
-      if (!next[stdKey]) next[stdKey] = {}
-      if (status === 'untouched') delete next[stdKey][clauseId]
-      else next[stdKey][clauseId] = status
-      if (Object.keys(next[stdKey]).length === 0) delete next[stdKey]
-      saveAssessments(next)
+      const key = stdKey
+      if (!next[key]) next[key] = {}
+      if (status === 'untouched') delete next[key][clauseId]
+      else next[key][clauseId] = status
+      if (Object.keys(next[key]).length === 0) delete next[key]
+      saveLocal(next)
+      saveServer(API, selected, next[key] || {})
       return next
     })
   }
@@ -256,7 +288,7 @@ export default function Compliance({ API }) {
       )}
 
       <div style={{ textAlign: 'center', padding: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
-        Assessment data is saved locally in your browser.
+        Assessment data synced to server (localStorage fallback).
       </div>
     </div>
   )

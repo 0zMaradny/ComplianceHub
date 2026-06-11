@@ -8,19 +8,14 @@ from app.services.ai import create_provider, AIProvider
 
 
 class TestProviderInstantiation:
-    def test_agentrouter_is_ai_provider(self):
-        p = create_provider('agentrouter')
+    def test_openrouter_is_ai_provider(self):
+        p = create_provider('openrouter')
         assert isinstance(p, AIProvider)
 
-    def test_agentrouter_has_generate(self):
-        p = create_provider('agentrouter')
+    def test_openrouter_has_generate(self):
+        p = create_provider('openrouter')
         assert hasattr(p, 'generate')
         assert callable(p.generate)
-
-    def test_agentrouter_has_extract_structured(self):
-        p = create_provider('agentrouter')
-        assert hasattr(p, 'extract_structured')
-        assert callable(p.extract_structured)
 
     def test_groq_is_ai_provider(self):
         p = create_provider('groq')
@@ -31,27 +26,26 @@ class TestProviderInstantiation:
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
-    def test_openrouter_is_ai_provider(self):
-        p = create_provider('openrouter')
+    def test_owl_alpha_is_ai_provider(self):
+        p = create_provider('owl_alpha')
         assert isinstance(p, AIProvider)
 
-    def test_openrouter_has_generate(self):
-        p = create_provider('openrouter')
+    def test_owl_alpha_has_generate(self):
+        p = create_provider('owl_alpha')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_local_qwen_is_ai_provider(self):
+        p = create_provider('local_qwen')
+        assert isinstance(p, AIProvider)
+
+    def test_local_qwen_has_generate(self):
+        p = create_provider('local_qwen')
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
 
 class TestErrorPaths:
-    def test_agentrouter_no_key(self):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setattr('os.environ', {}, raising=False)
-            from app.services.ai.agentrouter_provider import AgentRouterProvider
-            p = AgentRouterProvider()
-            p.api_key = ''
-            result = p.generate('test prompt')
-            assert 'error' in result
-            assert 'not set' in result['error'].lower()
-
     def test_groq_no_key(self):
         from app.services.ai.groq_provider import GroqProvider
         p = GroqProvider()
@@ -68,24 +62,8 @@ class TestErrorPaths:
         assert 'error' in result
         assert 'not set' in result['error'].lower()
 
-    def test_agentrouter_extract_no_key(self):
-        from app.services.ai.agentrouter_provider import AgentRouterProvider
-        p = AgentRouterProvider()
-        p.api_key = ''
-        result = p.extract_structured('test prompt')
-        assert 'error' in result
-        assert 'not set' in result['error'].lower()
-
 
 class TestInitialization:
-    def test_agentrouter_reads_env(self):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setenv('AGENTROUTER_API_KEY', 'sk-test-key')
-            from app.services.ai.agentrouter_provider import AgentRouterProvider
-            p = AgentRouterProvider()
-            assert p.api_key == 'sk-test-key'
-            assert p.base_url == 'https://agentrouter.org/v1'
-
     def test_groq_reads_env(self):
         with pytest.MonkeyPatch.context() as mp:
             mp.setenv('GROQ_API_KEY', 'gsk-test-key')
@@ -100,4 +78,4 @@ class TestInitialization:
             from app.services.ai.openrouter_provider import OpenRouterProvider
             p = OpenRouterProvider()
             assert p.api_key == 'sk-or-test'
-            assert p.model == 'openrouter/free'  # default model for 'openrouter' name
+            assert p.model == 'openrouter/free'

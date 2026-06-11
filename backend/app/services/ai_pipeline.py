@@ -4,28 +4,19 @@ from .ai.router import generate as router_generate, extract_structured as router
 from . import clause_data
 from ..config import ISO_STANDARDS, STANDARD_FAMILIES
 
-SYSTEM_PROMPT = """You are an expert ISO Lead Auditor at TÜV AUSTRIA with 20+ years of experience certifying organizations across 13+ management system standards. You generate professional, legally-defensible audit documents based on rough audit notes and Manday calculation data.
+SYSTEM_PROMPT = """You are a TÜV AUSTRIA ISO lead auditor. Return ONLY valid JSON. Never use placeholders ([Client Name], TBD). Every evidence/description field = 2-3 professional sentences with specific observations. Use ISO terminology (conformant, non-conformant, OFI). Dates = DD/MM/YYYY. Numbers must match Manday data exactly. Document must be complete and ready to issue. methodology = {approach, sampling, criteria, methods}.
 
-CRITICAL RULES:
-1. Return ONLY valid JSON. No markdown, no code fences, no extra text.
-2. Never use placeholder text like "[Client Name]" or "TBD" — infer from the data or leave as empty string.
-3. Every evidence/description field must be 2-3 professional sentences with specific observations and factual statements.
-4. Use precise ISO audit terminology (conformant, non-conformant, observation, OFI).
-5. Dates must be in DD/MM/YYYY format.
-6. Numbers (days, team members) must match the Manday data exactly.
-7. Your tone is professional, precise, and compliant with ISO 17021 certification standards.
-8. Reference supporting standards in the standard family where relevant (e.g., ISO 27002:2022 controls for ISO 27001).
-9. The document must be COMPLETE and ready to issue — no additional editing should be needed.
-10. methodology field must contain approach, sampling, criteria, and methods sub-fields as described."""
+== ARCHITECTURE ==
+generate(doc_type, prompt) → structured JSON → DOCX+PDF | 3-tier router: OpenRouter frontier (Nemotron550B, Qwen3Coder480B, KimiK2.6, OwlAlpha) → OpenRouter strong (Nemotron120B, Llama70B, Qwen3Next80B, Hermes405B) → Groq (Llama3.3 70B, 800t/s). Quality scored per doc type (threshold 40-70). Failures cascade to next tier."""
 
-SHARED_CONTEXT_PROMPT = """You are extracting shared facts from ISO audit documents. Analyze EVERY word of the audit notes and Manday data. Your extraction must be complete and accurate — these facts will be injected into all generated documents.
+SHARED_CONTEXT_PROMPT = """Extract shared facts from ISO audit docs. Return ONLY JSON.
 
-Extract ALL of the following fields (use null ONLY if truly absent):
+Fields:
 - client_name: string | null
-- audit_date: string | null (format: DD/MM/YYYY — use as single start date)
-- standard: string | null (the ISO standard, e.g. "ISO 9001:2015")
+- audit_date: string | null (DD/MM/YYYY)
+- standard: string | null (e.g. "ISO 9001:2015")
 - lead_auditor: string | null
-- audit_team: list of {{name: string, role: string, days: number}} | empty list
+- audit_team: list of {{name, role, days}} | []
 - total_mandays: number | null
 - scope_of_audit: string | null
 
@@ -33,9 +24,7 @@ Audit Notes:
 {notes_text}
 
 Manday Data:
-{manday_text}
-
-Return ONLY the JSON object."""
+{manday_text}"""
 
 
 def _get_standard_key(standard_label: str) -> str:
@@ -152,7 +141,7 @@ Active Standards: {', '.join(client.standards)}
 '''
 
     prompts = {
-        'Audit_Plan_Stage_1': f"""You are preparing a Stage 1 Audit Plan (readiness review) for a TÜV AUSTRIA certification audit. The output must be COMPLETE and ready to issue — no edits needed.
+        'Audit_Plan_Stage_1': f"""Stage 1 Audit Plan (readiness review). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -177,7 +166,7 @@ Return a JSON object with these exact fields:
 - language: string
 - report_date: string (30 days after audit end)""",
 
-        'Audit_Plan_Stage_2': f"""You are preparing a Stage 2 Audit Plan (full certification assessment) for a TÜV AUSTRIA certification audit. The output must be COMPLETE and ready to issue.
+        'Audit_Plan_Stage_2': f"""Stage 2 Audit Plan (full certification assessment). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -202,7 +191,7 @@ Return a JSON object with these exact fields:
 - language: string
 - report_date: string""",
 
-        'Participation_List': f"""Generate an audit Participation/Attendance List for TÜV AUSTRIA. The output must be COMPLETE and ready to issue.
+        'Participation_List': f"""Participation/Attendance List. COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -220,7 +209,7 @@ Return JSON with:
 - participants: list of 8-15 {{name, company, department, closing_meeting: "Yes"/"No", signature: ""}} — include audit team members and key client personnel
 - notes: string (professional attendance notes)""",
 
-        'Audit_Report': f"""Generate a comprehensive Audit Report for a TÜV AUSTRIA certification audit. The output must be COMPLETE with full paragraph text throughout — ready to issue with NO additional editing.
+        'Audit_Report': f"""Audit Report. Full paragraphs, comprehensive, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -247,7 +236,7 @@ Return JSON with these exact fields:
 - report_date: string
 - methodology: {{approach: string, sampling: string, criteria: string, methods: string}} — each a full paragraph describing the audit methodology""",
 
-        'ISO_Checklist': f"""Generate a completed ISO Compliance Checklist based on the audit evidence. Each evidence field must be 2-3 professional sentences with specific observations. The output must be COMPLETE.
+        'ISO_Checklist': f"""ISO Compliance Checklist. Evidence = 2-3 sentences each. COMPLETE.
 
 ISO Standard(s): {standards_str}
 
@@ -274,7 +263,7 @@ Return JSON with:
   }} — include 20-40 sections covering ALL relevant clauses
 - overall_assessment: string (2-3 full paragraphs)""",
 
-        'Certificate_Text': f"""Generate certificate text for a TÜV AUSTRIA certification. COMPLETE output.
+        'Certificate_Text': f"""Certificate text. COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -298,7 +287,7 @@ Return JSON with:
 - expiry_date: string (3 years from issue)
 - authorized_signatory: string""",
 
-        'TNL': f"""Generate a Test / Nonconformity Log (TNL) for audit findings. COMPLETE output.
+        'TNL': f"""Test / Nonconformity Log. COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -325,7 +314,7 @@ Return JSON with:
   }} — include 3-8 entries
 - summary: {{total_nc: int, major: int, minor: int, ofi: int, observations: int}}""",
 
-        'Certificate': f"""Generate the final Certificate document data. COMPLETE output.
+        'Certificate': f"""Final Certificate document data. COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -350,7 +339,7 @@ Return JSON with:
 - authorized_signatory: string
 - conditions: list of strings (condition texts if certification decision is "Conditional", empty list otherwise)""",
 
-        'Management_Review_Minutes': f"""Generate Management Review Minutes for a TÜV AUSTRIA certification client. The review covers Clause 9.3 of the ISO standard. COMPLETE output.
+        'Management_Review_Minutes': f"""Management Review Minutes (Clause 9.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -375,7 +364,7 @@ Return JSON with these exact fields:
 - next_review_date: string (12 months from review date)
 - report_date: string (same as review_date)""",
 
-        'Corrective_Action_Report': f"""Generate a Corrective Action Report (CAR) for a TÜV AUSTRIA certification audit. Covers Clause 10.1 of the ISO standard. COMPLETE output.
+        'Corrective_Action_Report': f"""Corrective Action Report (Clause 10.1). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -404,7 +393,7 @@ Return JSON with:
 - reviewed_by: string
 - closure_date: string (DD/MM/YYYY, typically 90 days from audit)""",
 
-        'Gap_Analysis_Report': f"""Generate a Gap Analysis Report for a pre-certification assessment. Evaluates the organization's current state against ISO standard requirements. COMPLETE output.
+        'Gap_Analysis_Report': f"""Gap Analysis Report (pre-certification). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -425,7 +414,7 @@ Return JSON with:
 - summary: {{total_clauses: int, conformant: int, partially_conformant: int, non_conformant: int, not_reviewed: int, overall_readiness: string}}
 - overall_assessment: string — 2-3 FULL PARAGRAPHS with readiness recommendation""",
 
-        'Statement_of_Applicability': f"""Generate a Statement of Applicability (SoA) for ISO 27001:2022 certification. The SoA documents which Annex A controls are applicable and the justification. COMPLETE output.
+        'Statement_of_Applicability': f"""Statement of Applicability (Annex A controls). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -444,7 +433,7 @@ Return JSON with:
 - controls: list of {{control_ref: string (e.g. "A.5.1"), control_title: string, applicability: "Applicable"/"Not Applicable", justification: string (2 sentences with risk context), selected_control: string, implementation_status: "Planned"/"In Progress"/"Implemented"/"Not Implemented", responsible: string}} — include ALL Annex A controls grouped by theme (A.5 Organizational: 37 controls, A.6 People: 8 controls, A.7 Physical: 14 controls, A.8 Technological: 34 controls)
 - summary: {{total_controls: int, applicable: int, not_applicable: int, implemented: int, not_implemented: int}}""",
 
-        'Business_Impact_Analysis': f"""Generate a Business Impact Analysis (BIA) for ISO 22301:2019 Business Continuity Management. Identifies critical activities, RTO/RPO/MTD, dependencies, and recovery strategies. COMPLETE output.
+        'Business_Impact_Analysis': f"""Business Impact Analysis (ISO 22301). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -464,7 +453,7 @@ Return JSON with:
 - summary: {{total_activities: int, critical: int, high: int, medium: int, low: int}}
 - overall_findings: string — 2-3 FULL PARAGRAPHS with BIA outcomes, key dependencies, and recommendations""",
 
-        'Records_of_Processing_Activities': f"""Generate a Record of Processing Activities (ROPA) per ISO 27701:2025 Clause 7.6 / GDPR Article 30. COMPLETE output.
+        'Records_of_Processing_Activities': f"""Record of Processing Activities (ISO 27701/GDPR Art 30). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -484,7 +473,7 @@ Return JSON with:
 - processing_activities: list of {{activity_id: string, activity_name: string, purpose: string, data_subjects: string, personal_data_categories: string, retention_period: string, cross_border_transfer: string, security_measures: string}} — include 4-6 processing activities covering HR, CRM, Marketing, Suppliers, Security, IT
 - summary: {{total_activities: int, has_cross_border_transfers: string ("Yes"/"No")}}""",
 
-        'Risk_Treatment_Plan': f"""Generate a Risk Treatment Plan for ISO 27001:2022 Clause 8.3. Documents how identified risks will be treated with selected controls and timelines. COMPLETE output.
+        'Risk_Treatment_Plan': f"""Risk Treatment Plan (Clause 8.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -503,7 +492,7 @@ Return JSON with:
 - risks: list of {{risk_id: string, risk_description: string, source: string, likelihood: string ("Very Low"/"Low"/"Medium"/"High"/"Very High"), impact: string ("Very Low"/"Low"/"Medium"/"High"/"Very High"), risk_level: string ("Low"/"Medium"/"High"/"Critical"), treatment_option: string ("Avoid"/"Reduce"/"Transfer"/"Accept"), treatment_details: string (2-3 sentences), selected_controls: string (Annex A references), risk_owner: string, target_date: string (DD/MM/YYYY), status: string ("Open"/"In Progress"/"Implemented"/"Closed")}} — include 6-10 risks covering technical, organizational, physical, and compliance risks
 - summary: {{total_risks: int, critical: int, high: int, medium: int, low: int}}""",
 
-        'Incident_Investigation_Report': f"""Generate an Incident Investigation Report for ISO 45001:2018 Clause 10.2. Documents incident details, root cause, corrective actions, and lessons learned. COMPLETE output.
+        'Incident_Investigation_Report': f"""Incident Investigation Report (Clause 10.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -532,7 +521,7 @@ Return JSON with:
 - status: string — "Open"/"In Progress"/"Closed"
 - reviewed_by: string""",
 
-        'Internal_Audit_Program': f"""Generate an Internal Audit Program for ISO Clause 9.2 covering the annual audit schedule across the management system. COMPLETE output.
+        'Internal_Audit_Program': f"""Internal Audit Program (Clause 9.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -551,7 +540,7 @@ Return JSON with:
 - audits: list of {{audit_id: string, scope: string, audit_type: string ("Full"/"Partial"/"Follow-up"/"Special"), planned_date: string (DD/MM/YYYY), auditor: string, auditee_department: string, status: string ("Planned"/"In Progress"/"Completed"/"Cancelled"), findings_count: int}} — include 6-10 audits spread across the year covering all relevant clauses
 - summary: {{total_audits: int, planned: int, in_progress: int, completed: int, cancelled: int}}""",
 
-        'Environmental_Aspect_Register': f"""Generate an Environmental Aspect Register for ISO 14001:2015 Clause 6.1.2. Identifies environmental aspects, impacts, significance, and controls. COMPLETE output.
+        'Environmental_Aspect_Register': f"""Environmental Aspect Register (Clause 6.1.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -570,7 +559,7 @@ Return JSON with:
 - aspects: list of {{aspect_id: string, activity: string, aspect: string, environmental_impact: string, impact_type: string ("Positive"/"Negative"), significance: string ("Low"/"Medium"/"High"/"Critical"), control_measures: string, legal_requirement: string, evaluation: string}} — include 6-10 aspects covering operations, waste, emissions, chemicals, energy, water
 - summary: {{total_aspects: int, critical: int, high: int, medium: int, low: int}}""",
 
-        'Hazard_Identification_Register': f"""Generate a Hazard Identification and Risk Assessment Register for ISO 45001:2018 Clause 6.1.2. COMPLETE output.
+        'Hazard_Identification_Register': f"""Hazard Identification Register (Clause 6.1.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -589,7 +578,7 @@ Return JSON with:
 - hazards: list of {{hazard_id: string, activity: string, hazard: string, associated_risk: string, existing_controls: string, risk_level: string ("Low"/"Medium"/"High"/"Critical"), additional_controls: string, hierarchy_of_control: string ("Elimination"/"Substitution"/"Engineering"/"Administrative"/"PPE")}} — include 6-10 hazards covering machinery, chemicals, manual handling, electrical, fire, DSE, workplace transport
 - summary: {{total_hazards: int, critical: int, high: int, medium: int, low: int}}""",
 
-        'Energy_Review': f"""Generate an Energy Review including Energy Baseline (EnB) and Energy Performance Indicators (EnPI) for ISO 50001:2018 Clause 6.3. COMPLETE output.
+        'Energy_Review': f"""Energy Review (Clause 6.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -610,7 +599,7 @@ Return JSON with:
 - significant_uses: list of {{use_id: string, equipment: string, energy_source: string, consumption: string, variables: string, enpi: string, baseline: string, current_performance: string}} — include 3-5 SEUs
 - summary: {{total_energy_sources: int, total_seus: int, total_energy_cost: string}}""",
 
-        'Compliance_Obligations_Register': f"""Generate a Compliance Obligations Register per ISO 37301:2021 / ISO 14001:2015 Clause 6.1.3. Documents all legal, regulatory, and other requirements. COMPLETE output.
+        'Compliance_Obligations_Register': f"""Compliance Obligations Register (Clause 6.1.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -629,7 +618,7 @@ Return JSON with:
 - obligations: list of {{obligation_id: string, obligation_type: string ("Legal"/"Regulatory"/"Contractual"/"Other"), source: string, requirement: string, applicability: string ("Full"/"Partial"/"Not Applicable"), compliance_status: string ("Compliant"/"Partially Compliant"/"Non-Compliant"/"Not Assessed"), evidence: string, due_date: string, responsible: string}} — include 6-10 obligations covering H&S, environmental, data protection, fire safety, contractual, industry standards
 - summary: {{total_obligations: int, compliant: int, partially_compliant: int, non_compliant: int, not_assessed: int}}""",
 
-        'Service_Portfolio': f"""Generate a Service Portfolio and SLA Register for ISO 20000-1:2018 Clause 7.2. Documents all services, their status, and service level agreements. COMPLETE output.
+        'Service_Portfolio': f"""Service Portfolio & SLA Register (Clause 7.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -650,7 +639,7 @@ Return JSON with:
 
         # ── ISO 20000-1 Service Management (10 new prompts) ─────────────
 
-        'Service_Catalogue': f"""Generate a Service Catalogue for ISO 20000-1:2018 Clause 7.2. Lists all live services with features, contacts, and service hours. COMPLETE output.
+        'Service_Catalogue': f"""Service Catalogue (Clause 7.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -670,7 +659,7 @@ Return JSON with:
 - services: list of {{service_id: string, service_name: string, description: string, service_type: string ("Business"/"Customer"/"Infrastructure"), status: string ("Live"/"Deprecated"/"Under Review"), features: string, contact: string, service_hours: string}} — include 6-10 services covering IT support, email, network, ERP, security, backup, etc.
 - summary: {{total_services: int, live: int, deprecated: int, under_review: int}}""",
 
-        'Supplier_Agreement_Register': f"""Generate a Supplier Agreement Register for ISO 20000-1:2018 Clause 8.4.2. Documents external provider agreements, performance, and renewal dates. COMPLETE output.
+        'Supplier_Agreement_Register': f"""Supplier Agreement Register (Clause 8.4.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -689,7 +678,7 @@ Return JSON with:
 - agreements: list of {{agreement_id: string, supplier_name: string, service_provided: string, agreement_type: string ("Contract"/"SLA"/"Partnership"/"Letter of Agreement"), start_date: string, renewal_date: string, status: string ("Active"/"Expired"/"Under Negotiation"/"Terminated"), performance_rating: string ("Excellent"/"Satisfactory"/"Needs Improvement"), key_contacts: string}} — include 5-8 agreements
 - summary: {{total_agreements: int, active: int, expired: int, under_negotiation: int, terminated: int}}""",
 
-        'Business_Relationship_Register': f"""Generate a Business Relationship Register for ISO 20000-1:2018 Clause 8.4.3. Tracks customer accounts, satisfaction scores, complaints, and review schedules. COMPLETE output.
+        'Business_Relationship_Register': f"""Business Relationship Register (Clause 8.4.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -708,7 +697,7 @@ Return JSON with:
 - customers: list of {{customer_id: string, customer_name: string, account_manager: string, services_used: string, satisfaction_score: string, complaints: int, last_review: string, next_review: string, status: string ("Active"/"On Hold"/"At Risk"/"Inactive")}} — include 4-6 customer accounts
 - summary: {{total_customers: int, active: int, on_hold: int, at_risk: int, inactive: int, avg_satisfaction: string}}""",
 
-        'Capacity_Management_Plan': f"""Generate a Capacity Management Plan for ISO 20000-1:2018 Clause 8.5.2. Documents infrastructure capacity, utilization, forecasts, and upgrades. COMPLETE output.
+        'Capacity_Management_Plan': f"""Capacity Management Plan (Clause 8.5.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -729,7 +718,7 @@ Return JSON with:
 - components: list of {{component_id: string, component: string, current_capacity: string, current_demand: string, utilization: string, threshold: string, forecast_demand: string, planned_upgrade: string, status: string ("Green"/"Amber"/"Red")}} — include 5-8 components covering servers, storage, network, backup, internet
 - summary: {{total_components: int, green: int, amber: int, red: int}}""",
 
-        'Change_Management_Register': f"""Generate a Change Management Register for ISO 20000-1:2018 Clause 8.6.2. Documents all changes with CAB minutes, risk/impact assessment, rollback plans. COMPLETE output.
+        'Change_Management_Register': f"""Change Management Register (Clause 8.6.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -748,7 +737,7 @@ Return JSON with:
 - changes: list of {{change_id: string, title: string, description: string, change_type: string ("Standard"/"Normal"/"Emergency"), priority: string ("Low"/"Medium"/"High"/"Critical"), risk_level: string ("Low"/"Medium"/"High"), impact_assessment: string, rollback_plan: string, cab_date: string, scheduled_date: string, requestor: string, status: string ("Requested"/"Approved"/"In Progress"/"Implemented"/"Closed"/"Rolled Back")}} — include 5-8 changes
 - summary: {{total_changes: int, requested: int, approved: int, in_progress: int, implemented: int, closed: int, rolled_back: int}}""",
 
-        'Release_Deployment_Plan': f"""Generate a Release & Deployment Plan for ISO 20000-1:2018 Clause 8.6.4. Documents release schedule, deployment packages, and back-out plans. COMPLETE output.
+        'Release_Deployment_Plan': f"""Release & Deployment Plan (Clause 8.6.4). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -767,7 +756,7 @@ Return JSON with:
 - releases: list of {{release_id: string, release_name: string, scope: string, release_type: string ("Major"/"Minor"/"Patches"/"Emergency"), planned_date: string, deployment_window: string, rollback_procedure: string, status: string ("Planned"/"In Progress"/"Deployed"/"Rolled Back"/"Cancelled")}} — include 4-7 releases
 - summary: {{total_releases: int, planned: int, in_progress: int, deployed: int, rolled_back: int, cancelled: int}}""",
 
-        'Incident_Management_Log': f"""Generate an Incident Management Log for ISO 20000-1:2018 Clause 8.7.2. Documents major incidents, SLA breach tracking, resolution times. COMPLETE output.
+        'Incident_Management_Log': f"""Incident Management Log (Clause 8.7.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -786,7 +775,7 @@ Return JSON with:
 - incidents: list of {{incident_id: string, incident_summary: string, severity: string ("P1 Critical"/"P2 High"/"P3 Medium"/"P4 Low"), reported_date: string, resolved_date: string, affected_service: string, resolution: string, status: string ("New"/"In Progress"/"Resolved"/"Closed"/"Escalated")}} — include 5-8 incidents
 - summary: {{total_incidents: int, critical: int, high: int, medium: int, low: int, open: int, resolved: int, avg_resolution_time: string}}""",
 
-        'Problem_Management_Register': f"""Generate a Problem Management Register for ISO 20000-1:2018 Clause 8.7.3. Documents known errors, root cause, workarounds, and permanent fixes. COMPLETE output.
+        'Problem_Management_Register': f"""Problem Management Register (Clause 8.7.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -805,7 +794,7 @@ Return JSON with:
 - problems: list of {{problem_id: string, incident_refs: string, problem_summary: string, root_cause: string, workaround: string, permanent_fix: string, category: string ("Infrastructure"/"Application"/"Process"/"Security"/"Third-Party"), priority: string ("Low"/"Medium"/"High"/"Critical"), status: string ("Identified"/"Under Investigation"/"Known Error"/"Resolved"/"Closed")}} — include 4-7 problems
 - summary: {{total_problems: int, critical: int, high: int, medium: int, low: int, identified: int, resolved: int}}""",
 
-        'Service_Continuity_Plan': f"""Generate a Service Continuity Plan for ISO 20000-1:2018 Clause 8.8.2. Documents continuity of services during disruption with RTO/RPO, recovery strategies, and test results. COMPLETE output.
+        'Service_Continuity_Plan': f"""Service Continuity Plan (Clause 8.8.2). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 
@@ -826,7 +815,7 @@ Return JSON with:
 - services: list of {{service_id: string, service_name: string, criticality: string ("Critical"/"High"/"Medium"/"Low"), rto: string, rpo: string, recovery_strategy: string, alternative_arrangements: string, last_test_date: string, test_result: string ("Pass"/"Fail"/"Partial"), status: string ("Ready"/"Needs Review"/"Remediation Required")}} — include 5-8 services
 - summary: {{total_services: int, ready: int, needs_review: int, remediation: int}}""",
 
-        'Availability_Management_Report': f"""Generate an Availability Management Report for ISO 20000-1:2018 Clause 8.8.3. Documents availability metrics, downtime analysis, MTBF, MTTR, and SLA compliance. COMPLETE output.
+        'Availability_Management_Report': f"""Availability Management Report (Clause 8.8.3). COMPLETE, ready to issue.
 
 ISO Standard(s): {standards_str}
 

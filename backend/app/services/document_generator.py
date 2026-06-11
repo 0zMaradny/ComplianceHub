@@ -859,15 +859,38 @@ def generate_iso_checklist(data, output_path, template_path=None, client_key: st
         setup_document(doc, landscape=True, client_key=client_key)
         sections = data.get('sections', [])
 
+        injected = False
         for table in doc.tables:
             if len(table.rows) < 3:
                 continue
+            first_row_text = ' '.join(c.text for c in table.rows[0].cells).lower()
             num_cols = len(table.rows[0].cells)
+
+            if num_cols == 3 and ('22301' in first_row_text or 'clauses' in first_row_text):
+                _inject_into_22301_template(table, sections)
+                injected = True
+                break
+
+            if num_cols == 4 and ('20000' in first_row_text or 'service management' in first_row_text):
+                _inject_into_20000_template(table, sections)
+                injected = True
+                break
 
             if num_cols >= 5:
                 _inject_into_template_table(table, sections)
                 set_col_widths(table, [12, 22, 12, 28, 14, 12], available_inches=9.5)
+                injected = True
                 break
+
+        if not injected:
+            for table in doc.tables:
+                if len(table.rows) < 3:
+                    continue
+                num_cols = len(table.rows[0].cells)
+                if num_cols >= 5 or len(table.rows) >= len(sections) + 1:
+                    _inject_into_template_table(table, sections)
+                    set_col_widths(table, [12, 22, 12, 28, 14, 12], available_inches=9.5)
+                    break
 
         overall = data.get('overall_assessment', '')
         if overall:
@@ -921,6 +944,61 @@ def generate_iso_checklist(data, output_path, template_path=None, client_key: st
 
     doc.save(output_path)
     return output_path
+
+
+def _combine_evidence_notes(section):
+    evidence = section.get('evidence', '').strip()
+    notes = section.get('notes', '').strip()
+    if evidence and notes:
+        return evidence + '\nNotes: ' + notes
+    return evidence or notes
+
+
+def _inject_into_22301_template(table, sections):
+    assessment_map = {
+        'Conformant': 1,
+        'Partially Conformant': 2,
+        'Non-Conformant': 3,
+        'Not Reviewed': '',
+    }
+    orig = {}
+    for s in sections:
+        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
+        s['evidence'] = _combine_evidence_notes(s)
+    result = _inject_into_template_by_clause(
+        table, sections, data_start_row=4,
+        col_clause=0, col_evidence=1, col_assessment=2,
+        assessment_map=assessment_map
+    )
+    for s in sections:
+        ev, nt = orig[id(s)]
+        s['evidence'] = ev
+        s['notes'] = nt
+    return result
+
+
+def _inject_into_20000_template(table, sections):
+    assessment_map = {
+        'Conformant': 1,
+        'Partially Conformant': 2,
+        'Non-Conformant': 3,
+        'Not Reviewed': '',
+    }
+    orig = {}
+    for s in sections:
+        orig[id(s)] = (s.get('evidence', ''), s.get('notes', ''))
+        s['evidence'] = _combine_evidence_notes(s)
+    result = _inject_into_template_by_clause(
+        table, sections, data_start_row=3,
+        col_clause=0, col_assessment=3,
+        assessment_map=assessment_map,
+        evidence_cols=[1, 2]
+    )
+    for s in sections:
+        ev, nt = orig[id(s)]
+        s['evidence'] = ev
+        s['notes'] = nt
+    return result
 
 
 def _inject_into_template_table(table, sections, data_row_start=1):
@@ -1034,15 +1112,6 @@ def _inject_into_template_by_clause(table, sections, data_start_row, col_clause=
                     run.font.color.rgb = RGBColor(0xCC, 0x7A, 0x00)
             filled += 1
     return filled
-
-
-def _combine_evidence_notes(section):
-    """Combine evidence and notes into one cell value for auditor-notes-together templates."""
-    evidence = section.get('evidence', '').strip()
-    notes = section.get('notes', '').strip()
-    if evidence and notes:
-        return evidence + '\nNotes: ' + notes
-    return evidence or notes
 
 
 # ── Management Review Minutes (ISO 9.3) ─────────────────────────────────────

@@ -1,10 +1,10 @@
 import os
-import json
 import time
 from typing import Any
 from openai import OpenAI
 
 from . import AIProvider
+from .json_utils import extract_json
 
 
 class GroqProvider(AIProvider):
@@ -31,7 +31,10 @@ class GroqProvider(AIProvider):
                     temperature=temperature,
                 )
                 raw = resp.choices[0].message.content.strip()
-                return json.loads(raw)
+                parsed = extract_json(raw)
+                if parsed is not None:
+                    return parsed
+                return {'text': raw}
             except Exception as e:
                 last_error = str(e)
                 if attempt < max_retries - 1:
@@ -50,3 +53,27 @@ class GroqProvider(AIProvider):
             system_prompt='You are a precise data extractor. Return ONLY valid JSON matching the requested schema.',
             temperature=0.1,
         )
+
+    def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
+        if not self.api_key:
+            yield 'GROQ_API_KEY not set'
+            return
+        client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        messages = []
+        if system_prompt:
+            messages.append({'role': 'system', 'content': system_prompt})
+        messages.append({'role': 'user', 'content': prompt})
+        try:
+            stream = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                max_tokens=kwargs.get('max_tokens', 4096),
+                temperature=kwargs.get('temperature', 0.3),
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    yield delta.content
+        except Exception as e:
+            yield f'[Error: {str(e)}]'

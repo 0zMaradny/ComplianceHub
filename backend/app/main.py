@@ -37,6 +37,8 @@ from app.services.offline_generator import generate_all as offline_generate_all
 from app.services.clause_data import get_clause_data, get_annex_a_data
 from app.services import db
 from datetime import datetime, timedelta
+from app.services.ai_chat import build_chat_context, chat_with_ai, chat_stream
+from app.services.doc_refiner import refine_field, bulk_refine, get_field_versions, get_refinable_fields, REFINABLE_FIELDS as RF
 
 app = FastAPI(
     title="ComplianceHub API",
@@ -1626,6 +1628,48 @@ def get_stats():
     return db.get_stats()
 
 
+# ── Export & Reporting Endpoints ──────────────────────────────────────────
+
+@app.get("/api/export/csv", summary="Export dataset as CSV", tags=["Export"])
+def export_csv(dataset: str = "nc_trends", months: int = 6, project_id: str = ""):
+    """Export analytics data as CSV. Supported datasets: nc_trends, project_health, capa_metrics, ai_usage."""
+    from app.services.report_generator import generate_csv
+    csv_text = generate_csv(dataset, months=months, project_id=project_id)
+    filename_map = {
+        "nc_trends": "nc_trends.csv",
+        "project_health": "project_health.csv",
+        "capa_metrics": "capa_metrics.csv",
+        "ai_usage": "ai_usage.csv",
+    }
+    filename = filename_map.get(dataset, "export.csv")
+    from starlette.responses import Response
+    return Response(
+        content=csv_text,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/report", summary="Generate PDF summary report", tags=["Export"])
+def export_report(report_type: str = "compliance_summary", project_id: str = ""):
+    """Generate PDF report. Supported types: compliance_summary, project_overview."""
+    from app.services.report_generator import generate_compliance_summary, generate_project_overview
+
+    if report_type == "project_overview":
+        pdf_bytes = generate_project_overview(project_id=project_id)
+        filename = "project_overview.pdf"
+    else:
+        pdf_bytes = generate_compliance_summary()
+        filename = "compliance_summary.pdf"
+
+    from starlette.responses import Response
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 @app.get("/api/progress/{job_id}")
 async def stream_progress(job_id: str):
     """SSE endpoint for real-time job progress updates."""
@@ -1704,6 +1748,21 @@ def get_standard_clauses(standard_id: str):
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f'Standard not found: {str(e)}')
+
+
+@app.get("/api/compliance/assessment/{standard_key}")
+def get_compliance_assessment(standard_key: str):
+    from app.services.db import load_compliance_assessment
+    data = load_compliance_assessment(standard_key)
+    return {'standard_key': standard_key, 'assessments': data or {}}
+
+
+@app.put("/api/compliance/assessment/{standard_key}")
+def save_compliance_assessment(standard_key: str, data: dict):
+    from app.services.db import save_compliance_assessment
+    assessments = data.get('assessments', {})
+    save_compliance_assessment(standard_key, assessments)
+    return {'status': 'ok', 'standard_key': standard_key}
 
 
 # ── Template Management ────────────────────────────────────────────────────
@@ -2076,15 +2135,25 @@ def bulk_update_checklist_endpoint(program_id: str, updates: dict = None):
 # --- Evidence Register ---
 
 @app.post("/api/audit_programs/{program_id}/evidence", summary="Add evidence", tags=["Audit Execution"])
-def add_evidence_endpoint(
+async def add_evidence_endpoint(
     program_id: str,
     clause_ref: str = Form(""),
     standard: str = Form(""),
     evidence_type: str = Form("document"),
     description: str = Form(""),
     collected_by: str = Form(""),
-    file_path: str = Form(""),
+    file: UploadFile = File(None),
 ):
+    file_path = ""
+    if file and file.filename:
+        evidence_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'audit_program_evidence')
+        os.makedirs(evidence_dir, exist_ok=True)
+        safe_name = f"{program_id}_{int(__import__('time').time())}_{file.filename}"
+        dest = os.path.join(evidence_dir, safe_name)
+        content = await file.read()
+        with open(dest, "wb") as f:
+            f.write(content)
+        file_path = dest
     ev = add_evidence(
         program_id=program_id, clause_ref=clause_ref,
         standard=standard, evidence_type=evidence_type,
@@ -2150,9 +2219,10 @@ def get_ai_models_status():
     for name, caps in ALL_MODELS.items():
         p = perf.get(name, {})
         healthy = _prov_health.get(name, 0) < 3
+        first_strength = caps.strengths[0] if caps.strengths else caps.tier
         models.append({
             "name": name,
-            "tier": caps.trengths[0] if caps.strengths else caps.tier,
+            "tier": first_strength,
             "tier_category": caps.tier,
             "context_length": caps.context_length,
             "provider": caps.provider,
@@ -2164,11 +2234,9 @@ def get_ai_models_status():
             "avg_response_time_ms": p.get("avg_response_time_ms", 0),
             "failure_rate_pct": p.get("failure_rate_pct", 0.0),
         })
-    # Sort: frontier first, then strong, then basic, then paid, then local
-    tier_order = {"frontier_free": 0, "strong_free": 1, "basic_free": 2, "paid": 3, "local": 4}
+    tier_order = {"frontier_free": 0, "strong_free": 1, "groq": 2, "local": 3, "paid": 4}
     models.sort(key=lambda m: (tier_order.get(m["tier_category"], 5), m["name"]))
 
-    # Recommendations per task type
     recommendations = {}
     task_types = ["Audit_Report", "Audit_Plan_Stage_1", "Audit_Plan_Stage_2",
                   "Participation_List", "ISO_Checklist", "Certificate_Text", "TNL"]
@@ -2181,18 +2249,11 @@ def get_ai_models_status():
 
 @app.post("/api/ai/validate", summary="Validate AI output quality", tags=["AI"])
 def validate_ai_output(data: dict):
-    """Validate AI output quality before export.
-
-    Accepts: {"task_type": "Audit_Report", "ai_output": {...}}
-    Returns quality report with score, issues, and recommendations.
-    """
     task_type = data.get("task_type", "")
     ai_output = data.get("ai_output", {})
     model_used = data.get("model_used", "")
-
     if not task_type or not ai_output:
         raise HTTPException(status_code=400, detail="task_type and ai_output required")
-
     validator = ExportValidator(task_type)
     report = validator.get_quality_report(ai_output, model_used)
     return report
@@ -2200,7 +2261,6 @@ def validate_ai_output(data: dict):
 
 @app.get("/api/ai/quality-history", summary="Quality scores over time", tags=["AI"])
 def get_quality_history():
-    """Return model performance history for quality tracking."""
     perf = get_model_performance()
     history = {}
     for name, p in perf.items():
@@ -2208,19 +2268,147 @@ def get_quality_history():
         history[name] = {
             "total_uses": p.get("total_uses", 0),
             "avg_quality": p.get("avg_quality_score", 0),
-            "task_quality": {
-                t: data.get("avg_quality", 0) for t, data in tasks.items()
-            },
+            "task_quality": {t: d.get("avg_quality", 0) for t, d in tasks.items()},
         }
     return {"models": history, "period": "all_time"}
 
 
-@app.post("/api/surveillance/check-overdue", tags=["Surveillance"])
-def trigger_overdue_check():
-    """Trigger overdue surveillance cycle check. Returns newly overdue cycles."""
-    from app.services.surveillance import check_overdue_cycles
-    overdue = check_overdue_cycles()
-    return {"newly_overdue": [c.to_dict() for c in overdue], "count": len(overdue)}
+# ── Refinement Endpoints ──────────────────────────────────────────────────
+
+@app.get("/api/refine/fields/{doc_type}", summary="List refinable fields for document type", tags=["Refinement"])
+def list_refinable_fields(doc_type: str):
+    return {'fields': get_refinable_fields(doc_type)}
+
+
+@app.get("/api/refine/versions/{job_id}/{doc_type}", summary="Get field version history", tags=["Refinement"])
+def get_versions_endpoint(job_id: str, doc_type: str, field: str = ''):
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if field:
+        return {'versions': get_field_versions(job_data, doc_type, field)}
+    results = job_data.get('results') or {}
+    doc_info = results.get(doc_type)
+    versions = doc_info.get('_versions', {}) if isinstance(doc_info, dict) else {}
+    return {'versions': versions}
+
+
+@app.post("/api/refine", summary="Refine a single document field via AI", tags=["Refinement"])
+async def refine_endpoint(request: Request):
+    body = await request.json()
+    job_id = body.get("job_id", "")
+    doc_type = body.get("doc_type", "")
+    field = body.get("field", "")
+    instruction = body.get("instruction", "")
+    api_key = body.get("api_key", "")
+    if not all([job_id, doc_type, field, instruction]):
+        raise HTTPException(status_code=400, detail="job_id, doc_type, field, and instruction are required")
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    result = refine_field(job_data, doc_type, field, instruction, api_key=api_key)
+    if 'error' in result:
+        raise HTTPException(status_code=400, detail=result['error'])
+    return result
+
+
+@app.post("/api/refine/bulk/{job_id}/{doc_type}", summary="Refine all fields for a document type", tags=["Refinement"])
+async def bulk_refine_endpoint(job_id: str, doc_type: str, request: Request):
+    body = await request.json()
+    instruction = body.get("instruction", "")
+    api_key = body.get("api_key", "")
+    if not instruction:
+        raise HTTPException(status_code=400, detail="instruction is required")
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    result = bulk_refine(job_data, doc_type, instruction, api_key=api_key)
+    return result
+
+
+# ── AI Chat Endpoints ─────────────────────────────────────────────────────
+
+@app.post("/api/chat", summary="Chat with AI about generated documents", tags=["AI Chat"])
+async def chat_endpoint(request: Request):
+    body = await request.json()
+    job_id = body.get("job_id", "")
+    message = body.get("message", "")
+    history = body.get("history", [])
+    if not job_id or not message:
+        raise HTTPException(status_code=400, detail="job_id and message are required")
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    context = build_chat_context(job_data)
+    result = chat_with_ai(message, context, history)
+    return result
+
+
+@app.post("/api/chat/stream", summary="Stream chat response via SSE", tags=["AI Chat"])
+async def chat_stream_endpoint(request: Request):
+    body = await request.json()
+    job_id = body.get("job_id", "")
+    message = body.get("message", "")
+    history = body.get("history", [])
+    if not job_id or not message:
+        raise HTTPException(status_code=400, detail="job_id and message are required")
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    context = build_chat_context(job_data)
+
+    async def event_stream():
+        for token in chat_stream(message, context, history):
+            yield f"data: {json.dumps({'token': token})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_stream(), media_type='text/event-stream')
+
+
+@app.post("/api/edit-field", summary="Directly edit a document field (no AI)", tags=["Refinement"])
+async def edit_field_endpoint(request: Request):
+    body = await request.json()
+    job_id = body.get("job_id", "")
+    doc_type = body.get("doc_type", "")
+    field = body.get("field", "")
+    value = body.get("value", "")
+    if not all([job_id, doc_type, field]):
+        raise HTTPException(status_code=400, detail="job_id, doc_type, and field are required")
+    job_data = _get_progress(job_id)
+    if not job_data:
+        job_data = db.get_job(job_id)
+    if not job_data:
+        raise HTTPException(status_code=404, detail="Job not found")
+    doc_info = (job_data.get('results') or {}).get(doc_type)
+    if not doc_info or not isinstance(doc_info, dict):
+        raise HTTPException(status_code=404, detail="Document not found")
+    if field not in RF.get(doc_type, []):
+        raise HTTPException(status_code=400, detail=f"Field {field} is not editable for {doc_type}")
+    doc_data = doc_info.get('_data')
+    if doc_data is None:
+        raise HTTPException(status_code=404, detail="Document data not found")
+    old_val = doc_data.get(field)
+    doc_data[field] = value
+    if '_versions' not in doc_info:
+        doc_info['_versions'] = {}
+    tim = time.time()
+    if field not in doc_info['_versions']:
+        doc_info['_versions'][field] = []
+    doc_info['_versions'][field].append({'value': value, 'timestamp': tim, 'instruction': 'manual edit'})
+    _update_progress(job_id, results=job_data.get('results'))
+    if not job_data.get('_ephemeral'):
+        db.save_job(job_id, json.dumps(job_data, ensure_ascii=False, default=str))
+    return {'field': field, 'value': value, 'previous_value': old_val, 'success': True}
 
 
 @app.on_event("startup")
