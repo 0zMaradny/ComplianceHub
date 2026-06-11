@@ -96,6 +96,36 @@ def health():
     }
 
 
+@app.get("/api/diagnostics")
+def diagnostics():
+    import py_compile, os
+    errors = []
+    # Check Python syntax
+    for root, dirs, files in os.walk("app"):
+        for f in files:
+            if f.endswith(".py"):
+                path = os.path.join(root, f)
+                try:
+                    py_compile.compile(path, doraise=True)
+                except py_compile.PyCompileError as e:
+                    errors.append(f"Syntax: {path}: {e}")
+    # Check DB connectivity
+    from app.services.db import init_db
+    try:
+        init_db()
+        db_status = "ok"
+    except Exception as e:
+        db_status = f"error: {e}"
+        errors.append(f"DB: {e}")
+    return {
+        "pass": len(errors) == 0,
+        "errors": errors,
+        "db": db_status,
+        "version": "2.0.0",
+        "timestamp": time.time(),
+    }
+
+
 # ── Thread-safe progress store ───────────────────────────────────────────
 progress_store: dict = {}
 _progress_lock = threading.Lock()
