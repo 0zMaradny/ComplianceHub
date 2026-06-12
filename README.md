@@ -42,7 +42,8 @@ frontend/                 # React 19 + Vite 8 + Tailwind CSS v4
 | `GROQ_API_KEY` | ✅ | Groq Llama 3.3 70B (fastest ~800 t/s) |
 | `HF_API_KEY` | Optional | HuggingFace free tier fallback |
 
-4. Open your `*.up.railway.app` URL in browser — zero installs.
+4. Railway auto-injects `DATABASE_URL` (PostgreSQL) — no config needed.
+5. Open your `*.up.railway.app` URL in browser — zero installs.
 
 ## Content Modes
 
@@ -52,7 +53,7 @@ frontend/                 # React 19 + Vite 8 + Tailwind CSS v4
 | **OpenRouter** | `OPENROUTER_API_KEY` | ~3-8s/doc | 9 frontier/strong models, all free |
 | **Groq** | `GROQ_API_KEY` | ~1-2s/doc | Llama 3.3 70B, fastest |
 | **HuggingFace** | `HF_API_KEY` | ~5-10s/doc | Llama-3-8B, free tier |
-| **Local AI** | llama-server + GGUF | ~20s/doc | Qwen2.5-0.5B (469 MB) |
+| **Local AI** | llama-server + GGUF | ~60s/doc | Qwen2.5-3B (1.9 GB) or 0.5B (469 MB) |
 
 ## 14 ISO Standards
 
@@ -89,7 +90,7 @@ All 14 standards produce the same 32 document types — content adapts to each s
 - **AI Router**: 3-tier parallel fallback (4 frontier → 4 strong → Groq), 9 free models
 - **Offline generator**: Zero-dependency template engine produces all 32 docs in ~0.8s
 - **Data-driven findings**: Parses NCs, OFIs, positives from audit notes → real content in documents
-- **SQLite persistence**: Job history, NC tracking, compliance assessments, CAPA metrics
+- **SQLite / PostgreSQL auto-detect**: Job history, NC tracking, compliance assessments, CAPA metrics
 - **SSE streaming**: Real-time progress updates during long-running AI generations
 - **Dark mode**: Toggleable light/dark theme, persisted to localStorage
 - **Responsive**: Mobile sidebar drawer, touch-friendly inputs, horizontal table scroll
