@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useToast } from '../components/Toast'
 
 const GATE_COLORS = {
   1: '#003D7A', 2: '#1A5276', 3: '#2E86C1',
@@ -11,11 +12,13 @@ const GATE_LABELS = {
 }
 
 export default function Projects({ API }) {
+  const showToast = useToast()
   const [projects, setProjects] = useState([])
   const [clients, setClients] = useState([])
   const [stats, setStats] = useState(null)
   const [selectedProject, setSelectedProject] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
   const [form, setForm] = useState({
     client_key: '', title: '', standards: [], target_date: '', lead_auditor: '',
   })
@@ -32,7 +35,11 @@ export default function Projects({ API }) {
   }
 
   const handleCreate = async () => {
-    if (!form.client_key || !form.title) return
+    const errors = {}
+    if (!form.client_key) errors.client_key = 'Client is required'
+    if (!form.title) errors.title = 'Title is required'
+    setFormErrors(errors)
+    if (Object.keys(errors).length > 0) return
     const body = new URLSearchParams()
     body.append('client_key', form.client_key)
     body.append('title', form.title)
@@ -45,10 +52,12 @@ export default function Projects({ API }) {
       body,
     })
     if (r.ok) {
+      showToast('Project created', 'success')
       setShowCreate(false)
+      setFormErrors({})
       setForm({ client_key: '', title: '', standards: [], target_date: '', lead_auditor: '' })
       refresh()
-    }
+    } else showToast('Failed to create project', 'error')
   }
 
   const handleAdvance = async (pid) => {
@@ -63,6 +72,7 @@ export default function Projects({ API }) {
   const handleDelete = async (pid) => {
     if (!confirm('Delete this project?')) return
     await fetch(`${API}/projects/${pid}`, { method: 'DELETE' })
+    showToast('Project deleted', 'success')
     setSelectedProject(null)
     refresh()
   }
@@ -77,16 +87,16 @@ export default function Projects({ API }) {
     const p = selectedProject.project
     const client = clients.find(c => c.key === p.client_key)
     return (
-      <div>
-        <button className="btn btn-secondary" onClick={() => setSelectedProject(null)} style={{ marginBottom: 16 }}>
+      <div className="animate-fadeIn">
+        <button className="btn btn-secondary mb-4" onClick={() => setSelectedProject(null)}>
           ← Back to Projects
         </button>
 
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="card mb-4">
+          <div className="flex justify-between items-start">
             <div>
-              <h2 style={{ margin: '0 0 4px' }}>{p.title}</h2>
-              <div style={{ color: 'var(--gray-500)', fontSize: 13 }}>
+              <h2 className="m-0 mb-1">{p.title}</h2>
+              <div className="text-sm" style={{ color: 'var(--gray-500)' }}>
                 {client?.name || p.client_key} · {p.standards.join(', ')} · {p.lead_auditor || 'No lead auditor'}
               </div>
             </div>
@@ -101,9 +111,9 @@ export default function Projects({ API }) {
         </div>
 
         {/* Gate Progress */}
-        <div className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 12 }}>6-Gate Pipeline</h3>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div className="card mb-4">
+          <h3 className="mb-3">6-Gate Pipeline</h3>
+          <div className="flex gap-2 mb-4">
             {[1, 2, 3, 4, 5, 6].map(g => (
               <div key={g} style={{
                 flex: 1, textAlign: 'center', padding: '12px 4px',
@@ -114,8 +124,8 @@ export default function Projects({ API }) {
                 border: g === p.current_gate ? '3px solid ' + GATE_COLORS[g] : '3px solid transparent',
                 boxShadow: g === p.current_gate ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
               }}>
-                <div style={{ fontSize: 18 }}>G{g}</div>
-                <div style={{ fontSize: 10, marginTop: 2 }}>{GATE_LABELS[g]}</div>
+                <div className="text-lg">G{g}</div>
+                <div className="text-xs mt-0.5">{GATE_LABELS[g]}</div>
               </div>
             ))}
           </div>
@@ -125,17 +135,17 @@ export default function Projects({ API }) {
             </button>
           )}
           {p.current_gate === 6 && (
-            <div style={{ color: '#27AE60', fontWeight: 600, fontSize: 14 }}>
+            <div className="text-sm font-semibold" style={{ color: '#27AE60' }}>
               ✅ All gates complete — ready for certification
             </div>
           )}
         </div>
 
         {/* NC + CAPA Summary */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="card">
             <h3>Nonconformities</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <div className="stat-card"><div className="stat-number">{selectedProject.nc_summary.total}</div><h3>Total</h3></div>
               <div className="stat-card"><div className="stat-number" style={{ color: '#E74C3C' }}>{selectedProject.nc_summary.open}</div><h3>Open</h3></div>
               <div className="stat-card"><div className="stat-number" style={{ color: '#E67E22' }}>{selectedProject.nc_summary.major}</div><h3>Major</h3></div>
@@ -144,7 +154,7 @@ export default function Projects({ API }) {
           </div>
           <div className="card">
             <h3>CAPA Items</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 8 }}>
+            <div className="grid grid-cols-2 gap-2 mt-2">
               <div className="stat-card"><div className="stat-number">{selectedProject.capa_summary.total}</div><h3>Total</h3></div>
               <div className="stat-card"><div className="stat-number" style={{ color: '#3498DB' }}>{selectedProject.capa_summary.draft}</div><h3>Draft</h3></div>
               <div className="stat-card"><div className="stat-number" style={{ color: '#F39C12' }}>{selectedProject.capa_summary.in_progress}</div><h3>In Progress</h3></div>
@@ -156,12 +166,12 @@ export default function Projects({ API }) {
         {/* Gate Deliverables */}
         <div className="card">
           <h3>Gate {p.current_gate}: {selectedProject.current_gate_info?.name}</h3>
-          <p style={{ color: 'var(--gray-500)', fontSize: 13 }}>{selectedProject.current_gate_info?.description}</p>
-          <div style={{ marginTop: 12 }}>
-            <h4 style={{ fontSize: 13, color: 'var(--gray-600)' }}>Deliverables:</h4>
-            <ul style={{ margin: '4px 0 0 16px', fontSize: 13 }}>
+          <p className="text-sm" style={{ color: 'var(--gray-500)' }}>{selectedProject.current_gate_info?.description}</p>
+          <div className="mt-3">
+            <h4 className="text-sm" style={{ color: 'var(--gray-600)' }}>Deliverables:</h4>
+            <ul className="m-1 ml-4 text-sm">
               {selectedProject.current_gate_info?.deliverables?.map((d, i) => (
-                <li key={i} style={{ marginBottom: 4 }}>{d.replace(/_/g, ' ')}</li>
+                <li key={i} className="mb-1">{d.replace(/_/g, ' ')}</li>
               ))}
             </ul>
           </div>
@@ -172,10 +182,10 @@ export default function Projects({ API }) {
 
   // ── List View ──
   return (
-    <div>
+    <div className="animate-fadeIn">
       {/* Dashboard Stats */}
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 20 }}>
+        <div className="grid gap-3 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
           <div className="stat-card">
             <div className="stat-number">{stats.total_projects}</div>
             <h3>Projects</h3>
@@ -197,18 +207,18 @@ export default function Projects({ API }) {
 
       {/* Gate Distribution */}
       {stats?.gate_distribution && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 12 }}>Projects by Gate</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="card mb-4">
+          <h3 className="mb-3">Projects by Gate</h3>
+          <div className="flex gap-2">
             {[1, 2, 3, 4, 5, 6].map(g => (
               <div key={g} style={{
                 flex: 1, textAlign: 'center', padding: '8px 4px', borderRadius: 6,
                 background: GATE_COLORS[g] + '15', border: '2px solid ' + GATE_COLORS[g] + '40',
               }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: GATE_COLORS[g] }}>
+                <div className="text-xl font-bold" style={{ color: GATE_COLORS[g] }}>
                   {stats.gate_distribution[g] || 0}
                 </div>
-                <div style={{ fontSize: 10, color: GATE_COLORS[g] }}>G{g} {GATE_LABELS[g]}</div>
+                <div className="text-xs" style={{ color: GATE_COLORS[g] }}>G{g} {GATE_LABELS[g]}</div>
               </div>
             ))}
           </div>
@@ -216,8 +226,8 @@ export default function Projects({ API }) {
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Audit Projects</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="m-0">Audit Projects</h2>
         <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
           {showCreate ? '✕ Cancel' : '+ New Project'}
         </button>
@@ -225,22 +235,24 @@ export default function Projects({ API }) {
 
       {/* Create Form */}
       {showCreate && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 12 }}>Create Audit Project</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div className="card mb-4">
+          <h3 className="mb-3">Create Audit Project</h3>
+          <div className="grid grid-cols-2 gap-3">
             <div className="form-group">
               <label>Client *</label>
-              <select value={form.client_key} onChange={e => setForm({ ...form, client_key: e.target.value })}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)' }}>
+              <select value={form.client_key} onChange={e => { setForm({ ...form, client_key: e.target.value }); setFormErrors(prev => ({ ...prev, client_key: '' })) }}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${formErrors.client_key ? 'var(--red-600)' : 'var(--gray-300)'}` }}>
                 <option value="">-- Select --</option>
                 {clients.map(c => <option key={c.key} value={c.key}>{c.name}</option>)}
               </select>
+              {formErrors.client_key && <span className="text-xs mt-1" style={{ color: 'var(--red-600)' }}>{formErrors.client_key}</span>}
             </div>
             <div className="form-group">
               <label>Title *</label>
               <input type="text" value={form.title} placeholder="e.g. ISO 22301 Certification 2026"
-                onChange={e => setForm({ ...form, title: e.target.value })}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)' }} />
+                onChange={e => { setForm({ ...form, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: '' })) }}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${formErrors.title ? 'var(--red-600)' : 'var(--gray-300)'}` }} />
+              {formErrors.title && <span className="text-xs mt-1" style={{ color: 'var(--red-600)' }}>{formErrors.title}</span>}
             </div>
             <div className="form-group">
               <label>Target Date</label>
@@ -255,7 +267,7 @@ export default function Projects({ API }) {
                 style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)' }} />
             </div>
           </div>
-          <button className="btn btn-primary" onClick={handleCreate} style={{ marginTop: 12 }}>
+          <button className="btn btn-primary mt-3" onClick={handleCreate}>
             Create Project
           </button>
         </div>
@@ -263,27 +275,25 @@ export default function Projects({ API }) {
 
       {/* Project List */}
       {projects.length === 0 ? (
-        <div className="card" style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>📋</div>
+        <div className="card text-center p-10">
+          <div className="text-5xl mb-3">📋</div>
           <h3>No projects yet</h3>
           <p style={{ color: 'var(--gray-500)' }}>Create your first audit project to get started</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div className="animate-slideIn flex flex-col gap-2">
           {projects.map(p => {
             const client = clients.find(c => c.key === p.client_key)
             return (
-              <div key={p.id} className="card" style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                cursor: 'pointer', padding: '12px 16px',
-              }} onClick={() => openProject(p)}>
+              <div key={p.id} className="card flex items-center justify-between cursor-pointer p-3"
+                   onClick={() => openProject(p)}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{p.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 2 }}>
+                  <div className="font-semibold text-sm">{p.title}</div>
+                  <div className="text-xs mt-0.5" style={{ color: 'var(--gray-500)' }}>
                     {client?.name || p.client_key} · {p.standards.join(', ')}
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="flex items-center gap-3">
                   <span className="badge" style={{
                     background: GATE_COLORS[p.current_gate] + '20',
                     color: GATE_COLORS[p.current_gate],
@@ -291,7 +301,7 @@ export default function Projects({ API }) {
                   }}>
                     G{p.current_gate}
                   </span>
-                  <span style={{ fontSize: 12, color: 'var(--gray-400)' }}>
+                  <span className="text-xs" style={{ color: 'var(--gray-400)' }}>
                     {new Date(p.updated_at).toLocaleDateString()}
                   </span>
                   <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: 11 }}

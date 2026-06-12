@@ -1,7 +1,5 @@
 import { useState } from 'react'
 
-/* ─── Audit Plan Generator — Pre-Audit Client Document ─── */
-
 const AUDIT_TYPES = [
   { value: 'stage1', label: 'Stage 1 — Readiness Review' },
   { value: 'stage2', label: 'Stage 2 — Certification Audit' },
@@ -28,177 +26,105 @@ const ISO_STANDARDS_LIST = [
 
 export default function AuditPlanGenerator({ API }) {
   const [form, setForm] = useState({
-    client_name: '',
-    client_key: '',
-    standards: [],
-    audit_type: 'stage2',
-    lead_auditor: '',
-    audit_team: '',
-    start_date: '',
-    end_date: '',
-    location: '',
-    audit_scope: '',
-    audit_language: 'English',
-    report_due_days: 30,
-    notes: '',
+    client_name: '', client_key: '', standards: [], audit_type: 'stage2',
+    lead_auditor: '', audit_team: '', start_date: '', end_date: '',
+    location: '', audit_scope: '', audit_language: 'English', report_due_days: 30, notes: '',
   })
-
   const [schedule, setSchedule] = useState([])
   const [generating, setGenerating] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
 
-  // Schedule row management
   const addScheduleRow = () => {
     const day = schedule.length + 1
-    setSchedule([...schedule, {
-      day,
-      date: '',
-      time: '09:00 – 17:00',
-      activity: '',
-      auditee: '',
-      auditor: '',
-      clause: '',
-    }])
+    setSchedule([...schedule, { day, date: '', time: '09:00 – 17:00', activity: '', auditee: '', auditor: '', clause: '' }])
   }
 
-  const updateScheduleRow = (idx, field, value) => {
-    const updated = [...schedule]
-    updated[idx] = { ...updated[idx], [field]: value }
-    setSchedule(updated)
-  }
-
-  const removeScheduleRow = (idx) => {
-    setSchedule(schedule.filter((_, i) => i !== idx))
-  }
+  const removeScheduleRow = (idx) => setSchedule(schedule.filter((_, i) => i !== idx))
 
   const generate = async () => {
     if (!form.client_name || !form.start_date || !form.end_date) {
-      setError('Client name, start date, and end date are required.')
-      return
+      setError('Client name, start date, and end date are required.'); return
     }
-    setGenerating(true)
-    setError('')
-    setResult(null)
-
+    setGenerating(true); setError(''); setResult(null)
     const body = new URLSearchParams()
-    Object.entries(form).forEach(([k, v]) => {
-      if (Array.isArray(v)) body.append(k, JSON.stringify(v))
-      else body.append(k, String(v))
-    })
+    Object.entries(form).forEach(([k, v]) => body.append(k, Array.isArray(v) ? JSON.stringify(v) : String(v)))
     body.append('daily_schedule', JSON.stringify(schedule))
-
     try {
       const r = await fetch(`${API}/audit_plan/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body,
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body,
       })
-      if (!r.ok) {
-        const d = await r.json().catch(() => ({}))
-        throw new Error(d.detail || 'Generation failed')
-      }
+      if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || 'Generation failed') }
       const blob = await r.blob()
       const url = URL.createObjectURL(blob)
       const safeName = form.client_name.replace(/[^a-z0-9]/gi, '_')
-      setResult({
-        url,
-        filename: `TUV_Audit_Plan_${safeName}_${form.audit_type}.docx`,
-        size: blob.size,
-      })
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setGenerating(false)
-    }
+      setResult({ url, filename: `TUV_Audit_Plan_${safeName}_${form.audit_type}.docx`, size: blob.size })
+    } catch (e) { setError(e.message) }
+    finally { setGenerating(false) }
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ margin: 0 }}>Audit Plan Generator</h2>
-        <p style={{ color: 'var(--gray-500)', margin: '4px 0 0', fontSize: 13 }}>
+    <div className="animate-fadeIn">
+      <div className="mb-5">
+        <h2 className="m-0">Audit Plan Generator</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--gray-500)' }}>
           Generate a professional TÜV-branded Audit Plan to send to the client before the audit.
-          Fill in the details below and download the Word document.
         </p>
       </div>
 
-      {/* ── Section 1: Client & Audit Info ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 16px', color: '#003D7A' }}>Client & Audit Information</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          <div>
-            <label className="form-label">Client Name *</label>
-            <input className="form-input" value={form.client_name}
-              onChange={e => setForm({ ...form, client_name: e.target.value })}
-              placeholder="Organization name" />
-          </div>
-          <div>
-            <label className="form-label">Client Key</label>
-            <input className="form-input" value={form.client_key}
-              onChange={e => setForm({ ...form, client_key: e.target.value })}
-              placeholder="e.g. abc-corp" />
-          </div>
-          <div>
-            <label className="form-label">Audit Type</label>
-            <select className="form-input" value={form.audit_type}
-              onChange={e => setForm({ ...form, audit_type: e.target.value })}>
-              {AUDIT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Location</label>
-            <input className="form-input" value={form.location}
-              onChange={e => setForm({ ...form, location: e.target.value })}
-              placeholder="Audit location / site" />
-          </div>
-          <div>
-            <label className="form-label">Start Date *</label>
-            <input type="date" className="form-input" value={form.start_date}
-              onChange={e => setForm({ ...form, start_date: e.target.value })} />
-          </div>
-          <div>
-            <label className="form-label">End Date *</label>
-            <input type="date" className="form-input" value={form.end_date}
-              onChange={e => setForm({ ...form, end_date: e.target.value })} />
-          </div>
+      <div className="card mb-4">
+        <h3 className="m-0 mb-4" style={{ color: '#003D7A' }}>Client & Audit Information</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Client Name *', key: 'client_name', type: 'text', placeholder: 'Organization name' },
+            { label: 'Client Key', key: 'client_key', type: 'text', placeholder: 'e.g. abc-corp' },
+            { label: 'Audit Type', key: 'audit_type', type: 'select', options: AUDIT_TYPES },
+            { label: 'Location', key: 'location', type: 'text', placeholder: 'Audit location / site' },
+            { label: 'Start Date *', key: 'start_date', type: 'date' },
+            { label: 'End Date *', key: 'end_date', type: 'date' },
+          ].map(f => (
+            <div key={f.key}>
+              <label className="form-label">{f.label}</label>
+              {f.type === 'select' ? (
+                <select className="form-input" value={form[f.key]} onChange={e => setForm({ ...form, [f.key]: e.target.value })}>
+                  {f.options.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              ) : (
+                <input type={f.type} className="form-input" value={form[f.key]}
+                  onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+                  placeholder={f.placeholder} />
+              )}
+            </div>
+          ))}
         </div>
-
-        {/* Standards */}
-        <div style={{ marginTop: 12 }}>
+        <div className="mt-3">
           <label className="form-label">Standard(s)</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          <div className="flex flex-wrap gap-1.5">
             {ISO_STANDARDS_LIST.map(std => {
               const selected = form.standards.includes(std.key)
               return (
-                <button
-                  key={std.key}
+                <button key={std.key}
                   className={`btn ${selected ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ fontSize: 12, padding: '4px 10px' }}
-                  onClick={() => {
-                    const newStds = selected
-                      ? form.standards.filter(s => s !== std.key)
-                      : [...form.standards, std.key]
-                    setForm({ ...form, standards: newStds })
-                  }}
-                >{std.label}</button>
+                  onClick={() => setForm({ ...form, standards: selected ? form.standards.filter(s => s !== std.key) : [...form.standards, std.key] })}>
+                  {std.label}
+                </button>
               )
             })}
           </div>
         </div>
       </div>
 
-      {/* ── Section 2: Audit Team ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 16px', color: '#003D7A' }}>Audit Team</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div className="card mb-4">
+        <h3 className="m-0 mb-4" style={{ color: '#003D7A' }}>Audit Team</h3>
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="form-label">Lead Auditor</label>
             <input className="form-input" value={form.lead_auditor}
               onChange={e => setForm({ ...form, lead_auditor: e.target.value })}
               placeholder="Lead auditor name" />
           </div>
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="col-span-2">
             <label className="form-label">Audit Team (comma-separated)</label>
             <input className="form-input" value={form.audit_team}
               onChange={e => setForm({ ...form, audit_team: e.target.value })}
@@ -207,16 +133,15 @@ export default function AuditPlanGenerator({ API }) {
         </div>
       </div>
 
-      {/* ── Section 3: Scope & Language ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <h3 style={{ margin: '0 0 16px', color: '#003D7A' }}>Scope & Language</h3>
-        <div style={{ marginBottom: 12 }}>
+      <div className="card mb-4">
+        <h3 className="m-0 mb-4" style={{ color: '#003D7A' }}>Scope & Language</h3>
+        <div className="mb-3">
           <label className="form-label">Audit Scope</label>
           <textarea className="form-input" rows={3} value={form.audit_scope}
             onChange={e => setForm({ ...form, audit_scope: e.target.value })}
             placeholder="Describe the audit scope — sites, processes, activities covered..." />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="form-label">Audit Language</label>
             <select className="form-input" value={form.audit_language}
@@ -227,13 +152,12 @@ export default function AuditPlanGenerator({ API }) {
             </select>
           </div>
           <div>
-            <label className="form-label">Report Due (days after audit)</label>
-            <input type="number" className="form-input" min={1} max={90}
-              value={form.report_due_days}
+            <label className="form-label">Report Due (days)</label>
+            <input type="number" className="form-input" min={1} max={90} value={form.report_due_days}
               onChange={e => setForm({ ...form, report_due_days: +e.target.value })} />
           </div>
         </div>
-        <div style={{ marginTop: 12 }}>
+        <div className="mt-3">
           <label className="form-label">Additional Notes</label>
           <textarea className="form-input" rows={2} value={form.notes}
             onChange={e => setForm({ ...form, notes: e.target.value })}
@@ -241,79 +165,35 @@ export default function AuditPlanGenerator({ API }) {
         </div>
       </div>
 
-      {/* ── Section 4: Daily Schedule ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <h3 style={{ margin: 0, color: '#003D7A' }}>Daily Schedule</h3>
+      <div className="card mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="m-0" style={{ color: '#003D7A' }}>Daily Schedule</h3>
           <button className="btn btn-primary" onClick={addScheduleRow}>+ Add Day / Slot</button>
         </div>
-
         {schedule.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 20, color: 'var(--gray-500)', fontSize: 13 }}>
+          <div className="text-center py-5 text-sm" style={{ color: 'var(--gray-500)' }}>
             No schedule entries. Click "Add Day / Slot" to build the daily audit programme.
-            <br />A default schedule will be auto-generated if left empty.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', minWidth: 800 }}>
-              <thead>
-                <tr>
-                  <th>Day</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Activity</th>
-                  <th>Auditee</th>
-                  <th>Auditor</th>
-                  <th>Clause Ref</th>
-                  <th></th>
-                </tr>
-              </thead>
+          <div className="overflow-x-auto">
+            <table className="table w-full" style={{ minWidth: 800 }}>
+              <thead><tr>
+                <th>Day</th><th>Date</th><th>Time</th><th>Activity</th><th>Auditee</th><th>Auditor</th><th>Clause Ref</th><th></th>
+              </tr></thead>
               <tbody>
                 {schedule.map((row, idx) => (
                   <tr key={idx}>
+                    {['day', 'date', 'time', 'activity', 'auditee', 'auditor', 'clause'].map(f => (
+                      <td key={f}>
+                        <input className="form-input" style={{ width: f === 'day' ? 50 : f === 'date' ? 110 : f === 'time' ? 120 : f === 'clause' ? 80 : 100, padding: 4 }}
+                          type={f === 'day' ? 'number' : f === 'date' ? 'date' : 'text'}
+                          min={f === 'day' ? 1 : undefined}
+                          value={row[f]} placeholder={f === 'time' ? '09:00 – 17:00' : f === 'activity' ? 'Activity description' : f === 'auditee' ? 'Department / person' : f === 'auditor' ? 'Auditor name' : f === 'clause' ? 'e.g. 4.1-5.3' : ''}
+                          onChange={e => { const s = [...schedule]; s[idx] = { ...s[idx], [f]: e.target.value }; setSchedule(s) }} />
+                      </td>
+                    ))}
                     <td>
-                      <input className="form-input" style={{ width: 50, padding: '4px' }}
-                        type="number" min={1} value={row.day}
-                        onChange={e => updateScheduleRow(idx, 'day', +e.target.value)} />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ width: 110, padding: '4px' }}
-                        type="date" value={row.date}
-                        onChange={e => updateScheduleRow(idx, 'date', e.target.value)} />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ width: 120, padding: '4px' }}
-                        value={row.time}
-                        onChange={e => updateScheduleRow(idx, 'time', e.target.value)}
-                        placeholder="09:00 – 17:00" />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ minWidth: 150, padding: '4px' }}
-                        value={row.activity}
-                        onChange={e => updateScheduleRow(idx, 'activity', e.target.value)}
-                        placeholder="Activity description" />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ width: 100, padding: '4px' }}
-                        value={row.auditee}
-                        onChange={e => updateScheduleRow(idx, 'auditee', e.target.value)}
-                        placeholder="Department / person" />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ width: 100, padding: '4px' }}
-                        value={row.auditor}
-                        onChange={e => updateScheduleRow(idx, 'auditor', e.target.value)}
-                        placeholder="Auditor name" />
-                    </td>
-                    <td>
-                      <input className="form-input" style={{ width: 80, padding: '4px' }}
-                        value={row.clause}
-                        onChange={e => updateScheduleRow(idx, 'clause', e.target.value)}
-                        placeholder="e.g. 4.1-5.3" />
-                    </td>
-                    <td>
-                      <button className="btn btn-danger" style={{ padding: '2px 6px', fontSize: 12 }}
-                        onClick={() => removeScheduleRow(idx)}>✕</button>
+                      <button className="btn btn-danger px-1.5 py-0.5 text-xs" onClick={() => removeScheduleRow(idx)}>✕</button>
                     </td>
                   </tr>
                 ))}
@@ -323,26 +203,19 @@ export default function AuditPlanGenerator({ API }) {
         )}
       </div>
 
-      {/* ── Generate Button ── */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 20 }}>
-        <button
-          className="btn btn-primary"
-          style={{ fontSize: 16, padding: '12px 32px' }}
-          onClick={generate}
-          disabled={generating}
-        >
+      <div className="flex gap-3 items-center mb-5">
+        <button className="btn btn-primary text-lg px-8 py-3" onClick={generate} disabled={generating}>
           {generating ? '⏳ Generating...' : '📄 Generate Audit Plan'}
         </button>
-        {error && <span style={{ color: '#DC2626', fontSize: 13 }}>⚠ {error}</span>}
+        {error && <span className="text-sm" style={{ color: '#DC2626' }}>⚠ {error}</span>}
       </div>
 
-      {/* ── Result ── */}
       {result && (
         <div className="card" style={{ border: '2px solid #059669', background: '#F0FDF4' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="flex items-center justify-between">
             <div>
-              <h4 style={{ margin: '0 0 4px', color: '#065F46' }}>✅ Audit Plan Generated</h4>
-              <p style={{ margin: 0, fontSize: 13, color: '#047857' }}>
+              <h4 className="m-0 mb-1" style={{ color: '#065F46' }}>✅ Audit Plan Generated</h4>
+              <p className="m-0 text-sm" style={{ color: '#047857' }}>
                 {result.filename} ({(result.size / 1024).toFixed(1)} KB)
               </p>
             </div>

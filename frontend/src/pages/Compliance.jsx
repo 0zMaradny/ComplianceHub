@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Skeleton from '../components/Skeleton'
 
 const STATUS_ORDER = ['compliant', 'partial', 'non_compliant', 'na']
 const STATUS_LABELS = { compliant: 'Compliant', partial: 'Partial', non_compliant: 'Non-Compliant', na: 'N/A' }
@@ -132,7 +133,7 @@ export default function Compliance({ API }) {
 
   if (!selected) {
     return (
-      <div>
+      <div className="animate-fadeIn">
         <div className="page-header">
           <h2>Compliance Assessment</h2>
           <p>Select a standard to begin clause-level compliance assessment</p>
@@ -141,13 +142,13 @@ export default function Compliance({ API }) {
           <h3>ISO Standards</h3>
           <div className="checkbox-group">
             {allStandards.map(s => (
-              <div key={s.id} className="checkbox-item" style={{ cursor: 'pointer', justifyContent: 'space-between' }}
+              <div key={s.id} className="checkbox-item cursor-pointer justify-between"
                    onClick={() => setSelected(s.id)}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{s.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{s.desc}</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{s.desc}</div>
                 </div>
-                <span style={{ fontSize: 20, color: 'var(--text-secondary)' }}>→</span>
+                <span className="text-xl" style={{ color: 'var(--text-secondary)' }}>→</span>
               </div>
             ))}
           </div>
@@ -159,10 +160,10 @@ export default function Compliance({ API }) {
   const currentStd = allStandards.find(s => s.id === selected)
 
   return (
-    <div>
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+    <div className="animate-fadeIn">
+      <div className="page-header flex justify-between items-start">
         <div>
-          <button className="btn btn-secondary" onClick={() => setSelected(null)} style={{ fontSize: 12, marginBottom: 8 }}>
+          <button className="btn btn-secondary text-xs mb-2" onClick={() => setSelected(null)}>
             ← Back to Standards
           </button>
           <h2>{currentStd?.label || selected}</h2>
@@ -176,14 +177,14 @@ export default function Compliance({ API }) {
           <div className={`stat-number ${scoredClauses >= 80 ? 'green' : scoredClauses >= 50 ? 'amber' : 'red'}`}>
             {scoredClauses}%
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
             {compliantCount} compliant, {partialCount} partial, {nonCompliantCount} non-compliant
           </div>
         </div>
         <div className="stat-card">
           <h3>Clauses</h3>
           <div className="stat-number">{assessed.length}/{totalClauses}</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
             {totalClauses - assessed.length} remaining
           </div>
         </div>
@@ -191,14 +192,14 @@ export default function Compliance({ API }) {
           <h3>Non-Compliant</h3>
           <div className="stat-number red">{nonCompliantCount}</div>
           {nonCompliantCount > 0 && (
-            <div style={{ fontSize: 12, color: 'var(--red-600)', marginTop: 4 }}>
+            <div className="text-xs mt-1" style={{ color: 'var(--red-600)' }}>
               Requires corrective action
             </div>
           )}
         </div>
         <div className="stat-card">
           <h3>Progress Bar</h3>
-          <div className="progress-bar" style={{ marginTop: 8 }}>
+          <div className="progress-bar mt-2">
             <div className="progress-fill" style={{
               width: `${scoredClauses}%`,
               background: scoredClauses >= 80 ? 'var(--green-600)' : scoredClauses >= 50 ? 'var(--amber-600)' : 'var(--red-600)',
@@ -208,9 +209,9 @@ export default function Compliance({ API }) {
       </div>
 
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ margin: 0 }}>Clause Checklist</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="m-0">Clause Checklist</h3>
+          <div className="flex gap-2">
             {['all', 'compliant', 'partial', 'non_compliant', 'untouched'].map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`btn btn-small ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
@@ -222,11 +223,11 @@ export default function Compliance({ API }) {
         </div>
 
         {loading ? (
-          <div className="loading">Loading clauses...</div>
+          <div className="animate-fadeIn"><Skeleton variant="table-row" count={8} className="mb-2" /></div>
         ) : visible.length === 0 ? (
           <div className="empty-state">No clauses match the selected filter.</div>
         ) : (
-          <div>
+          <div className="animate-slideIn">
             {visible.map(c => {
               const status = getStatus(c.id)
               return (
@@ -236,18 +237,18 @@ export default function Compliance({ API }) {
                   borderRadius: status !== 'untouched' ? 8 : 0,
                   marginBottom: status !== 'untouched' ? 4 : 0,
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1 }}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
                       <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                         Clause {c.id}: {c.title}
                       </div>
                       {c.description && (
-                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                        <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                           {c.description.substring(0, 200)}
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: 4, marginLeft: 12, flexWrap: 'wrap' }}>
+                    <div className="flex gap-1 ml-3 flex-wrap">
                       {STATUS_ORDER.map(s => (
                         <button key={s} onClick={() => setStatus(c.id, status === s ? 'untouched' : s)}
                           className="btn btn-small"
@@ -272,14 +273,14 @@ export default function Compliance({ API }) {
       {annexKeys.length > 0 && (
         <div className="card">
           <h3>Annex A Controls</h3>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+          <div className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
             {selected === 'iso_27001' ? `${annexKeys.length} control themes from Annex A (93 controls)` :
              selected === 'iso_42001' ? `${annexKeys.length} control objectives from Annex A` :
              `${annexKeys.length} annex sections`}
           </div>
           <div className="checkbox-group">
             {annexKeys.map(key => (
-              <div key={key} className="checkbox-item" style={{ cursor: 'default' }}>
+              <div key={key} className="checkbox-item cursor-default">
                 {key}
               </div>
             ))}
@@ -287,7 +288,7 @@ export default function Compliance({ API }) {
         </div>
       )}
 
-      <div style={{ textAlign: 'center', padding: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+      <div className="text-center p-4 text-xs" style={{ color: 'var(--text-secondary)' }}>
         Assessment data synced to server (localStorage fallback).
       </div>
     </div>

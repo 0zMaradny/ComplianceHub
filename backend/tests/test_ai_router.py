@@ -75,7 +75,7 @@ class TestResolveChain:
 
     def test_default_chain_structure(self):
         chain = resolve_chain('Audit_Report')
-        assert len(chain) == 10
+        assert len(chain) == 11
         for name in chain:
             assert name in ALL_MODELS
 
@@ -83,7 +83,8 @@ class TestResolveChain:
         chain = resolve_chain('Audit_Report')
         assert 'groq_llama' in chain
         assert 'local_qwen' in chain
-        assert chain[-1] == 'local_qwen'
+        assert 'local_qwen_3b' in chain
+        assert chain[-1] == 'local_qwen_3b'
 
     def test_all_task_types_resolved(self):
         task_types = [
@@ -99,7 +100,7 @@ class TestResolveChain:
 
     def test_unknown_task_gets_default_chain(self):
         chain = resolve_chain('Unknown_Task')
-        assert len(chain) == 10
+        assert len(chain) == 11
 
     def test_override_provider(self):
         chain = resolve_chain('Audit_Report', override_provider='kimi_k26')

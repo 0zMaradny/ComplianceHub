@@ -134,6 +134,15 @@ LOCAL_FREE = [
         strengths=("chat_query",),
         notes="Qwen2.5-0.5B via local llama-server (localhost:8080). ~20s/doc, CPU-only ARM64 fallback.",
     ),
+    ModelCaps(
+        model_id="qwen-3b",
+        openrouter_name="local_qwen_3b",
+        provider="local",
+        tier="local",
+        context_length=8192,
+        strengths=("chat_query", "ISO_Checklist", "Audit_Plan_Stage_1", "Audit_Plan_Stage_2"),
+        notes="Qwen2.5-3B (Q4_K_M) via local llama-server. ~60s/doc, 6x params over qwen-0.5b. Needs ~2.5 GB RAM.",
+    ),
 ]
 
 # Paid fallbacks — only used when all free tiers fail or aren't available

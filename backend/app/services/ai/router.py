@@ -7,8 +7,8 @@ Architecture:
           — run in parallel batches, only if Tier 1 all fail
   Tier 3: Groq (groq_llama — Llama 3.3 70B, ~800 t/s)
           — single attempt, independent API endpoint, only if Tiers 1+2 fail
-  Tier 4: Local AI (local_qwen — Qwen2.5-0.5B, ~20s/doc)
-          — offline fallback, only if Tiers 1-3 fail
+   Tier 4: Local AI (local_qwen / local_qwen_3b — Qwen2.5-3B or Qwen2.5-0.5B)
+           — offline fallback, only if Tiers 1-3 fail
 
 Quality-aware: each tier's output is scored (0-100). If below threshold,
 the router upgrades to the next tier.
@@ -383,7 +383,8 @@ def generate(
       2. Tier 1: ALL frontier free models in parallel batches
       3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
       4. Tier 3: Groq (if Tiers 1+2 fail)
-      5. Return error if all exhausted
+      5. Tier 4: Local AI (qwen-3b or qwen-0.5b) (if Tiers 1-3 fail)
+      6. Return error if all exhausted
     """
     ck = _cache_key(task_type, prompt)
     cached = _check_cache(ck)
@@ -519,6 +520,7 @@ def extract_structured(
       2. Tier 1: ALL frontier free models in parallel batches
       3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
       4. Tier 3: Groq (if Tiers 1+2 fail)
+      5. Tier 4: Local AI (qwen-3b or qwen-0.5b) (if Tiers 1-3 fail)
     """
     ck = _cache_key(task_type, prompt)
     cached = _check_cache(ck)

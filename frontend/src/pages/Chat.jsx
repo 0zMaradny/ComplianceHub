@@ -87,14 +87,8 @@ function Chat({ API }) {
     }
   }
 
-  const statusStyle = (status) => {
-    if (status === 'done') return { color: '#16a34a' }
-    if (status === 'error') return { color: '#dc2626' }
-    return { color: '#ca8a04' }
-  }
-
   return (
-    <div className="chat-page">
+    <div className="chat-page animate-fadeIn">
       <div className="page-header">
         <h1>AI Chat</h1>
         <p className="subtitle">Ask questions about generated audit documents</p>
@@ -113,7 +107,7 @@ function Chat({ API }) {
                   onClick={() => setSelectedJob(job.job_id)}
                 >
                   <strong>{job.job_id?.slice(0, 8)}...</strong>
-                  <span style={statusStyle(job.status)}>{job.status}</span>
+                  <span style={job.status === 'done' ? { color: '#16a34a' } : job.status === 'error' ? { color: '#dc2626' } : { color: '#ca8a04' }}>{job.status}</span>
                   <small>{job.created_at ? new Date(job.created_at * 1000).toLocaleDateString() : ''}</small>
                 </button>
               ))}

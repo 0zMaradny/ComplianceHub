@@ -14,6 +14,9 @@ from app.services.offline_generator import (
     _extract_auditor,
     _extract_total_days,
     _extract_team,
+    _extract_ncs,
+    _extract_ofis,
+    _extract_positives,
     _key_for_standard,
     STANDARD_LABEL_MAP,
 )
@@ -81,6 +84,83 @@ class TestKeyForStandard:
         for key, label in STANDARD_LABEL_MAP.items():
             resolved = _key_for_standard(label)
             assert resolved == key, f'{label} -> {resolved}, expected {key}'
+
+
+class TestExtractFindings:
+    def test_extract_ncs_simple(self):
+        text = 'NC-Minor: Document control procedure not followed (Clause 7.5.3)\nNC-Major: Internal audit programme incomplete (Clause 9.2)'
+        ncs = _extract_ncs(text)
+        assert len(ncs) == 2
+        assert ncs[0]['severity'] == 'Minor'
+        assert ncs[0]['description'] == 'Document control procedure not followed'
+        assert ncs[1]['severity'] == 'Major'
+        assert ncs[1]['clause'] == '9.2'
+
+    def test_extract_ncs_various_formats(self):
+        text = 'Non-Conformity: Training records not maintained (Clause 7.2)\nFinding: No risk assessment for new process (Clause 6.1)'
+        ncs = _extract_ncs(text)
+        assert len(ncs) == 2
+        assert ncs[0]['description'] == 'Training records not maintained'
+
+    def test_extract_ncs_no_match(self):
+        assert _extract_ncs('Everything is fine') == []
+
+    def test_extract_ofis_simple(self):
+        text = 'OFI: Consider automated monitoring (Clause 9.1)\nOpportunity for improvement: Enhance supplier evaluation (Clause 8.4)'
+        ofis = _extract_ofis(text)
+        assert len(ofis) == 2
+        assert ofis[0]['description'] == 'Consider automated monitoring'
+
+    def test_extract_positives_simple(self):
+        text = 'Positive: Strong management commitment\nStrength: Well-documented procedures (Clause 7.5)'
+        positives = _extract_positives(text)
+        assert len(positives) == 2
+        assert positives[0]['description'] == 'Strong management commitment'
+        assert positives[1]['clause'] == '7.5'
+
+    def test_extract_from_realistic_notes(self):
+        text = """
+Audit of ISO 9001:2015 at Acme Corp
+Client: Acme Corporation
+Lead Auditor: John Smith
+Date: 15/06/2026
+
+Findings:
+1 NC-Minor: Calibration records for measuring equipment not up to date (Clause 7.1.5)
+2 NC-Minor: Supplier evaluation not performed for 2 critical suppliers (Clause 8.4)
+OFI: Consider implementing digital dashboard for real-time KPI monitoring (Clause 9.1)
+Positive: Excellent quality culture and employee engagement
+        """
+        ncs = _extract_ncs(text)
+        ofis = _extract_ofis(text)
+        positives = _extract_positives(text)
+        assert len(ncs) == 2
+        assert len(ofis) == 1
+        assert len(positives) == 1
+        assert 'Calibration' in ncs[0]['description']
+        assert 'digital dashboard' in ofis[0]['description']
+        assert 'quality culture' in positives[0]['description']
+
+    def test_findings_in_shared_context(self):
+        text = """
+Client: TestCorp
+Date: 15/06/2026
+Lead Auditor: John Smith
+NC-Minor: Document control procedure not followed (Clause 7.5.3)
+OFI: Enhance internal audit methodology (Clause 9.2)
+Positive: Strong management commitment
+        """
+        ctx = generate_shared_context(text, 'Total: 4')
+        assert len(ctx['extracted_ncs']) == 1
+        assert len(ctx['extracted_ofis']) == 1
+        assert len(ctx['extracted_positives']) == 1
+        assert ctx['extracted_ncs'][0]['clause'] == '7.5.3'
+
+    def test_no_findings_fallback(self):
+        ctx = generate_shared_context('Client: Test\nDate: 01/06/2026\nLead Auditor: A', 'Total: 4')
+        assert ctx['extracted_ncs'] == []
+        assert ctx['extracted_ofis'] == []
+        assert ctx['extracted_positives'] == []
 
 
 class TestGenerateSharedContext:

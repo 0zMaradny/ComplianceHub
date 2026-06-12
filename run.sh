@@ -50,21 +50,46 @@ fuser -k $LOCAL_AI_PORT/tcp 2>/dev/null || true
 sleep 1
 echo -e "  Done"
 
+# ── RAM watchdog background loop ──────────────────────────────────────────
+ram_watchdog() {
+  local THRESHOLD_KB=500000
+  local CHECK_INTERVAL=300
+  while true; do
+    sleep $CHECK_INTERVAL
+    local mem_avail
+    mem_avail=$(grep MemAvailable /proc/meminfo 2>/dev/null | awk '{print $2}') || mem_avail=999999999
+    if [ "$mem_avail" -lt "$THRESHOLD_KB" ] 2>/dev/null; then
+      echo -e "  ${RED}[watchdog] Low memory: ${mem_avail}kB available. Killing idle processes...${NC}"
+      # Kill known non-essential processes to free RAM
+      kill $(pgrep -f "openclaw-gateway" 2>/dev/null) 2>/dev/null || true
+      # Log current memory state
+      echo -e "  ${YELLOW}[watchdog] $(free -h | head -2 | tail -1)${NC}"
+    fi
+  done
+}
+
 # ── Step 2 (optional): Start local AI server ──────────────────────────────
 LOCAL_AI_PID=""
 if [ "$START_LOCAL" = true ]; then
+  # Start RAM watchdog in background
+  ram_watchdog &
+  WATCHDOG_PID=$!
+
   if [ -n "$LOCAL_MODEL_NAME" ]; then
     MODEL="$MODEL_DIR/$LOCAL_MODEL_NAME.gguf"
   else
-    # Auto-detect: prefer qwen-0.5b (only model that's fast enough on CPU ARM)
-    if [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
+    # Auto-detect: prefer qwen-3b (better quality), fall back to qwen-0.5b
+    if [ -f "$MODEL_DIR/qwen-3b.gguf" ]; then
+      MODEL="$MODEL_DIR/qwen-3b.gguf"
+      echo -e "  ${CYAN}Auto-selected: qwen-3b (Qwen2.5-3B, ~60s/doc)${NC}"
+    elif [ -f "$MODEL_DIR/qwen-0.5b.gguf" ]; then
       MODEL="$MODEL_DIR/qwen-0.5b.gguf"
       echo -e "  ${CYAN}Auto-selected: qwen-0.5b (~20s/doc)${NC}"
     fi
   fi
 
   if [ -z "$MODEL" ] || [ ! -f "$MODEL" ]; then
-    model_name="${LOCAL_MODEL_NAME:-qwen-0.5b}"
+    model_name="${LOCAL_MODEL_NAME:-qwen-3b}"
     echo -e "  ${YELLOW}Model not found: $MODEL_DIR/$model_name.gguf${NC}"
     echo -e "  ${YELLOW}Available models:${NC}"
     if ls "$MODEL_DIR"/*.gguf >/dev/null 2>&1; then
@@ -77,21 +102,29 @@ if [ "$START_LOCAL" = true ]; then
     echo -e "${YELLOW}[2/4] Starting local AI on port $LOCAL_AI_PORT ...${NC}"
     MODEL_NAME="$(basename "$MODEL")"
     echo -e "  Model: $MODEL_NAME ($(du -h "$MODEL" | cut -f1))"
+
+    # Context window: 8192 for 3B, 4096 for smaller models
+    if echo "$MODEL_NAME" | grep -q "qwen-3b"; then
+      CTX=8192
+    else
+      CTX=4096
+    fi
+
     /opt/llama-server/llama-server \
-      -m "$MODEL" -c 4096 -t 4 -b 2048 --mlock \
+      -m "$MODEL" -c $CTX -t 4 -b 2048 --mlock \
       --host 0.0.0.0 --port $LOCAL_AI_PORT --temp 0.3 \
       > /tmp/llama-server.log 2>&1 &
     LOCAL_AI_PID=$!
     sleep 2
 
-    # Readiness check: poll /health up to 3 times (5s timeout each)
+    # Readiness check: poll /health up to 5 times (3B takes longer to load)
     READY=false
-    for i in 1 2 3; do
+    for i in 1 2 3 4 5; do
       if curl -sf http://127.0.0.1:$LOCAL_AI_PORT/health > /dev/null 2>&1; then
         READY=true
         break
       fi
-      echo -e "  Waiting for model to load... (attempt $i/3)"
+      echo -e "  Waiting for model to load... (attempt $i/5)"
       sleep 3
     done
 
@@ -138,7 +171,7 @@ echo -e "${BOLD}${GREEN}║  ${CYAN}http://localhost:5173${GREEN}               
 echo -e "${BOLD}${GREEN}║                                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  Content modes:                                  ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Offline (default): no API key needed         ║${NC}"
-echo -e "${BOLD}${GREEN}║  • Local AI: --local-model=<name>               ║${NC}"
+echo -e "${BOLD}${GREEN}║  • Local AI: --local-model=<name> (qwen-3b)       ║${NC}"
 echo -e "${BOLD}${GREEN}║  • Cloud AI: enter Gemini/OpenAI key in UI      ║${NC}"
 if grep -q "^HF_API_KEY=hf_" backend/.env 2>/dev/null; then
   echo -e "${BOLD}${GREEN}║  • HF Free Tier: active (Llama-3-8B via API)    ║${NC}"
@@ -165,6 +198,7 @@ cleanup() {
   kill $BACKEND_PID 2>/dev/null || true
   kill $FRONTEND_PID 2>/dev/null || true
   [ -n "$LOCAL_AI_PID" ] && kill $LOCAL_AI_PID 2>/dev/null || true
+  [ -n "$WATCHDOG_PID" ] && kill $WATCHDOG_PID 2>/dev/null || true
   echo -e "${GREEN}Servers stopped.${NC}"
   exit 0
 }

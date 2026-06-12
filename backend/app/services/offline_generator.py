@@ -112,6 +112,61 @@ def _extract_total_days(text: str) -> int:
     return int(m.group(1)) if m else 6
 
 
+def _extract_ncs(text: str) -> list[dict]:
+    ncs = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match(
+            r'(?:#?\d+\s*)?(?:NC|Non-Conformity|Nonconformity|Finding)\s*[-–—:]*\s*(Major|Minor)?\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?\s*$',
+            line, re.I
+        )
+        if m:
+            ncs.append({
+                'severity': m.group(1).strip() if m.group(1) else 'Minor',
+                'description': m.group(2).strip().rstrip('.'),
+                'clause': m.group(3).strip() if m.group(3) else '',
+            })
+    return ncs
+
+
+def _extract_ofis(text: str) -> list[dict]:
+    ofis = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match(
+            r'(?:#?\d+\s*)?(?:OFI|Opportunity\s*(?:for\s+improvement)?)\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?\s*$',
+            line, re.I
+        )
+        if m:
+            ofis.append({
+                'description': m.group(1).strip().rstrip('.'),
+                'clause': m.group(2).strip() if m.group(2) else '',
+            })
+    return ofis
+
+
+def _extract_positives(text: str) -> list[dict]:
+    positives = []
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match(
+            r'(?:#?\d+\s*)?(?:Positive|Strength|Good\s*practice|Best\s*practice|Strong\s*point)\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?\s*$',
+            line, re.I
+        )
+        if m:
+            positives.append({
+                'description': m.group(1).strip().rstrip('.'),
+                'clause': m.group(2).strip() if m.group(2) else '',
+            })
+    return positives
+
+
 TODAY = datetime.now()
 TODAY_STR = TODAY.strftime('%d/%m/%Y')
 
@@ -347,6 +402,10 @@ def generate_shared_context(notes_text: str, manday_text: str, manday_info: dict
     auditor = _extract_auditor(combined)
     family = FAMILY_LABEL_MAP.get(std_key, 'Management System')
 
+    ncs = _extract_ncs(combined)
+    ofis = _extract_ofis(combined)
+    positives = _extract_positives(combined)
+
     return {
         'client_name': client,
         'audit_date': date,
@@ -361,6 +420,9 @@ def generate_shared_context(notes_text: str, manday_text: str, manday_info: dict
         'language': 'English',
         'report_number': f'TUV-AR-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
         'certificate_number': f'TUV-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
+        'extracted_ncs': ncs,
+        'extracted_ofis': ofis,
+        'extracted_positives': positives,
     }
 
 
@@ -410,20 +472,67 @@ def generate_audit_report(data: dict) -> dict:
 
     sections = _build_checklist_sections(standard_key)
 
+    extracted_ncs = data.get('extracted_ncs', [])
+    extracted_ofis = data.get('extracted_ofis', [])
+    extracted_positives = data.get('extracted_positives', [])
+
+    section_map = {s['clause']: s for s in sections}
+
     nonconformities = []
-    for s in sections:
-        if s['status'] == 'Non-Conformant' or (s['status'] == 'Partially Conformant' and random.random() < 0.3):
-            nonconformities.append({
-                'clause': s['clause'],
-                'severity': 'Minor' if s['status'] == 'Partially Conformant' else random.choice(['Minor', 'Minor', 'Major']),
-                'description': (
-                    f'{s["title"]}: {s["evidence"]} '
-                    f'During the audit, it was observed that the current implementation does not fully meet the '
-                    f'requirements of {standard_label} Clause {s["clause"]}. '
-                    'The organization is required to implement corrective actions and demonstrate effectiveness within the agreed timeframe.'
-                ),
-                'due_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
-            })
+    for nc in extracted_ncs:
+        clause = nc.get('clause', '')
+        nonconformities.append({
+            'clause': clause,
+            'severity': nc.get('severity', 'Minor'),
+            'description': nc['description'],
+            'due_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
+        })
+        if clause in section_map:
+            section_map[clause]['status'] = 'Non-Conformant'
+
+    if not nonconformities:
+        for s in sections:
+            if s['status'] == 'Non-Conformant' or (s['status'] == 'Partially Conformant' and random.random() < 0.3):
+                nonconformities.append({
+                    'clause': s['clause'],
+                    'severity': 'Minor' if s['status'] == 'Partially Conformant' else random.choice(['Minor', 'Minor', 'Major']),
+                    'description': f'{s["title"]}: {s["evidence"]}. During the audit, it was observed that the current implementation does not fully meet the requirements of {standard_label} Clause {s["clause"]}. The organization is required to implement corrective actions and demonstrate effectiveness within the agreed timeframe.',
+                    'due_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
+                })
+
+    ofi_descriptions = []
+    for ofi in extracted_ofis:
+        txt = ofi['description']
+        if ofi.get('clause'):
+            txt += f' (Clause {ofi["clause"]})'
+        ofi_descriptions.append(txt)
+        clause = ofi.get('clause', '')
+        if clause in section_map and section_map[clause]['status'] != 'Non-Conformant':
+            section_map[clause]['status'] = 'Partially Conformant'
+
+    positive_descriptions = []
+    for p in extracted_positives:
+        txt = p['description']
+        if p.get('clause'):
+            txt += f' (Clause {p["clause"]})'
+        positive_descriptions.append(txt)
+
+    if not ofi_descriptions:
+        ofi_descriptions = [
+            'Consider enhancing the root cause analysis methodology for recurring nonconformities to prevent recurrence more effectively (Clause 10.1)',
+            'Review the frequency and methodology of supplier re-evaluation, particularly for critical external providers (Clause 8.4)',
+            'Strengthen the traceability of management review action items to ensure timely closure and effectiveness verification (Clause 9.3)',
+            'Consider implementing a more systematic approach to capturing and sharing lessons learned across the organization (Clause 7.4)',
+        ]
+
+    if not positive_descriptions:
+        positive_descriptions = [
+            'Top management demonstrates active commitment through regular participation in management reviews and resource allocation for the management system',
+            'Personnel across all levels display appropriate competence and awareness of their roles and responsibilities within the management system',
+            'The documented information system is well-structured, with effective document control and record retention practices observed',
+            'Internal audit programme is effectively implemented with competent auditors and thorough audit reports',
+            'The organization has established effective processes for identifying and addressing risks and opportunities',
+        ]
 
     has_major = any(nc['severity'] == 'Major' for nc in nonconformities)
     has_any_nc = len(nonconformities) > 0
@@ -438,6 +547,9 @@ def generate_audit_report(data: dict) -> dict:
         conclusion_key = 'compliant'
         decision = 'Certified'
 
+    tot_ofi = len(ofi_descriptions)
+    tot_nc = len(nonconformities)
+
     return {
         'client_name': client,
         'audit_date': date,
@@ -450,27 +562,13 @@ def generate_audit_report(data: dict) -> dict:
             f'The audit of {client} against {standard_label} was conducted over {data.get("total_mandays", 6)} audit days '
             f'by a team of {len(team)} qualified auditors. The organization demonstrates a generally effective {family} system '
             f'with committed leadership and competent personnel across the audited functions. '
-            f'A total of {len(nonconformities)} nonconformit{"y" if len(nonconformities) == 1 else "ies"} '
-            f'and {len(nonconformities) + random.randint(1, 3)} opportunities for improvement were identified. '
+            f'A total of {tot_nc} nonconformit{"y" if tot_nc == 1 else "ies"} '
+            f'and {tot_ofi} opportunities for improvement were identified. '
             f'The overall level of system maturity indicates that the management system is '
-            f'{ "fully" if decision == "Certified" else "partially" } capable of achieving its intended outcomes. '
-            f'Key strengths include management commitment, competent personnel, and a well-structured documentation system. '
-            f'Areas requiring attention include the effectiveness of corrective action processes and the robustness of '
-            f'performance monitoring in certain operational areas.'
+            f'{ "fully" if decision == "Certified" else "partially" } capable of achieving its intended outcomes.'
         ),
-        'positive_findings': [
-            'Top management demonstrates active commitment through regular participation in management reviews and resource allocation for the management system',
-            'Personnel across all levels display appropriate competence and awareness of their roles and responsibilities within the management system',
-            'The documented information system is well-structured, with effective document control and record retention practices observed',
-            'Internal audit programme is effectively implemented with competent auditors and thorough audit reports',
-            'The organization has established effective processes for identifying and addressing risks and opportunities',
-        ],
-        'opportunities_for_improvement': [
-            'Consider enhancing the root cause analysis methodology for recurring nonconformities to prevent recurrence more effectively (Clause 10.1)',
-            'Review the frequency and methodology of supplier re-evaluation, particularly for critical external providers (Clause 8.4)',
-            'Strengthen the traceability of management review action items to ensure timely closure and effectiveness verification (Clause 9.3)',
-            'Consider implementing a more systematic approach to capturing and sharing lessons learned across the organization (Clause 7.4)',
-        ],
+        'positive_findings': positive_descriptions,
+        'opportunities_for_improvement': ofi_descriptions,
         'nonconformities': nonconformities[:5],
         'conclusion': _CONCLUSIONS[conclusion_key],
         'report_date': (TODAY + timedelta(days=7)).strftime('%d/%m/%Y'),
@@ -495,10 +593,30 @@ def generate_participation_list(data: dict) -> dict:
     }
 
 
+def _apply_extracted_findings_to_sections(data: dict, sections: list[dict]):
+    extracted_ncs = data.get('extracted_ncs', [])
+    extracted_ofis = data.get('extracted_ofis', [])
+    for nc in extracted_ncs:
+        clause = nc.get('clause', '')
+        for s in sections:
+            if s['clause'] == clause:
+                s['status'] = 'Non-Conformant'
+                s['notes'] = nc['description']
+                break
+    for ofi in extracted_ofis:
+        clause = ofi.get('clause', '')
+        for s in sections:
+            if s['clause'] == clause and s['status'] != 'Non-Conformant':
+                s['status'] = 'Partially Conformant'
+                s['notes'] = ofi['description']
+                break
+
+
 def generate_checklist(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 9001:2015')
     standard_key = data.get('standard_key', 'iso_9001')
     sections = _build_checklist_sections(standard_key)
+    _apply_extracted_findings_to_sections(data, sections)
     family = FAMILY_LABEL_MAP.get(standard_key, 'Management System')
 
     compliant_count = sum(1 for s in sections if s['status'] == 'Conformant')
@@ -562,39 +680,70 @@ def generate_tnl(data: dict) -> dict:
     standard_key = data.get('standard_key', 'iso_9001')
     sections = _build_checklist_sections(standard_key)
 
+    extracted_ncs = data.get('extracted_ncs', [])
+    extracted_ofis = data.get('extracted_ofis', [])
+
     entries = []
     nc_count, major, minor, ofi_count = 0, 0, 0, 0
 
-    for i, s in enumerate(sections):
-        if len(entries) >= 5:
-            break
-        if s['status'] in ('Non-Conformant', 'Partially Conformant'):
-            typ = 'NC' if s['status'] == 'Non-Conformant' else random.choice(['NC', 'OFI'])
-            severity = 'Minor'
-            if typ == 'NC':
-                nc_count += 1
-                severity = random.choice(['Minor', 'Minor', 'Major'])
-                if severity == 'Major':
-                    major += 1
-                else:
-                    minor += 1
-            else:
-                ofi_count += 1
+    for i, nc in enumerate(extracted_ncs):
+        entries.append({
+            'tnl_number': f'TNL-{i+1:03d}',
+            'clause': nc.get('clause', ''),
+            'type': 'NC',
+            'description': nc['description'],
+            'severity': nc.get('severity', 'Minor'),
+            'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
+            'due_date': (TODAY + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
+            'status': 'Open',
+        })
+        nc_count += 1
+        if nc.get('severity') == 'Major':
+            major += 1
+        else:
+            minor += 1
 
-            entries.append({
-                'tnl_number': f'TNL-{i+1:03d}',
-                'clause': s['clause'],
-                'type': typ,
-                'description': (
-                    f'{s["title"]}: {s["evidence"]} '
-                    f'The current implementation does not fully satisfy the requirements of {standard_label} Clause {s["clause"]}. '
-                    f'Corrective actions shall be implemented and verified for effectiveness.'
-                ),
-                'severity': severity if typ == 'NC' else 'N/A',
-                'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
-                'due_date': (TODAY + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
-                'status': 'Open',
-            })
+    for i, ofi in enumerate(extracted_ofis):
+        entries.append({
+            'tnl_number': f'TNL-{len(entries)+1:03d}',
+            'clause': ofi.get('clause', ''),
+            'type': 'OFI',
+            'description': ofi['description'],
+            'severity': 'N/A',
+            'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
+            'due_date': (TODAY + timedelta(days=60)).strftime('%d/%m/%Y'),
+            'status': 'Open',
+        })
+        ofi_count += 1
+
+    if not entries:
+        _apply_extracted_findings_to_sections(data, sections)
+        for i, s in enumerate(sections):
+            if len(entries) >= 5:
+                break
+            if s['status'] in ('Non-Conformant', 'Partially Conformant'):
+                typ = 'NC' if s['status'] == 'Non-Conformant' else random.choice(['NC', 'OFI'])
+                severity = 'Minor'
+                if typ == 'NC':
+                    nc_count += 1
+                    severity = random.choice(['Minor', 'Minor', 'Major'])
+                    if severity == 'Major':
+                        major += 1
+                    else:
+                        minor += 1
+                else:
+                    ofi_count += 1
+
+                entries.append({
+                    'tnl_number': f'TNL-{len(entries)+1:03d}',
+                    'clause': s['clause'],
+                    'type': typ,
+                    'description': f'{s["title"]}: {s["evidence"]}. The current implementation does not fully satisfy the requirements of {standard_label} Clause {s["clause"]}. Corrective actions shall be implemented and verified for effectiveness.',
+                    'severity': severity if typ == 'NC' else 'N/A',
+                    'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
+                    'due_date': (TODAY + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
+                    'status': 'Open',
+                })
 
     return {
         'client_name': data.get('client_name', 'Client'),

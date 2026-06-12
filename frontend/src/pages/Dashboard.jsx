@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Skeleton from '../components/Skeleton'
 
 const TUV_BLUE = '#003D7A'
 const TUV_RED = '#C00000'
@@ -34,7 +35,6 @@ function healthLabel(score) {
   return 'Critical'
 }
 
-// ── Simple CSS Bar Chart ──
 function BarChart({ data, colors, labels, height = 120 }) {
   const { months, ...series } = data
   if (!months || months.length === 0) return <div className="empty-state">No trend data</div>
@@ -43,37 +43,33 @@ function BarChart({ data, colors, labels, height = 120 }) {
   const maxVal = Math.max(...allValues, 1)
 
   return (
-    <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height, padding: '0 4px' }}>
+    <div className="mt-3">
+      <div className="flex items-end gap-1 px-1" style={{ height }}>
         {months.map((m, i) => {
           const stacked = Object.entries(series).map(([key, vals]) => ({ key, val: vals[i] || 0 }))
           const total = stacked.reduce((s, d) => s + d.val, 0)
           return (
-            <div key={m} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <div style={{ display: 'flex', flexDirection: 'column-reverse', width: '100%', alignItems: 'center' }}>
+            <div key={m} className="flex-1 flex flex-col items-center gap-0.5">
+              <div className="flex flex-col-reverse w-full items-center">
                 {stacked.map(d => {
                   const h = d.val > 0 ? Math.max((d.val / maxVal) * (height - 20), 4) : 0
                   return h > 0 ? (
-                    <div key={d.key} style={{
-                      width: '80%', height: h,
-                      background: colors[d.key] || '#999',
-                      borderRadius: '2px 2px 0 0',
-                      minHeight: 2,
-                    }} title={`${d.key}: ${d.val}`} />
+                    <div key={d.key} style={{ width: '80%', height: h, background: colors[d.key] || '#999', borderRadius: '2px 2px 0 0', minHeight: 2 }}
+                      title={`${d.key}: ${d.val}`} />
                   ) : null
                 })}
               </div>
-              <span style={{ fontSize: 9, color: 'var(--text-secondary)', writingMode: 'vertical-rl', textOrientation: 'mixed', maxHeight: 40 }}>
+              <span className="text-[9px] writing-mode-vertical" style={{ color: 'var(--text-secondary)', textOrientation: 'mixed', maxHeight: 40 }}>
                 {m.slice(5)}
               </span>
             </div>
           )
         })}
       </div>
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 8, flexWrap: 'wrap' }}>
+      <div className="flex gap-3 justify-center mt-2 flex-wrap">
         {Object.entries(colors).map(([key, color]) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
-            <div style={{ width: 10, height: 10, background: color, borderRadius: 2 }} />
+          <div key={key} className="flex items-center gap-1 text-[11px]">
+            <div className="w-2.5 h-2.5 rounded-[2px]" style={{ background: color }} />
             <span>{labels[key] || key}</span>
           </div>
         ))}
@@ -82,7 +78,6 @@ function BarChart({ data, colors, labels, height = 120 }) {
   )
 }
 
-// ── CSS Pie Chart ──
 function PieChart({ data, size = 100 }) {
   const entries = Object.entries(data).filter(([, v]) => v > 0)
   const total = entries.reduce((s, [, v]) => s + v, 0)
@@ -92,7 +87,7 @@ function PieChart({ data, size = 100 }) {
   let cumAngle = 0
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 8 }}>
+    <div className="flex items-center gap-4 mt-2">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         {entries.map(([key, val], i) => {
           const angle = (val / total) * 360
@@ -111,10 +106,10 @@ function PieChart({ data, size = 100 }) {
         <circle cx={size/2} cy={size/2} r={size/4} fill="var(--bg-primary)" />
         <text x={size/2} y={size/2} textAnchor="middle" dominantBaseline="central" fontSize="14" fontWeight="700" fill="var(--text-primary)">{total}</text>
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="flex flex-col gap-1">
         {entries.map(([key, val], i) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11 }}>
-            <div style={{ width: 8, height: 8, background: colors[i % colors.length], borderRadius: 2 }} />
+          <div key={key} className="flex items-center gap-1.5 text-[11px]">
+            <div className="w-2 h-2 rounded-[2px]" style={{ background: colors[i % colors.length] }} />
             <span>{key}: {val} ({Math.round(val/total*100)}%)</span>
           </div>
         ))}
@@ -154,16 +149,28 @@ export default function Dashboard({ API }) {
     }).catch(() => setLoading(false))
   }, [API])
 
-  if (loading) return <div className="loading">Loading dashboard...</div>
+  if (loading) return (
+    <div className="animate-fadeIn">
+      <div className="page-header"><Skeleton variant="title" width="200px" /><Skeleton variant="text" width="320px" className="mt-2" /></div>
+      <div className="stats-grid">
+        {[1,2,3,4,5].map(i => <Skeleton key={i} variant="stat-card" />)}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <Skeleton variant="card" height="240px" />
+        <Skeleton variant="card" height="240px" />
+      </div>
+      <Skeleton variant="card" height="160px" />
+      <Skeleton variant="card" height="120px" />
+    </div>
+  )
 
   return (
-    <div>
+    <div className="animate-fadeIn">
       <div className="page-header">
         <h2>Dashboard</h2>
         <p>Overview of your compliance and audit management system</p>
       </div>
 
-      {/* ── KPI Row ── */}
       <div className="stats-grid">
         <div className="stat-card">
           <h3>Total Jobs</h3>
@@ -193,13 +200,12 @@ export default function Dashboard({ API }) {
         </div>
       </div>
 
-      {/* ── NC Trends + AI Usage ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="flex justify-between items-center">
             <h3>NC Trends (6 months)</h3>
             <a href={`${API}/export/csv?dataset=nc_trends&months=6`}
-               className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}
+               className="btn btn-secondary text-[11px] px-2 py-1"
                download="nc_trends.csv">CSV</a>
           </div>
           {ncTrends ? (
@@ -211,55 +217,40 @@ export default function Dashboard({ API }) {
           ) : <div className="empty-state">No NC data yet</div>}
         </div>
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="flex justify-between items-center">
             <h3>AI Usage</h3>
             <a href={`${API}/export/csv?dataset=ai_usage`}
-               className="btn btn-secondary" style={{ fontSize: 11, padding: '3px 8px' }}
+               className="btn btn-secondary text-[11px] px-2 py-1"
                download="ai_usage.csv">CSV</a>
           </div>
           {aiUsage?.by_provider && Object.keys(aiUsage.by_provider).length > 0 ? (
             <PieChart data={aiUsage.by_provider} />
           ) : <div className="empty-state">No AI usage data yet</div>}
           {aiUsage?.total_generations != null && (
-            <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
+            <div className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
               {aiUsage.total_generations} generations · {aiUsage.cache_hit_rate ?? 0}% cache hit
             </div>
           )}
         </div>
       </div>
 
-      {/* ── Project Health ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card mb-4">
         <h3>Project Health</h3>
         {projectHealth?.projects && projectHealth.projects.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          <div className="flex flex-col gap-2 mt-2">
             {projectHealth.projects.map(p => (
-              <div key={p.id} style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '8px 12px', borderRadius: 8,
-                background: 'var(--bg-secondary, #f8f9fa)',
-              }}>
-                <div style={{
-                  width: 8, height: 8, borderRadius: '50%',
-                  background: healthColor(p.healthScore),
-                  flexShrink: 0,
-                }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {p.title}
-                  </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+              <div key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-secondary, #f8f9fa)' }}>
+                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: healthColor(p.healthScore) }} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate">{p.title}</div>
+                  <div className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
                     {p.client} · Gate {p.current_gate} · {p.days_in_gate}d in gate
                   </div>
                 </div>
-                <div style={{ width: 60, height: 6, background: 'var(--border-color)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${p.healthScore}%`, height: '100%',
-                    background: healthColor(p.healthScore),
-                    borderRadius: 3, transition: 'width 0.3s',
-                  }} />
+                <div className="w-[60px] h-1.5 rounded overflow-hidden" style={{ background: 'var(--border-color)' }}>
+                  <div className="h-full rounded transition-[width] duration-300" style={{ width: `${p.healthScore}%`, background: healthColor(p.healthScore) }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 600, color: healthColor(p.healthScore), minWidth: 60, textAlign: 'right' }}>
+                <span className="text-xs font-semibold min-w-[60px] text-right" style={{ color: healthColor(p.healthScore) }}>
                   {p.healthScore} — {healthLabel(p.healthScore)}
                 </span>
               </div>
@@ -270,9 +261,8 @@ export default function Dashboard({ API }) {
         )}
       </div>
 
-      {/* ── CAPA Metrics ── */}
       {capaMetrics && (
-        <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: 16 }}>
+        <div className="stats-grid grid-cols-2 lg:grid-cols-4 mb-4">
           <div className="stat-card">
             <h3>Total CAPAs</h3>
             <div className="stat-number">{capaMetrics.total_capas ?? 0}</div>
@@ -294,39 +284,32 @@ export default function Dashboard({ API }) {
         </div>
       )}
 
-      {/* ── Recent Jobs ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card mb-4">
         <h3>Recent Jobs</h3>
-        <div style={{ marginTop: 8 }}>
+        <div className="mt-2">
           {recentJobs.length > 0 ? recentJobs.map(j => (
-            <div key={j.job_id} style={{
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              padding: '6px 0', borderBottom: '1px solid var(--border-color)', fontSize: 13,
-            }}>
-              <div style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {getStandardsLabel(j.standards)}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div key={j.job_id} className="flex justify-between items-center py-1.5 text-xs" style={{ borderBottom: '1px solid var(--border-color)' }}>
+              <div className="flex-1 truncate">{getStandardsLabel(j.standards)}</div>
+              <div className="flex items-center gap-2">
                 <span className={`status-badge status-${j.status}`} style={{ fontSize: 11 }}>{j.status}</span>
-                <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>{formatDate(j.created_at)}</span>
+                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{formatDate(j.created_at)}</span>
               </div>
             </div>
           )) : (
-            <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>No jobs yet</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>No jobs yet</div>
           )}
         </div>
         {recentJobs.length > 0 && (
           <a href="#history" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'history' })) }}
-             style={{ display: 'block', marginTop: 8, fontSize: 12, color: 'var(--primary)' }}>
+             className="block mt-2 text-xs" style={{ color: 'var(--primary)' }}>
             View all jobs →
           </a>
         )}
       </div>
 
-      {/* ── Quick Actions ── */}
-      <div className="card" style={{ marginBottom: 16 }}>
+      <div className="card mb-4">
         <h3>Quick Actions</h3>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <div className="flex gap-3 flex-wrap">
           <a href="#audit" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'audit' })) }}
              className="btn btn-primary">Generate Audit Documents</a>
           <a href="#history" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'history' })) }}
@@ -336,12 +319,11 @@ export default function Dashboard({ API }) {
         </div>
       </div>
 
-      {/* ── Standards ── */}
       <div className="card">
         <h3>Supported ISO Standards</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 8 }}>
+        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
           {(standards || []).map(s => (
-            <div key={s} className="checkbox-item" style={{ cursor: 'default' }}>{s}</div>
+            <div key={s} className="checkbox-item cursor-default">{s}</div>
           ))}
         </div>
       </div>

@@ -13,6 +13,7 @@ import Surveillance from './pages/Surveillance'
 import Chat from './pages/Chat'
 import Reporting from './pages/Reporting'
 import ErrorBoundary from './components/ErrorBoundary'
+import { ToastProvider } from './components/Toast'
 
 const API = '/api'
 
@@ -139,6 +140,7 @@ function App() {
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light')
 
   return (
+    <ToastProvider>
     <div className="app-layout">
       <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Menu">
         {sidebarOpen ? ICONS.x : ICONS.menu}
@@ -189,6 +191,7 @@ function App() {
         </ErrorBoundary>
       </main>
     </div>
+    </ToastProvider>
   )
 }
 

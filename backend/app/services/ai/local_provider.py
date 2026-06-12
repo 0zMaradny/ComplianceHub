@@ -11,12 +11,12 @@ from .json_utils import extract_json
 logger = logging.getLogger(__name__)
 
 LOCAL_BASE = 'http://localhost:8080'
-LOCAL_TIMEOUT = 30
+LOCAL_TIMEOUT = 120
 MAX_RETRIES = 2
 
 
 class LocalProvider(AIProvider):
-    """Provider for local llama-server (qwen-0.5b) at localhost:8080."""
+    """Provider for local llama-server (qwen-0.5b / qwen-3b) at localhost:8080."""
 
     def _call(self, prompt: str, system_prompt: str | None = None, **kwargs) -> dict[str, Any]:
         messages = []
@@ -27,7 +27,7 @@ class LocalProvider(AIProvider):
         body = json.dumps({
             'messages': messages,
             'temperature': kwargs.get('temperature', 0.1),
-            'max_tokens': kwargs.get('max_tokens', 4096),
+            'max_tokens': kwargs.get('max_tokens', 8192),
             'stream': False,
         }).encode()
 

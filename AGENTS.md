@@ -1,14 +1,15 @@
 # ComplianceHub — Agent Instructions
 
-## AI Provider Architecture (3-Tier Fallback, 9 Models)
+## AI Provider Architecture (4-Tier Fallback, 11 Models)
 
 ```
 generate() / extract_structured()
   ├─ Cache check (md5, 1h TTL)
   ├─ Tier 1: Frontier OpenRouter (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha 1M) — parallel batch=2
   │   └─ all fail → Tier 2: Strong OpenRouter (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B) — parallel batch=2
-  │       └─ all fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s) — independent API endpoint
-  │           └─ fail → return error
+  │       └─ all fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
+  │           └─ all fail → Tier 4: Local AI (Qwen2.5-3B or Qwen2.5-0.5B, localhost:8080)
+  │               └─ fail → return error
 ```
 
 | Tier | Provider | Models | Cost | Context | Speed |
@@ -16,6 +17,7 @@ generate() / extract_structured()
 | **1** | OpenRouter | Nemotron 3 Ultra 550B, Qwen3 Coder 480B, Kimi K2.6, **Owl Alpha** | **Free** | Up to 1M | Good |
 | **2** | OpenRouter | Nemotron 3 Super 120B, Llama 3.3 70B, Qwen3 Next 80B, Hermes 405B | **Free** | Up to 1M | Good |
 | **3** | Groq | Llama 3.3 70B Versatile | **Free** (~800 t/s) | 131k | **Fastest** |
+| **4** | Local (llama-server) | Qwen2.5-3B or Qwen2.5-0.5B GGUF | $0 | 8k / 4k | ~60s / ~20s per doc |
 | **Offline** | Template engine | Static generation | $0 | Instant (3.2s/8docs) | Professional |
 
 ### API Key Setup
@@ -59,7 +61,8 @@ generate() / extract_structured()
 
 ### Run Servers
 - `bash run.sh` — Start backend + frontend (offline mode)
-- `bash run.sh --local-ai` — Start with local AI (auto-selects qwen-0.5b)
+- `bash run.sh --local-ai` — Start with local AI (auto-selects: qwen-3b if available, else qwen-0.5b)
+- `bash run.sh --local-model=qwen-3b` — Start with Qwen2.5-3B (~2.1 GB, ~60s/doc)
 - `bash run.sh --local-model=qwen-0.5b` — Start with Qwen2.5-0.5B (469 MB, ~20s/doc)
 - `bash run.sh --no-local-ai` — Explicitly skip local AI
 
@@ -76,20 +79,24 @@ generate() / extract_structured()
 - `cd frontend && npm run dev` — Development server (port 5173)
 
 ### Local AI (llama.cpp server)
+- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-3b.gguf -c 8192 -t 4 -b 2048 --mlock --port 8080` — Start Qwen2.5-3B (~2.1 GB, ~60s/doc, 8k context)
 - `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start Qwen2.5-0.5B (469 MB, ~20s/doc)
-- Models: canonical copy at `/opt/llama-server/models/qwen-0.5b.gguf`; repo `models/` is a symlink to `/opt/llama-server/models/`
+- Models: canonical copies at `/opt/llama-server/models/` (`qwen-3b.gguf`, `qwen-0.5b.gguf`); repo `models/` is a symlink to `/opt/llama-server/models/`
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
+- Qwen2.5-3B uses `-c 8192` (6x params, needs ~2.5 GB RAM at Q4_K_M)
+- **RAM watchdog**: Background loop (5 min interval) monitors `MemAvailable` — kills non-essential processes when below 500 MB
 - **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
 
-### Model Benchmarks (ARM64, 4 threads, CPU-only, 4096 ctx)
+### Model Benchmarks (ARM64, 4 threads, CPU-only)
 
-| Model | Size | Time/doc | JSON | Verdict |
-|-------|------|----------|------|---------|
-| **qwen-0.5b** (Qwen2.5-0.5B) | **469 MB** | **~20s** | ✅ Valid | **Recommended** |
-| ~~Phi-4 Mini (3.8B)~~ | ~~2.4 GB~~ | ~~~65s~~ | ✅ Valid, nested | ❌ Removed (too slow) |
-| ~~Qwen3-4B~~ | ~~2.4 GB~~ | ~~~90s~~ | ❌ Non-JSON | ❌ Removed (too slow) |
+| Model | Size | Context | Time/doc | JSON | Quality Score | Verdict |
+|-------|------|---------|----------|------|---------------|---------|
+| **qwen-3b** (Qwen2.5-3B Q4_K_M) | **~2.1 GB** | **8k** | **~60s** | ✅ Valid | **65** (est.) | **Best local quality** |
+| qwen-0.5b (Qwen2.5-0.5B) | 469 MB | 4k | ~20s | ✅ Valid | 45 | Reliable fallback |
+| ~~Phi-4 Mini (3.8B)~~ | ~~2.4 GB~~ | ~~4k~~ | ~~~65s~~ | ✅ Valid, nested | ~~65~~ | ❌ Removed (too slow) |
+| ~~Qwen3-4B~~ | ~~2.4 GB~~ | ~~4k~~ | ~~~90s~~ | ❌ Non-JSON | ~~50~~ | ❌ Removed (too slow) |
 
-- 4B-class models are impractical on this CPU-only ARM device. Only qwen-0.5b is usable for real-time generation.
+- Qwen2.5-3B Q4_K_M (~2.1 GB) delivers **6x more parameters** than qwen-0.5b at the cost of 3x slower inference — best quality/speed tradeoff for this device.
 - Cloud AI (HF/OpenAI/Gemini/Claude) provides better quality at higher speed when API keys are available.
 - Offline mode completes all 8 docs in **3.2s total** (0.4s avg/doc) — the fastest option.
 
@@ -108,6 +115,23 @@ generate() / extract_structured()
   - Default model: `meta-llama/Meta-Llama-3-8B-Instruct` (fast, good quality)
   - Override via `HF_MODEL` env var in `.env`
   - Token provided (`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`) works with Llama-3-8B and Llama-3.2-1B
+
+### Database (PostgreSQL / Railway)
+- `backend/app/services/db.py` — Auto-detects `DATABASE_URL` env var at import time
+- If `DATABASE_URL` starts with `postgresql://` or `postgres://`, uses **psycopg2** (via `psycopg2-binary==2.9.10`)
+- Otherwise falls back to **SQLite** (`backend/compliancehub.db`) with WAL mode
+- All queries abstracted through `_exec()`, `_fetchone()`, `_fetchall()` helpers
+- SQLite uses `?` placeholders; PostgreSQL uses `%s` (auto-translated via `_fix_sql()`)
+- `INSERT OR REPLACE` → PostgreSQL `INSERT ... ON CONFLICT ... DO UPDATE`
+- Railway auto-injects `DATABASE_URL`; no manual config needed
+
+### Railway Deployment
+- `railway.json` — Dockerfile builder, healthcheck at `/api/health`, 3 retries
+- `Dockerfile.railway` — Multi-stage: Node 20 builds FE → Python 3.12-slim serves both
+- Backend runs via `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}`
+- `.env.example` documents `DATABASE_URL`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `HF_API_KEY`
+- First deploy: `railway login` → `railway init` → `railway up`
+- Set env vars in Railway Dashboard (Variables tab) — keys are auto-injected
 
 ### Docker Deployment
 - `docker compose build` — Build backend + frontend images
