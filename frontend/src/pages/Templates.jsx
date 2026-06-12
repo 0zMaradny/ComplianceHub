@@ -57,18 +57,18 @@ export default function Templates({ API }) {
 
   return (
     <div className="animate-fadeIn">
-      <div className="page-header flex justify-between items-start">
+      <div className="mb-8 flex justify-between items-start">
         <div>
-          <h2>Template Manager</h2>
-          <p>Manage TÜV Austria document and checklist templates</p>
+          <h2 className="text-3xl font-bold text-[var(--text-primary)] m-0">Template Manager</h2>
+          <p className="mt-1 text-[var(--text-secondary)]">Manage TÜV Austria document and checklist templates</p>
         </div>
-        <label className="btn btn-primary cursor-pointer text-sm">
+        <label className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap">
           {uploading ? 'Uploading...' : 'Upload Template'}
-          <input type="file" accept=".docx,.xlsx,.doc" onChange={handleUpload} className="hidden" disabled={uploading} />
+          <input type="file" accept=".docx,.xlsx,.doc" onChange={handleUpload} className="sr-only" disabled={uploading} />
         </label>
       </div>
 
-      {error && <div className="error-banner">{error}</div>}
+      {error && <div className="px-3.5 py-2.5 rounded-lg text-xs font-medium mb-4 bg-red-50 border border-red-600 text-red-600">{error}</div>}
 
       {loading ? (
         <div className="animate-fadeIn">
@@ -76,36 +76,34 @@ export default function Templates({ API }) {
           <Skeleton variant="card" height="200px" />
         </div>
       ) : templates.length === 0 ? (
-        <div className="empty-state">No templates found.</div>
+        <div className="text-center p-12 text-[var(--text-secondary)]">No templates found.</div>
       ) : (
         <div className="animate-slideIn">
-          <div className="card">
-            <h3>Document Templates ({docTemplates.length})</h3>
-            <div className="checkbox-group">
+          <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Document Templates ({docTemplates.length})</h3>
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
               {docTemplates.map(t => (
-                <div key={t.filename} className="checkbox-item justify-between">
+                <div key={t.filename} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] justify-between">
                   <div>
                     <div className="font-semibold text-sm">{t.doc_type || t.filename}</div>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{t.filename}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">{t.filename}</div>
                   </div>
-                  <button className="btn btn-small btn-secondary" onClick={() => handleDelete(t.filename)}
-                          style={{ color: 'var(--red-500)' }}>Delete</button>
+                  <button className="text-xs px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap text-red-500" onClick={() => handleDelete(t.filename)}>Delete</button>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="card">
-            <h3>Checklist Templates ({checklistTemplates.length})</h3>
-            <div className="checkbox-group">
+          <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Checklist Templates ({checklistTemplates.length})</h3>
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
               {checklistTemplates.map(t => (
-                <div key={t.filename} className="checkbox-item justify-between">
+                <div key={t.filename} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] justify-between">
                   <div>
                     <div className="font-semibold text-sm">{t.standard_key || t.filename}</div>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{t.filename}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">{t.filename}</div>
                   </div>
-                  <button className="btn btn-small btn-secondary" onClick={() => handleDelete(t.filename)}
-                          style={{ color: 'var(--red-500)' }}>Delete</button>
+                  <button className="text-xs px-2.5 py-1 rounded-md bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap text-red-500" onClick={() => handleDelete(t.filename)}>Delete</button>
                 </div>
               ))}
             </div>

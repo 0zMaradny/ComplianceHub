@@ -143,7 +143,7 @@ generate() / extract_structured()
 - Upload volume persists across restarts via `uploads` named volume
 
 ### Tests
-- `cd backend && python -m pytest tests/ -v` — Run 285 tests (unit + integration)
+- `cd backend && python -m pytest tests/ -v` — Run 342 tests (unit + integration)
 - `cd backend && python -m pytest tests/ --coverage` — With coverage report
 - Test files: `tests/test_manday_calculator.py` (55 tests), `tests/test_offline_generator.py` (25 tests), `tests/test_template_manager.py` (16 tests)
 

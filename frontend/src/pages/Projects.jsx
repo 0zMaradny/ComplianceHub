@@ -88,19 +88,19 @@ export default function Projects({ API }) {
     const client = clients.find(c => c.key === p.client_key)
     return (
       <div className="animate-fadeIn">
-        <button className="btn btn-secondary mb-4" onClick={() => setSelectedProject(null)}>
+        <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap mb-4" onClick={() => setSelectedProject(null)}>
           ← Back to Projects
         </button>
 
-        <div className="card mb-4">
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="m-0 mb-1">{p.title}</h2>
-              <div className="text-sm" style={{ color: 'var(--gray-500)' }}>
+              <div className="text-sm text-[var(--gray-500)]">
                 {client?.name || p.client_key} · {p.standards.join(', ')} · {p.lead_auditor || 'No lead auditor'}
               </div>
             </div>
-            <span className="badge" style={{
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{
               background: GATE_COLORS[p.current_gate] + '20',
               color: GATE_COLORS[p.current_gate],
               fontSize: 14, padding: '6px 14px',
@@ -111,8 +111,8 @@ export default function Projects({ API }) {
         </div>
 
         {/* Gate Progress */}
-        <div className="card mb-4">
-          <h3 className="mb-3">6-Gate Pipeline</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">6-Gate Pipeline</h3>
           <div className="flex gap-2 mb-4">
             {[1, 2, 3, 4, 5, 6].map(g => (
               <div key={g} style={{
@@ -130,7 +130,7 @@ export default function Projects({ API }) {
             ))}
           </div>
           {p.current_gate < 6 && (
-            <button className="btn btn-primary" onClick={() => handleAdvance(p.id)}>
+            <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap" onClick={() => handleAdvance(p.id)}>
               ▶ Advance to Gate {p.current_gate + 1}
             </button>
           )}
@@ -143,32 +143,32 @@ export default function Projects({ API }) {
 
         {/* NC + CAPA Summary */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="card">
-            <h3>Nonconformities</h3>
+          <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Nonconformities</h3>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="stat-card"><div className="stat-number">{selectedProject.nc_summary.total}</div><h3>Total</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#E74C3C' }}>{selectedProject.nc_summary.open}</div><h3>Open</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#E67E22' }}>{selectedProject.nc_summary.major}</div><h3>Major</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#F39C12' }}>{selectedProject.nc_summary.minor}</div><h3>Minor</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]">{selectedProject.nc_summary.total}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Total</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#E74C3C' }}>{selectedProject.nc_summary.open}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Open</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#E67E22' }}>{selectedProject.nc_summary.major}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Major</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#F39C12' }}>{selectedProject.nc_summary.minor}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Minor</h3></div>
             </div>
           </div>
-          <div className="card">
-            <h3>CAPA Items</h3>
+          <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">CAPA Items</h3>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <div className="stat-card"><div className="stat-number">{selectedProject.capa_summary.total}</div><h3>Total</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#3498DB' }}>{selectedProject.capa_summary.draft}</div><h3>Draft</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#F39C12' }}>{selectedProject.capa_summary.in_progress}</div><h3>In Progress</h3></div>
-              <div className="stat-card"><div className="stat-number" style={{ color: '#27AE60' }}>{selectedProject.capa_summary.verified}</div><h3>Verified</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]">{selectedProject.capa_summary.total}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Total</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#3498DB' }}>{selectedProject.capa_summary.draft}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Draft</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#F39C12' }}>{selectedProject.capa_summary.in_progress}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">In Progress</h3></div>
+              <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#27AE60' }}>{selectedProject.capa_summary.verified}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Verified</h3></div>
             </div>
           </div>
         </div>
 
         {/* Gate Deliverables */}
-        <div className="card">
-          <h3>Gate {p.current_gate}: {selectedProject.current_gate_info?.name}</h3>
-          <p className="text-sm" style={{ color: 'var(--gray-500)' }}>{selectedProject.current_gate_info?.description}</p>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Gate {p.current_gate}: {selectedProject.current_gate_info?.name}</h3>
+          <p className="text-sm text-[var(--gray-500)]">{selectedProject.current_gate_info?.description}</p>
           <div className="mt-3">
-            <h4 className="text-sm" style={{ color: 'var(--gray-600)' }}>Deliverables:</h4>
+            <h4 className="text-sm font-semibold text-[var(--text-primary)] m-0 text-[var(--gray-600)]">Deliverables:</h4>
             <ul className="m-1 ml-4 text-sm">
               {selectedProject.current_gate_info?.deliverables?.map((d, i) => (
                 <li key={i} className="mb-1">{d.replace(/_/g, ' ')}</li>
@@ -186,29 +186,29 @@ export default function Projects({ API }) {
       {/* Dashboard Stats */}
       {stats && (
         <div className="grid gap-3 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-          <div className="stat-card">
-            <div className="stat-number">{stats.total_projects}</div>
-            <h3>Projects</h3>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <div className="text-3xl font-bold text-[var(--primary)]">{stats.total_projects}</div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Projects</h3>
           </div>
-          <div className="stat-card">
-            <div className="stat-number" style={{ color: '#27AE60' }}>{stats.active_projects}</div>
-            <h3>Active</h3>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#27AE60' }}>{stats.active_projects}</div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Active</h3>
           </div>
-          <div className="stat-card">
-            <div className="stat-number" style={{ color: '#E74C3C' }}>{stats.open_ncs}</div>
-            <h3>Open NCs</h3>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#E74C3C' }}>{stats.open_ncs}</div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Open NCs</h3>
           </div>
-          <div className="stat-card">
-            <div className="stat-number" style={{ color: '#F39C12' }}>{stats.pending_capas}</div>
-            <h3>Pending CAPAs</h3>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <div className="text-3xl font-bold text-[var(--primary)]" style={{ color: '#F39C12' }}>{stats.pending_capas}</div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Pending CAPAs</h3>
           </div>
         </div>
       )}
 
       {/* Gate Distribution */}
       {stats?.gate_distribution && (
-        <div className="card mb-4">
-          <h3 className="mb-3">Projects by Gate</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Projects by Gate</h3>
           <div className="flex gap-2">
             {[1, 2, 3, 4, 5, 6].map(g => (
               <div key={g} style={{
@@ -228,17 +228,17 @@ export default function Projects({ API }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="m-0">Audit Projects</h2>
-        <button className="btn btn-primary" onClick={() => setShowCreate(!showCreate)}>
+        <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap" onClick={() => setShowCreate(!showCreate)}>
           {showCreate ? '✕ Cancel' : '+ New Project'}
         </button>
       </div>
 
       {/* Create Form */}
       {showCreate && (
-        <div className="card mb-4">
-          <h3 className="mb-3">Create Audit Project</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Create Audit Project</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="form-group">
+            <div className="mb-5">
               <label>Client *</label>
               <select value={form.client_key} onChange={e => { setForm({ ...form, client_key: e.target.value }); setFormErrors(prev => ({ ...prev, client_key: '' })) }}
                 style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${formErrors.client_key ? 'var(--red-600)' : 'var(--gray-300)'}` }}>
@@ -247,27 +247,27 @@ export default function Projects({ API }) {
               </select>
               {formErrors.client_key && <span className="text-xs mt-1" style={{ color: 'var(--red-600)' }}>{formErrors.client_key}</span>}
             </div>
-            <div className="form-group">
+            <div className="mb-5">
               <label>Title *</label>
               <input type="text" value={form.title} placeholder="e.g. ISO 22301 Certification 2026"
                 onChange={e => { setForm({ ...form, title: e.target.value }); setFormErrors(prev => ({ ...prev, title: '' })) }}
                 style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: `1px solid ${formErrors.title ? 'var(--red-600)' : 'var(--gray-300)'}` }} />
               {formErrors.title && <span className="text-xs mt-1" style={{ color: 'var(--red-600)' }}>{formErrors.title}</span>}
             </div>
-            <div className="form-group">
+            <div className="mb-5">
               <label>Target Date</label>
               <input type="date" value={form.target_date}
                 onChange={e => setForm({ ...form, target_date: e.target.value })}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)' }} />
+                className="w-full px-3 py-2 rounded-md border border-[var(--border-color)]" />
             </div>
-            <div className="form-group">
+            <div className="mb-5">
               <label>Lead Auditor</label>
               <input type="text" value={form.lead_auditor}
                 onChange={e => setForm({ ...form, lead_auditor: e.target.value })}
-                style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--gray-300)' }} />
+                className="w-full px-3 py-2 rounded-md border border-[var(--border-color)]" />
             </div>
           </div>
-          <button className="btn btn-primary mt-3" onClick={handleCreate}>
+          <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap mt-3" onClick={handleCreate}>
             Create Project
           </button>
         </div>
@@ -275,36 +275,36 @@ export default function Projects({ API }) {
 
       {/* Project List */}
       {projects.length === 0 ? (
-        <div className="card text-center p-10">
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] text-center p-10">
           <div className="text-5xl mb-3">📋</div>
-          <h3>No projects yet</h3>
-          <p style={{ color: 'var(--gray-500)' }}>Create your first audit project to get started</p>
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">No projects yet</h3>
+          <p className="text-[var(--gray-500)]">Create your first audit project to get started</p>
         </div>
       ) : (
         <div className="animate-slideIn flex flex-col gap-2">
           {projects.map(p => {
             const client = clients.find(c => c.key === p.client_key)
             return (
-              <div key={p.id} className="card flex items-center justify-between cursor-pointer p-3"
+              <div key={p.id} className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-between cursor-pointer p-3"
                    onClick={() => openProject(p)}>
                 <div>
                   <div className="font-semibold text-sm">{p.title}</div>
-                  <div className="text-xs mt-0.5" style={{ color: 'var(--gray-500)' }}>
+                  <div className="text-xs mt-0.5 text-[var(--gray-500)]">
                     {client?.name || p.client_key} · {p.standards.join(', ')}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="badge" style={{
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={{
                     background: GATE_COLORS[p.current_gate] + '20',
                     color: GATE_COLORS[p.current_gate],
                     fontSize: 12, padding: '4px 10px',
                   }}>
                     G{p.current_gate}
                   </span>
-                  <span className="text-xs" style={{ color: 'var(--gray-400)' }}>
+                  <span className="text-xs text-[var(--gray-400)]">
                     {new Date(p.updated_at).toLocaleDateString()}
                   </span>
-                  <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: 11 }}
+                  <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap" style={{ padding: '4px 8px', fontSize: 11 }}
                     onClick={e => { e.stopPropagation(); handleDelete(p.id) }}>
                     🗑
                   </button>

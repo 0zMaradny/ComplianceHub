@@ -52,9 +52,9 @@ export default function Reporting({ API }) {
 
   return (
     <div className="animate-fadeIn">
-      <div className="page-header">
-        <h2>Reporting</h2>
-        <p>Generate and export compliance reports and data</p>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-[var(--text-primary)]">Reporting</h2>
+        <p className="mt-1 text-[var(--text-secondary)]">Generate and export compliance reports and data</p>
       </div>
 
       {message && (
@@ -65,35 +65,32 @@ export default function Reporting({ API }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* PDF Report */}
-        <div className="card">
-          <h3>PDF Summary Report</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">PDF Summary Report</h3>
           <div className="mt-3">
-            <label className="block mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Report Type</label>
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Report Type</label>
             <select value={reportType} onChange={e => setReportType(e.target.value)}
-              className="w-full p-2 rounded-md text-sm mb-3"
-              style={{ border: '1px solid var(--border-color)' }}>
+              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]">
               <option value="compliance_summary">Compliance Summary</option>
               <option value="project_overview">Project Overview</option>
             </select>
-            <label className="block mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Project ID (optional)</label>
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Project ID (optional)</label>
             <input type="text" value={projectId} onChange={e => setProjectId(e.target.value)}
               placeholder="Leave empty for all projects"
-              className="w-full p-2 rounded-md text-sm mb-3"
-              style={{ border: '1px solid var(--border-color)' }} />
-            <button className="btn btn-primary w-full" onClick={generatePdf} disabled={generating}>
+              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]" />
+            <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap w-full" onClick={generatePdf} disabled={generating}>
               {generating ? <><Spinner size="sm" className="mr-1.5" />Generating...</> : 'Download PDF Report'}
             </button>
           </div>
         </div>
 
         {/* CSV Export */}
-        <div className="card">
-          <h3>CSV Data Export</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">CSV Data Export</h3>
           <div className="mt-3">
-            <label className="block mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Dataset</label>
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Dataset</label>
             <select value={csvDataset} onChange={e => setCsvDataset(e.target.value)}
-              className="w-full p-2 rounded-md text-sm mb-3"
-              style={{ border: '1px solid var(--border-color)' }}>
+              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]">
               <option value="nc_trends">NC Trends</option>
               <option value="project_health">Project Health</option>
               <option value="capa_metrics">CAPA Metrics</option>
@@ -101,13 +98,12 @@ export default function Reporting({ API }) {
             </select>
             {csvDataset === 'nc_trends' && (
               <>
-                <label className="block mb-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Months</label>
+                <label className="block mb-2 text-sm text-[var(--text-secondary)]">Months</label>
                 <input type="number" value={months} onChange={e => setMonths(Number(e.target.value))} min={1} max={24}
-                  className="w-full p-2 rounded-md text-sm mb-3"
-                  style={{ border: '1px solid var(--border-color)' }} />
+                  className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]" />
               </>
             )}
-            <button className="btn btn-primary w-full" onClick={downloadCsv} disabled={generating}>
+            <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap w-full" onClick={downloadCsv} disabled={generating}>
               {generating ? <><Spinner size="sm" className="mr-1.5" />Downloading...</> : 'Download CSV'}
             </button>
           </div>
@@ -115,13 +111,13 @@ export default function Reporting({ API }) {
       </div>
 
       {/* Quick export buttons for Dashboard integration */}
-      <div className="card mt-4">
-        <h3>Quick Links</h3>
+      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mt-4">
+        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Quick Links</h3>
         <div className="flex gap-3 flex-wrap mt-2">
           {['dashboard', 'analytics', 'compliance'].map(page => (
             <a key={page} href={`#${page}`}
               onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: page })) }}
-              className="btn btn-secondary capitalize">{page}</a>
+              className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap capitalize">{page}</a>
           ))}
         </div>
       </div>

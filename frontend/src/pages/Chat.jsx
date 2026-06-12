@@ -7,6 +7,7 @@ function Chat({ API }) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const bottomRef = useRef(null)
+  const inputRef = useRef(null)
 
   useEffect(() => {
     const fetchJobs = () =>
@@ -88,47 +89,47 @@ function Chat({ API }) {
   }
 
   return (
-    <div className="chat-page animate-fadeIn">
-      <div className="page-header">
-        <h1>AI Chat</h1>
-        <p className="subtitle">Ask questions about generated audit documents</p>
+    <div className="animate-fadeIn max-w-5xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[var(--text-primary)]">AI Chat</h1>
+        <p className="mt-1 text-[var(--text-secondary)]">Ask questions about generated audit documents</p>
       </div>
 
-      <div className="chat-layout">
+      <div>
         {!selectedJob ? (
-          <div className="chat-job-select">
-            <h2>Select a Job</h2>
-            {jobs.length === 0 && <p className="empty">No completed jobs found. Generate documents first.</p>}
-            <div className="job-list">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-3 text-[var(--text-primary)]">Select a Job</h2>
+            {jobs.length === 0 && <p className="text-[var(--text-secondary)]">No completed jobs found. Generate documents first.</p>}
+            <div className="flex flex-col gap-2 max-w-md">
               {jobs.map(job => (
                 <button
                   key={job.job_id}
-                  className="job-card"
+                  className="flex items-center justify-between px-4 py-3 rounded-lg border border-[var(--border-color)] cursor-pointer hover:border-[var(--primary)] transition-colors w-full text-left bg-[var(--bg-card)]"
                   onClick={() => setSelectedJob(job.job_id)}
                 >
                   <strong>{job.job_id?.slice(0, 8)}...</strong>
-                  <span style={job.status === 'done' ? { color: '#16a34a' } : job.status === 'error' ? { color: '#dc2626' } : { color: '#ca8a04' }}>{job.status}</span>
+                  <span className={job.status === 'done' ? 'text-green-600' : job.status === 'error' ? 'text-red-600' : 'text-amber-600'}>{job.status}</span>
                   <small>{job.created_at ? new Date(job.created_at * 1000).toLocaleDateString() : ''}</small>
                 </button>
               ))}
             </div>
           </div>
         ) : (
-          <div className="chat-session">
-            <div className="chat-header">
-              <button className="btn-back" onClick={() => { setSelectedJob(null); setMessages([]) }}>
+          <div className="flex flex-col h-[70vh]">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-color)] mb-2">
+              <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-md text-sm cursor-pointer border-none transition-colors" onClick={() => { setSelectedJob(null); setMessages([]) }}>
                 ← Back
               </button>
               <span>Job: {selectedJob.slice(0, 8)}...</span>
             </div>
 
-            <div className="chat-messages">
+            <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-3">
               {messages.length === 0 && (
-                <div className="chat-welcome">
+                <div className="text-center py-8 text-[var(--text-secondary)]">
                   <p>Ask about the generated documents, findings, ISO clauses, or request field refinements.</p>
-                  <div className="suggestions">
+                  <div className="flex flex-wrap gap-2 justify-center mt-3">
                     {['Summarize the audit findings', 'List all nonconformities', 'Refine the conclusion to be more thorough', 'Explain ISO 27001 Annex A controls'].map(s => (
-                      <button key={s} className="chip" onClick={() => { setInput(s); setTimeout(() => document.querySelector('.chat-input textarea')?.focus(), 50) }}>
+                      <button key={s} className="px-3 py-1.5 rounded-full text-xs cursor-pointer bg-gray-100 hover:bg-gray-200 text-[var(--text-primary)] border-none transition-colors" onClick={() => { setInput(s); setTimeout(() => inputRef.current?.focus(), 50) }}>
                         {s}
                       </button>
                     ))}
@@ -136,24 +137,26 @@ function Chat({ API }) {
                 </div>
               )}
               {messages.map((m, i) => (
-                <div key={i} className={`chat-msg ${m.role}`}>
-                  <div className="msg-bubble">{m.text}</div>
+                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'bg-[var(--primary)] text-white rounded-br-md' : 'bg-gray-100 text-[var(--text-primary)] rounded-bl-md'}`}>{m.text}</div>
                 </div>
               ))}
-              {sending && <div className="chat-msg assistant"><div className="msg-bubble typing">Thinking...</div></div>}
+              {sending && <div className="flex justify-start"><div className="max-w-[70%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed bg-gray-100 text-[var(--text-primary)] rounded-bl-md italic">Thinking...</div></div>}
               <div ref={bottomRef} />
             </div>
 
-            <div className="chat-input">
+            <div className="flex gap-2 px-4 py-3 border-t border-[var(--border-color)]">
               <textarea
+                ref={inputRef}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about the audit documents..."
                 rows={2}
                 disabled={sending}
+                className="flex-1 px-3 py-2 rounded-lg border border-[var(--border-color)] resize-none text-sm bg-[var(--input-bg)] text-[var(--text-primary)]"
               />
-              <button onClick={sendMessage} disabled={!input.trim() || sending}>
+              <button onClick={sendMessage} disabled={!input.trim() || sending} className="px-5 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold text-sm cursor-pointer disabled:opacity-50 border-none transition-colors">
                 Send
               </button>
             </div>

@@ -37,7 +37,7 @@ function healthLabel(score) {
 
 function BarChart({ data, colors, labels, height = 120 }) {
   const { months, ...series } = data
-  if (!months || months.length === 0) return <div className="empty-state">No trend data</div>
+  if (!months || months.length === 0) return <div className="text-center p-12 text-[var(--text-secondary)]">No trend data</div>
 
   const allValues = Object.values(series).flat()
   const maxVal = Math.max(...allValues, 1)
@@ -81,7 +81,7 @@ function BarChart({ data, colors, labels, height = 120 }) {
 function PieChart({ data, size = 100 }) {
   const entries = Object.entries(data).filter(([, v]) => v > 0)
   const total = entries.reduce((s, [, v]) => s + v, 0)
-  if (total === 0) return <div className="empty-state">No data</div>
+  if (total === 0) return <div className="text-center p-12 text-[var(--text-secondary)]">No data</div>
 
   const colors = ['#003D7A', '#C00000', '#27AE60', '#F39C12', '#8E44AD', '#3498DB', '#E67E22', '#1ABC9C']
   let cumAngle = 0
@@ -151,8 +151,8 @@ export default function Dashboard({ API }) {
 
   if (loading) return (
     <div className="animate-fadeIn">
-      <div className="page-header"><Skeleton variant="title" width="200px" /><Skeleton variant="text" width="320px" className="mt-2" /></div>
-      <div className="stats-grid">
+      <div className="mb-8"><Skeleton variant="title" width="200px" /><Skeleton variant="text" width="320px" className="mt-2" /></div>
+      <div className="grid gap-5 mb-8 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         {[1,2,3,4,5].map(i => <Skeleton key={i} variant="stat-card" />)}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
@@ -166,46 +166,46 @@ export default function Dashboard({ API }) {
 
   return (
     <div className="animate-fadeIn">
-      <div className="page-header">
-        <h2>Dashboard</h2>
-        <p>Overview of your compliance and audit management system</p>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-[var(--text-primary)] m-0">Dashboard</h2>
+        <p className="mt-1 text-[var(--text-secondary)]">Overview of your compliance and audit management system</p>
       </div>
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <h3>Total Jobs</h3>
-          <div className="stat-number">{stats?.total_jobs ?? 0}</div>
+      <div className="grid gap-5 mb-8 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Total Jobs</h3>
+          <div className="text-3xl font-bold text-[var(--primary)]">{stats?.total_jobs ?? 0}</div>
         </div>
-        <div className="stat-card">
-          <h3>Success Rate</h3>
-          <div className={`stat-number ${(stats?.success_rate ?? 0) >= 80 ? 'green' : (stats?.success_rate ?? 0) >= 50 ? 'amber' : 'red'}`}>
+        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Success Rate</h3>
+          <div className={`text-3xl font-bold ${(stats?.success_rate ?? 0) >= 80 ? 'text-green-600' : (stats?.success_rate ?? 0) >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
             {stats?.success_rate ?? 0}%
           </div>
         </div>
-        <div className="stat-card">
-          <h3>Open NCs</h3>
-          <div className="stat-number" style={{ color: (stats?.open_ncs ?? 0) > 0 ? TUV_RED : undefined }}>
+        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Open NCs</h3>
+          <div className="text-3xl font-bold" style={{ color: (stats?.open_ncs ?? 0) > 0 ? TUV_RED : undefined }}>
             {stats?.open_ncs ?? 0}
           </div>
         </div>
-        <div className="stat-card">
-          <h3>Pending CAPAs</h3>
-          <div className="stat-number" style={{ color: (stats?.pending_capas ?? 0) > 0 ? '#F39C12' : undefined }}>
+        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Pending CAPAs</h3>
+          <div className="text-3xl font-bold" style={{ color: (stats?.pending_capas ?? 0) > 0 ? '#F39C12' : undefined }}>
             {stats?.pending_capas ?? 0}
           </div>
         </div>
-        <div className="stat-card">
-          <h3>Avg CAPA Closure</h3>
-          <div className="stat-number">{capaMetrics?.avg_closure_days ?? '—'}d</div>
+        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Avg CAPA Closure</h3>
+          <div className="text-3xl font-bold text-[var(--primary)]">{capaMetrics?.avg_closure_days ?? '—'}d</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <div className="card">
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
           <div className="flex justify-between items-center">
-            <h3>NC Trends (6 months)</h3>
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">NC Trends (6 months)</h3>
             <a href={`${API}/export/csv?dataset=nc_trends&months=6`}
-               className="btn btn-secondary text-[11px] px-2 py-1"
+               className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap no-underline text-[11px] px-2 py-1"
                download="nc_trends.csv">CSV</a>
           </div>
           {ncTrends ? (
@@ -214,40 +214,40 @@ export default function Dashboard({ API }) {
               colors={{ major_nc: TUV_RED, minor_nc: '#F39C12', ofi: '#3498DB', closed: '#27AE60' }}
               labels={{ major_nc: 'Major NC', minor_nc: 'Minor NC', ofi: 'OFI', closed: 'Closed' }}
             />
-          ) : <div className="empty-state">No NC data yet</div>}
+          ) : <div className="text-center p-12 text-[var(--text-secondary)]">No NC data yet</div>}
         </div>
-        <div className="card">
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
           <div className="flex justify-between items-center">
-            <h3>AI Usage</h3>
+            <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">AI Usage</h3>
             <a href={`${API}/export/csv?dataset=ai_usage`}
-               className="btn btn-secondary text-[11px] px-2 py-1"
+               className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap no-underline text-[11px] px-2 py-1"
                download="ai_usage.csv">CSV</a>
           </div>
           {aiUsage?.by_provider && Object.keys(aiUsage.by_provider).length > 0 ? (
             <PieChart data={aiUsage.by_provider} />
-          ) : <div className="empty-state">No AI usage data yet</div>}
+          ) : <div className="text-center p-12 text-[var(--text-secondary)]">No AI usage data yet</div>}
           {aiUsage?.total_generations != null && (
-            <div className="mt-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+            <div className="mt-2 text-xs text-[var(--text-secondary)]">
               {aiUsage.total_generations} generations · {aiUsage.cache_hit_rate ?? 0}% cache hit
             </div>
           )}
         </div>
       </div>
 
-      <div className="card mb-4">
-        <h3>Project Health</h3>
+      <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Project Health</h3>
         {projectHealth?.projects && projectHealth.projects.length > 0 ? (
           <div className="flex flex-col gap-2 mt-2">
             {projectHealth.projects.map(p => (
-              <div key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-secondary, #f8f9fa)' }}>
+              <div key={p.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[var(--bg-secondary,#f8f9fa)]">
                 <div className="w-2 h-2 rounded-full shrink-0" style={{ background: healthColor(p.healthScore) }} />
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold truncate">{p.title}</div>
-                  <div className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="text-[11px] text-[var(--text-secondary)]">
                     {p.client} · Gate {p.current_gate} · {p.days_in_gate}d in gate
                   </div>
                 </div>
-                <div className="w-[60px] h-1.5 rounded overflow-hidden" style={{ background: 'var(--border-color)' }}>
+                <div className="w-[60px] h-1.5 rounded overflow-hidden bg-[var(--border-color)]">
                   <div className="h-full rounded transition-[width] duration-300" style={{ width: `${p.healthScore}%`, background: healthColor(p.healthScore) }} />
                 </div>
                 <span className="text-xs font-semibold min-w-[60px] text-right" style={{ color: healthColor(p.healthScore) }}>
@@ -257,73 +257,73 @@ export default function Dashboard({ API }) {
             ))}
           </div>
         ) : (
-          <div className="empty-state">No active projects</div>
+          <div className="text-center p-12 text-[var(--text-secondary)]">No active projects</div>
         )}
       </div>
 
       {capaMetrics && (
-        <div className="stats-grid grid-cols-2 lg:grid-cols-4 mb-4">
-          <div className="stat-card">
-            <h3>Total CAPAs</h3>
-            <div className="stat-number">{capaMetrics.total_capas ?? 0}</div>
+        <div className="grid gap-5 grid-cols-2 lg:grid-cols-4 mb-4">
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Total CAPAs</h3>
+            <div className="text-3xl font-bold text-[var(--primary)]">{capaMetrics.total_capas ?? 0}</div>
           </div>
-          <div className="stat-card">
-            <h3>Closure Rate</h3>
-            <div className="stat-number green">{capaMetrics.closure_rate_pct ?? 0}%</div>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Closure Rate</h3>
+            <div className="text-3xl font-bold text-green-600">{capaMetrics.closure_rate_pct ?? 0}%</div>
           </div>
-          <div className="stat-card">
-            <h3>Avg Days</h3>
-            <div className="stat-number">{capaMetrics.avg_closure_days ?? '—'}</div>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Avg Days</h3>
+            <div className="text-3xl font-bold text-[var(--primary)]">{capaMetrics.avg_closure_days ?? '—'}</div>
           </div>
-          <div className="stat-card">
-            <h3>Overdue</h3>
-            <div className="stat-number" style={{ color: (capaMetrics.overdue_count ?? 0) > 0 ? TUV_RED : undefined }}>
+          <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Overdue</h3>
+            <div className="text-3xl font-bold" style={{ color: (capaMetrics.overdue_count ?? 0) > 0 ? TUV_RED : undefined }}>
               {capaMetrics.overdue_count ?? 0}
             </div>
           </div>
         </div>
       )}
 
-      <div className="card mb-4">
-        <h3>Recent Jobs</h3>
+      <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Recent Jobs</h3>
         <div className="mt-2">
           {recentJobs.length > 0 ? recentJobs.map(j => (
-            <div key={j.job_id} className="flex justify-between items-center py-1.5 text-xs" style={{ borderBottom: '1px solid var(--border-color)' }}>
+            <div key={j.job_id} className="flex justify-between items-center py-1.5 text-xs border-b border-[var(--border-color)]">
               <div className="flex-1 truncate">{getStandardsLabel(j.standards)}</div>
               <div className="flex items-center gap-2">
-                <span className={`status-badge status-${j.status}`} style={{ fontSize: 11 }}>{j.status}</span>
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{formatDate(j.created_at)}</span>
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${{uploaded:'bg-blue-50 text-[var(--primary)]',generating:'bg-amber-50 text-amber-600',done:'bg-green-50 text-green-600',error:'bg-red-50 text-red-600'}[j.status] || ''}`} style={{ fontSize: 11 }}>{j.status}</span>
+                <span className="text-[11px] text-[var(--text-secondary)]">{formatDate(j.created_at)}</span>
               </div>
             </div>
           )) : (
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>No jobs yet</div>
+            <div className="text-xs text-[var(--text-secondary)]">No jobs yet</div>
           )}
         </div>
         {recentJobs.length > 0 && (
           <a href="#history" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'history' })) }}
-             className="block mt-2 text-xs" style={{ color: 'var(--primary)' }}>
+             className="block mt-2 text-xs text-[var(--primary)]">
             View all jobs →
           </a>
         )}
       </div>
 
-      <div className="card mb-4">
-        <h3>Quick Actions</h3>
+      <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
+        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Quick Actions</h3>
         <div className="flex gap-3 flex-wrap">
           <a href="#audit" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'audit' })) }}
-             className="btn btn-primary">Generate Audit Documents</a>
+             className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer no-underline">Generate Audit Documents</a>
           <a href="#history" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'history' })) }}
-             className="btn btn-secondary">View Job History</a>
+             className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap no-underline">View Job History</a>
           <a href="#compliance" onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: 'compliance' })) }}
-             className="btn btn-secondary">Compliance Frameworks</a>
+             className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap no-underline">Compliance Frameworks</a>
         </div>
       </div>
 
-      <div className="card">
-        <h3>Supported ISO Standards</h3>
-        <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))' }}>
+      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Supported ISO Standards</h3>
+        <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(250px,1fr))]">
           {(standards || []).map(s => (
-            <div key={s} className="checkbox-item cursor-default">{s}</div>
+            <div key={s} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] cursor-default">{s}</div>
           ))}
         </div>
       </div>

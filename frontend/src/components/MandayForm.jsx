@@ -130,67 +130,67 @@ export default function MandayForm({
   const stdCount = selectedStandards.length
 
   return (
-    <div className="manday-form" style={styles.container}>
+    <div className="border border-[var(--border-color)] rounded-lg mt-3 bg-[var(--bg-secondary,#f9fafb)]">
       <div
-        style={styles.header}
+        className="px-4 py-3 cursor-pointer flex items-center justify-between select-none"
         onClick={() => setExpanded(!expanded)}
       >
-        <span style={styles.title}>
+        <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">
           {expanded ? '\u25BC' : '\u25B6'} Manday Calculation
         </span>
         {computed && (
-          <span style={styles.summary}>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {computed.total_mandays} days | {auditType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} | {employeeCount} emp
           </span>
         )}
       </div>
 
       {expanded && (
-        <div style={styles.body}>
-          <div style={styles.row}>
-            <div style={styles.field}>
-              <label style={styles.label}>Audit Type</label>
+        <div className="px-4 pb-4 border-t border-[var(--border-color)]">
+          <div className="flex gap-4 mt-3 flex-wrap">
+            <div className="flex-1 min-w-[150px]">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Audit Type</label>
               <select
                 value={auditType}
                 onChange={e => setAuditType(e.target.value)}
-                style={styles.select}
+                className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800"
               >
                 {AUDIT_TYPES.map(t => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
               </select>
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Employees</label>
+            <div className="flex-1 min-w-[150px]">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Employees</label>
               <input
                 type="number"
                 value={employeeCount}
                 onChange={e => setEmployeeCount(Number(e.target.value))}
-                style={styles.input}
+                className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                 min={1}
               />
             </div>
-            <div style={styles.field}>
-              <label style={styles.label}>Sites</label>
+            <div className="flex-1 min-w-[150px]">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Sites</label>
               <input
                 type="number"
                 value={siteCount}
                 onChange={e => setSiteCount(Number(e.target.value))}
-                style={styles.input}
+                className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                 min={1}
               />
             </div>
           </div>
 
           {stdCount > 0 && (
-            <div style={styles.section}>
-              <label style={styles.label}>Per-Standard Details</label>
-              <table style={styles.table}>
+            <div className="mt-3">
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Per-Standard Details</label>
+              <table className="w-full border-collapse text-sm mt-1">
                 <thead>
                   <tr>
-                    <th style={styles.th}>Standard</th>
-                    <th style={styles.th}>Risk / Complexity</th>
-                    <th style={styles.th}>Base Mandays (from DOCX or table)</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Standard</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Risk / Complexity</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Base Mandays (from DOCX or table)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -198,24 +198,24 @@ export default function MandayForm({
                     const label = standards?.[s]?.split(' \u2014 ')?.[0] || s
                     return (
                       <tr key={s}>
-                        <td style={styles.td}>{label}</td>
-                        <td style={styles.td}>
+                        <td className="px-2 py-1 border-b border-gray-100 dark:border-gray-800">{label}</td>
+                        <td className="px-2 py-1 border-b border-gray-100 dark:border-gray-800">
                           <select
                             value={riskCategories[s] || 'medium'}
                             onChange={e => setRiskCategories({ ...riskCategories, [s]: e.target.value })}
-                            style={styles.select}
+                            className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800"
                           >
                             {COMPLEXITY_LEVELS.map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
                           </select>
                         </td>
-                        <td style={styles.td}>
+                        <td className="px-2 py-1 border-b border-gray-100 dark:border-gray-800">
                           <input
                             type="number"
                             value={baseMandays[s] || ''}
                             onChange={e => setBaseMandays({ ...baseMandays, [s]: Number(e.target.value) || '' })}
-                            style={{ ...styles.input, width: '80px' }}
+                            className="w-20 px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                             min={0}
                             step={0.5}
                             placeholder="Auto"
@@ -230,14 +230,14 @@ export default function MandayForm({
           )}
 
           {stdCount >= 2 && (
-            <div style={styles.row}>
-              <div style={styles.field}>
-                <label style={styles.label}>IMS Reduction (IAF MD 11) %</label>
+          <div className="flex gap-4 mt-3 flex-wrap">
+            <div className="flex-1 min-w-[150px]">
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">IMS Reduction (IAF MD 11) %</label>
                 <input
                   type="number"
                   value={imsReduction !== null ? Math.round(imsReduction * 100) : ''}
                   onChange={e => setImsReduction(e.target.value ? Number(e.target.value) / 100 : null)}
-                  style={styles.input}
+                  className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                   min={0}
                   max={20}
                   placeholder={`Auto (${(stdCount >= 2 ? 20 : 0)})`}
@@ -247,30 +247,30 @@ export default function MandayForm({
           )}
 
           {computed && (
-            <div style={styles.result}>
-              <div style={styles.resultTitle}>Calculated Mandays</div>
-              <div style={styles.resultGrid}>
-                <div style={styles.resultItem}>
-                  <span style={styles.resultLabel}>Total Mandays</span>
-                  <span style={styles.resultValue}>{computed.total_mandays}</span>
+            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
+              <div className="font-bold text-xs text-green-700 dark:text-green-400 mb-2">Calculated Mandays</div>
+              <div className="flex flex-col gap-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Total Mandays</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-semibold">{computed.total_mandays}</span>
                 </div>
-                <div style={styles.resultItem}>
-                  <span style={styles.resultLabel}>Per Standard</span>
-                  <span style={styles.resultValue}>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Per Standard</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {Object.entries(computed.mandays_per_standard).map(([k, v]) =>
                       `${k.replace('iso_', '').toUpperCase()}: ${v}`
                     ).join(', ')}
                   </span>
                 </div>
-                <div style={styles.resultItem}>
-                  <span style={styles.resultLabel}>Team</span>
-                  <span style={styles.resultValue}>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Team</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {computed.team_composition.map(t => `${t.role} x${t.count} (${t.days}d)`).join(', ')}
                   </span>
                 </div>
-                <div style={styles.resultItem}>
-                  <span style={styles.resultLabel}>Base</span>
-                  <span style={styles.resultValue}>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">Base</span>
+                  <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {selectedStandards.map(s => {
                       const b = baseMandays[s]
                       return `${s.replace('iso_', '').toUpperCase()}: ${b || 'auto'}`
@@ -286,117 +286,3 @@ export default function MandayForm({
   )
 }
 
-const styles = {
-  container: {
-    border: '1px solid #e0e0e0',
-    borderRadius: '8px',
-    marginTop: '12px',
-    background: '#f9fafb',
-  },
-  header: {
-    padding: '12px 16px',
-    cursor: 'pointer',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    userSelect: 'none',
-  },
-  title: {
-    fontWeight: 600,
-    fontSize: '14px',
-    color: '#333',
-  },
-  summary: {
-    fontSize: '12px',
-    color: '#666',
-  },
-  body: {
-    padding: '0 16px 16px',
-    borderTop: '1px solid #e0e0e0',
-  },
-  row: {
-    display: 'flex',
-    gap: '16px',
-    marginTop: '12px',
-    flexWrap: 'wrap',
-  },
-  field: {
-    flex: '1',
-    minWidth: '150px',
-  },
-  label: {
-    display: 'block',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#555',
-    marginBottom: '4px',
-  },
-  input: {
-    width: '100%',
-    padding: '6px 8px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '13px',
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '6px 8px',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    fontSize: '13px',
-    background: '#fff',
-  },
-  section: {
-    marginTop: '12px',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    fontSize: '13px',
-    marginTop: '4px',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '6px 8px',
-    borderBottom: '2px solid #e0e0e0',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: '#555',
-  },
-  td: {
-    padding: '4px 8px',
-    borderBottom: '1px solid #eee',
-  },
-  result: {
-    marginTop: '16px',
-    padding: '12px',
-    background: '#e8f4e8',
-    borderRadius: '6px',
-    border: '1px solid #c8e6c9',
-  },
-  resultTitle: {
-    fontWeight: 700,
-    fontSize: '13px',
-    color: '#2e7d32',
-    marginBottom: '8px',
-  },
-  resultGrid: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '6px',
-  },
-  resultItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '13px',
-  },
-  resultLabel: {
-    color: '#555',
-    fontWeight: 500,
-  },
-  resultValue: {
-    color: '#333',
-    fontWeight: 600,
-  },
-}

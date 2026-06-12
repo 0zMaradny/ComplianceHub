@@ -20,7 +20,7 @@ function healthLabel(score) {
 
 function BarChart({ data, colors, labels, height = 160 }) {
   const { months, ...series } = data
-  if (!months || months.length === 0) return <div className="empty-state">No trend data</div>
+  if (!months || months.length === 0) return <div className="text-center p-12 text-[var(--text-secondary)]">No trend data</div>
   const allValues = Object.values(series).flat()
   const maxVal = Math.max(...allValues, 1)
 
@@ -42,7 +42,7 @@ function BarChart({ data, colors, labels, height = 160 }) {
                   ) : null
                 })}
               </div>
-              <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{m.slice(5)}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{m.slice(5)}</span>
             </div>
           )
         })}
@@ -122,8 +122,8 @@ export default function Analytics({ API }) {
 
   if (loading) return (
     <div className="animate-fadeIn">
-      <div className="page-header"><Skeleton variant="title" width="200px" /><Skeleton variant="text" width="280px" className="mt-2" /></div>
-      <div className="stats-grid">{[1,2,3,4].map(i => <Skeleton key={i} variant="stat-card" />)}</div>
+      <div className="mb-8"><Skeleton variant="title" width="200px" /><Skeleton variant="text" width="280px" className="mt-2" /></div>
+      <div className="grid gap-5 mb-8 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">{[1,2,3,4].map(i => <Skeleton key={i} variant="stat-card" />)}</div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <Skeleton variant="card" height="300px" /><Skeleton variant="card" height="300px" />
       </div>
@@ -133,41 +133,39 @@ export default function Analytics({ API }) {
 
   return (
     <div className="animate-fadeIn">
-      <div className="page-header flex items-center justify-between flex-wrap gap-3">
+      <div className="mb-8 flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2>📊 Analytics</h2>
-          <p>Detailed insights into audit operations, quality metrics, and AI performance</p>
+          <h2 className="text-3xl font-bold text-[var(--text-primary)] m-0">📊 Analytics</h2>
+          <p className="mt-1 text-[var(--text-secondary)]">Detailed insights into audit operations, quality metrics, and AI performance</p>
         </div>
         <div className="flex gap-2 items-center">
           <select value={period} onChange={e => setPeriod(e.target.value)}
-            className="text-sm px-3 py-1.5 rounded-md"
-            style={{ border: '1px solid var(--border-color)' }}>
+            className="text-sm px-3 py-1.5 rounded-md border border-[var(--border-color)]">
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
             <option value="90d">Last 90 days</option>
             <option value="1y">Last 12 months</option>
           </select>
-          <button className="btn btn-secondary" onClick={loadData}>↻ Refresh</button>
+          <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap" onClick={loadData}>↻ Refresh</button>
         </div>
       </div>
 
-      {/* ── NC Trends ── */}
-      <div className="card mb-4">
+      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
         <div className="flex items-center justify-between">
-          <h3>Nonconformity Trends</h3>
-          {ncTrends && <button className="btn btn-secondary px-2.5 py-1 text-xs" onClick={exportNCCSV}>Export CSV</button>}
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Nonconformity Trends</h3>
+          {ncTrends && <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap px-2.5 py-1 text-xs" onClick={exportNCCSV}>Export CSV</button>}
         </div>
         {ncTrends ? (
           <BarChart data={ncTrends}
             colors={{ major_nc: TUV_RED, minor_nc: '#F39C12', ofi: '#3498DB', closed: '#27AE60' }}
             labels={{ major_nc: 'Major NC', minor_nc: 'Minor NC', ofi: 'OFI', closed: 'Closed' }}
             height={180} />
-        ) : <div className="empty-state">No NC data available</div>}
+        ) : <div className="text-center p-12 text-[var(--text-secondary)]">No NC data available</div>}
         {ncTrends && (
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                <tr className="border-b-2 border-[var(--border-color)]">
                   <th className="text-left px-2 py-1.5">Month</th>
                   <th className="text-center px-2 py-1.5" style={{ color: TUV_RED }}>Major</th>
                   <th className="text-center px-2 py-1.5" style={{ color: '#F39C12' }}>Minor</th>
@@ -178,7 +176,7 @@ export default function Analytics({ API }) {
               </thead>
               <tbody>
                 {ncTrends.months.map((m, i) => (
-                  <tr key={m} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <tr key={m} className="border-b border-[var(--border-color)]">
                     <td className="px-2 py-1.5 font-semibold">{m}</td>
                     <td className="text-center px-2 py-1.5">{ncTrends.major_nc[i]}</td>
                     <td className="text-center px-2 py-1.5">{ncTrends.minor_nc[i]}</td>
@@ -193,19 +191,18 @@ export default function Analytics({ API }) {
         )}
       </div>
 
-      {/* ── Project Health Table ── */}
-      <div className="card mb-4">
+      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mb-4">
         <div className="flex items-center justify-between">
-          <h3>Project Health</h3>
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Project Health</h3>
           {sortedProjects.length > 0 && (
-            <button className="btn btn-secondary px-2.5 py-1 text-xs" onClick={exportProjectCSV}>Export CSV</button>
+            <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap px-2.5 py-1 text-xs" onClick={exportProjectCSV}>Export CSV</button>
           )}
         </div>
         {sortedProjects.length > 0 ? (
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr style={{ borderBottom: '2px solid var(--border-color)' }}>
+                <tr className="border-b-2 border-[var(--border-color)]">
                   {[
                     { key: 'title', label: 'Project' },
                     { key: 'client', label: 'Client' },
@@ -224,7 +221,7 @@ export default function Analytics({ API }) {
               </thead>
               <tbody>
                 {sortedProjects.map(p => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <tr key={p.id} className="border-b border-[var(--border-color)]">
                     <td className="px-2 py-2 font-semibold">{p.title}</td>
                     <td className="px-2 py-2">{p.client}</td>
                     <td className="px-2 py-2">
@@ -244,13 +241,12 @@ export default function Analytics({ API }) {
               </tbody>
             </table>
           </div>
-        ) : <div className="empty-state">No active projects</div>}
+        ) : <div className="text-center p-12 text-[var(--text-secondary)]">No active projects</div>}
       </div>
 
-      {/* ── AI Models + CAPA Metrics ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-        <div className="card">
-          <h3>AI Model Status</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">AI Model Status</h3>
           {aiModels?.models ? (
             <div className="mt-2 flex flex-col gap-1.5">
               {aiModels.models.filter(m => m.total_uses > 0 || m.healthy).slice(0, 8).map(m => (
@@ -265,7 +261,7 @@ export default function Analytics({ API }) {
                   }} />
                   <div className="flex-1">
                     <div className="text-xs font-semibold">{m.name}</div>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="text-xs text-[var(--text-secondary)]">
                       {m.tier_category} · {m.total_uses} uses
                       {m.avg_quality_score > 0 && ` · q=${m.avg_quality_score}`}
                       {m.avg_response_time_ms > 0 && ` · ${m.avg_response_time_ms}ms`}
@@ -282,31 +278,31 @@ export default function Analytics({ API }) {
                 <div className="mt-2 p-2 rounded-md" style={{ background: 'var(--bg-secondary, #f8f9fa)' }}>
                   <div className="text-xs font-semibold mb-1" style={{ color: TUV_BLUE }}>Recommendations</div>
                   {Object.entries(aiModels.recommended_for).slice(0, 5).map(([task, model]) => (
-                    <div key={task} className="text-xs py-0.5" style={{ color: 'var(--text-secondary)' }}>
+                    <div key={task} className="text-xs py-0.5 text-[var(--text-secondary)]">
                       {task}: <strong>{model}</strong>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          ) : <div className="empty-state">No AI usage data yet</div>}
+          ) : <div className="text-center p-12 text-[var(--text-secondary)]">No AI usage data yet</div>}
         </div>
 
-        <div className="card">
-          <h3>CAPA Metrics</h3>
+        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
+          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">CAPA Metrics</h3>
           {capaMetrics ? (
             <div className="mt-2">
               <div className="grid grid-cols-2 gap-2">
-                <div className="stat-card"><div className="stat-number">{capaMetrics.total_capas ?? 0}</div><h3>Total</h3></div>
-                <div className="stat-card"><div className="stat-number green">{capaMetrics.closure_rate_pct ?? 0}%</div><h3>Closure Rate</h3></div>
-                <div className="stat-card"><div className="stat-number">{capaMetrics.avg_closure_days ?? '—'}</div><h3>Avg Days</h3></div>
-                <div className="stat-card"><div className="stat-number" style={{ color: (capaMetrics.overdue_count ?? 0) > 0 ? TUV_RED : undefined }}>{capaMetrics.overdue_count ?? 0}</div><h3>Overdue</h3></div>
+                <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]">{capaMetrics.total_capas ?? 0}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Total</h3></div>
+                <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-green-600">{capaMetrics.closure_rate_pct ?? 0}%</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Closure Rate</h3></div>
+                <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]">{capaMetrics.avg_closure_days ?? '—'}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Avg Days</h3></div>
+                <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]"><div className="text-3xl font-bold text-[var(--primary)]" style={{ color: (capaMetrics.overdue_count ?? 0) > 0 ? TUV_RED : undefined }}>{capaMetrics.overdue_count ?? 0}</div><h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Overdue</h3></div>
               </div>
               {capaMetrics.by_status && Object.keys(capaMetrics.by_status).length > 0 && (
                 <div className="mt-3">
-                  <h4 className="text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>By Status</h4>
+                  <h4 className="text-xs mb-1.5 text-[var(--text-secondary)]">By Status</h4>
                   {Object.entries(capaMetrics.by_status).map(([status, count]) => (
-                    <div key={status} className="flex justify-between py-1 text-xs" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <div key={status} className="flex justify-between py-1 text-xs border-b border-[var(--border-color)]">
                       <span>{status}</span>
                       <span className="font-bold">{count}</span>
                     </div>
@@ -315,9 +311,9 @@ export default function Analytics({ API }) {
               )}
               {capaMetrics.avg_days_by_severity && Object.keys(capaMetrics.avg_days_by_severity).length > 0 && (
                 <div className="mt-3">
-                  <h4 className="text-xs mb-1.5" style={{ color: 'var(--text-secondary)' }}>Avg Days by Severity</h4>
+                  <h4 className="text-xs mb-1.5 text-[var(--text-secondary)]">Avg Days by Severity</h4>
                   {Object.entries(capaMetrics.avg_days_by_severity).map(([sev, days]) => (
-                    <div key={sev} className="flex justify-between py-1 text-xs" style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <div key={sev} className="flex justify-between py-1 text-xs border-b border-[var(--border-color)]">
                       <span>{sev}</span>
                       <span className="font-bold">{Number(days).toFixed(1)}d</span>
                     </div>
@@ -325,7 +321,7 @@ export default function Analytics({ API }) {
                 </div>
               )}
             </div>
-          ) : <div className="empty-state">No CAPA data yet</div>}
+          ) : <div className="text-center p-12 text-[var(--text-secondary)]">No CAPA data yet</div>}
         </div>
       </div>
     </div>
