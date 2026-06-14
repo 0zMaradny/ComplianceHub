@@ -1,7 +1,10 @@
+import logging
 import os
 import re
 import shutil
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 import arabic_reshaper
 from bidi.algorithm import get_display
@@ -38,12 +41,14 @@ class AuditPDF(FPDF):
         super().__init__('P', 'mm', 'A4')
         self.doc_type_label = doc_type_label
         self.standard = standard
-        self.add_font('Sans', '', FONT_REGULAR)
-        self.add_font('Sans', 'B', FONT_BOLD)
-        self.add_font('Sans', 'I', FONT_ITALIC)
-        self.add_font('Sans', 'BI', FONT_BI)
-        self.add_font('Arabic', '', ARABIC_FONT_REGULAR)
-        self.add_font('Arabic', 'B', ARABIC_FONT_BOLD)
+        if os.path.exists(FONT_REGULAR):
+            self.add_font('Sans', '', FONT_REGULAR)
+            self.add_font('Sans', 'B', FONT_BOLD)
+            self.add_font('Sans', 'I', FONT_ITALIC)
+            self.add_font('Sans', 'BI', FONT_BI)
+        if os.path.exists(ARABIC_FONT_REGULAR):
+            self.add_font('Arabic', '', ARABIC_FONT_REGULAR)
+            self.add_font('Arabic', 'B', ARABIC_FONT_BOLD)
         self._arabic_mode = False
 
     def _switch_font_ar(self, style='', size=10):
@@ -206,7 +211,7 @@ class AuditPDF(FPDF):
 
 
 def safe_str(v):
-    return str(v) if v else ''
+    return str(v) if v is not None else ''
 
 
 def _generate_audit_plan(data, output_path, stage_label):
@@ -409,18 +414,34 @@ def generate_iso_checklist(data, output_path):
     sections = data.get('sections') or []
     if sections:
         pdf.add_page()
-        pdf.section_title('Checklist Items')
-        pdf.table_header([(14, 'Clause'), (50, 'Title'), (70, 'Requirement'), (22, 'Status'), (30, 'Evidence')])
+        pdf.section_title('Checklist — Questions & Evidence')
+        pdf.table_header([(14, 'Clause'), (86, 'Audit Questions'), (86, 'Evidence to Check')])
         for sec in sections:
             y_before = pdf.get_y()
             if y_before > 250:
                 pdf.add_page()
-                pdf.table_header([(14, 'Clause'), (50, 'Title'), (70, 'Requirement'), (22, 'Status'), (30, 'Evidence')])
+                pdf.table_header([(14, 'Clause'), (86, 'Audit Questions'), (86, 'Evidence to Check')])
+            aq = safe_str(sec.get('audit_questions', ''))[:80]
+            ec = safe_str(sec.get('evidence_to_check', ''))[:80]
             pdf.table_row([(14, safe_str(sec.get('clause', ''))[:14]),
-                           (50, safe_str(sec.get('title', ''))[:50]),
-                           (70, safe_str(sec.get('requirement', ''))[:70]),
-                           (22, safe_str(sec.get('status', ''))),
-                           (30, safe_str(sec.get('evidence', ''))[:30])])
+                           (86, aq), (86, ec)])
+
+        pdf.add_page()
+        pdf.section_title('Checklist — Findings & Status')
+        pdf.table_header([(14, 'Clause'), (100, 'Findings / Observations'), (36, 'Status'), (36, 'Reference')])
+        for sec in sections:
+            y_before = pdf.get_y()
+            if y_before > 250:
+                pdf.add_page()
+                pdf.table_header([(14, 'Clause'), (100, 'Findings / Observations'), (36, 'Status'), (36, 'Reference')])
+            findings_text = safe_str(sec.get('evidence', ''))
+            notes = sec.get('notes', '')
+            if notes:
+                findings_text += ' | Notes: ' + safe_str(notes)
+            pdf.table_row([(14, safe_str(sec.get('clause', ''))[:14]),
+                           (100, findings_text[:100]),
+                           (36, safe_str(sec.get('status', ''))),
+                           (36, safe_str(sec.get('reference', ''))[:36])])
     overall = data.get('overall_assessment')
     if overall:
         pdf.ln(4)
@@ -590,13 +611,13 @@ def convert_to_pdf(docx_path: str) -> str | None:
                 ['libreoffice', '--headless', '--convert-to', 'pdf',
                  '--outdir', out_dir, docx_path],
                 capture_output=True, timeout=60, check=True,
-                env={**os.environ, 'HOME': '/tmp'},
+                env={**os.environ, 'HOME': os.environ.get('TMPDIR', '/tmp')},
             )
         elif PDF_ENGINE == 'docx2pdf':
             from docx2pdf import convert as _convert
             _convert(docx_path, pdf_path)
         if os.path.exists(pdf_path):
             return pdf_path
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("convert_to_pdf failed: %s", e)
     return None
