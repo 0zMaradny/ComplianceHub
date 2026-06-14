@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import History from '../History'
 
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+globalThis.fetch = mockFetch
 
 const API = '/api'
 

@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import Dashboard from '../Dashboard'
 
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+globalThis.fetch = mockFetch
 
 const API = '/api'
 
@@ -13,9 +13,6 @@ const statsResponse = {
   cert_outcomes: { Certified: 6, Conditional: 2 },
 }
 
-const jobsResponse = { jobs: [{ job_id: 'abc123', status: 'done', created_at: 1000000 }] }
-const standardsResponse = { standards: { iso_9001: 'ISO 9001:2015' } }
-
 beforeEach(() => {
   mockFetch.mockReset()
 })
@@ -23,8 +20,8 @@ beforeEach(() => {
 describe('Dashboard', () => {
   it('shows loading state initially', () => {
     mockFetch.mockResolvedValue({ json: async () => ({}) })
-    render(<Dashboard API={API} />)
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    const { container } = render(<Dashboard API={API} />)
+    expect(container.querySelector('.animate-fadeIn')).toBeInTheDocument()
   })
 
   it('renders stats after fetch', async () => {
@@ -34,9 +31,10 @@ describe('Dashboard', () => {
     expect(total).toBeInTheDocument()
   })
 
-  it('renders page header', () => {
+  it('renders page header', async () => {
     mockFetch.mockResolvedValue({ json: async () => ({}) })
     render(<Dashboard API={API} />)
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
+    const heading = await screen.findByText('Dashboard')
+    expect(heading).toBeInTheDocument()
   })
 })

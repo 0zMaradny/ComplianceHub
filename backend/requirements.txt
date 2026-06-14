@@ -9,7 +9,7 @@ pydantic==2.13.4
 aiofiles==24.1.0
 fpdf2==2.8.3                  # PDF generation
 python-dotenv==1.1.0         # .env loading
-arabic_reshaper==3.1.0      # Arabic text reshaping for PDF
+arabic_reshaper==3.0.1      # Arabic text reshaping for PDF
 
 # AI Providers
 google-genai==2.7.0        # Gemini

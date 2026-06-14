@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import Skeleton from '../components/Skeleton'
 
 const STATUS_ORDER = ['compliant', 'partial', 'non_compliant', 'na']
-const STATUS_LABELS = { compliant: 'Compliant', partial: 'Partial', non_compliant: 'Non-Compliant', na: 'N/A' }
 const STATUS_COLORS = {
   compliant: { bg: 'var(--green-50)', color: 'var(--green-600)' },
   partial: { bg: 'var(--amber-50)', color: 'var(--amber-600)' },
@@ -39,13 +39,14 @@ async function saveServer(API, stdKey, assessments) {
 }
 
 export default function Compliance({ API }) {
+  const { t } = useTranslation()
   const [selected, setSelected] = useState(null)
   const [allStandards, setAllStandards] = useState([])
   const [clauses, setClauses] = useState([])
   const [annex, setAnnex] = useState({})
   const [loading, setLoading] = useState(false)
   const [assessments, setAssessments] = useState(loadLocal)
-  const [serverLoaded, setServerLoaded] = useState(false)
+  const [fetchError, setFetchError] = useState(null)
   const [filter, setFilter] = useState('all')
 
   useEffect(() => {
@@ -58,9 +59,10 @@ export default function Compliance({ API }) {
             return { id, label: parts[0] || label, desc: parts[1] || '' }
           })
           setAllStandards(list)
+          setFetchError(null)
         }
       })
-      .catch(() => {})
+      .catch(e => { console.error('Failed to fetch standards:', e); setFetchError('Failed to load standards') })
   }, [API])
 
   const stdKey = selected || '__empty__'
@@ -76,7 +78,6 @@ export default function Compliance({ API }) {
         const merged = { ...loadLocal(), [selected]: serverData }
         saveLocal(merged)
         setAssessments(merged)
-        setServerLoaded(true)
       } else if (!cancelled) {
         setAssessments(loadLocal())
       }
@@ -134,23 +135,28 @@ export default function Compliance({ API }) {
   if (!selected) {
     return (
       <div className="animate-fadeIn">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-[var(--text-primary)] m-0">Compliance Assessment</h2>
-          <p className="mt-1 text-[var(--text-secondary)]">Select a standard to begin clause-level compliance assessment</p>
+        <div className="page-header">
+          <h2>{t('compliance.title')}</h2>
+          <p>{t('compliance.subtitle')}</p>
         </div>
-        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">ISO Standards</h3>
-          <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-            {allStandards.map(s => (
-              <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] cursor-pointer hover:border-[var(--primary)] hover:bg-[var(--primary-light)] transition-all justify-between"
-                   onClick={() => setSelected(s.id)}>
-                <div>
-                  <div className="font-semibold text-sm">{s.label}</div>
-                  <div className="text-xs text-[var(--text-secondary)]">{s.desc}</div>
+        <div className="card mb-5">
+          <div className="card-header">
+            <h3>{t('compliance.standards')}</h3>
+          </div>
+          <div className="card-body">
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+              {allStandards.map(s => (
+                <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] cursor-pointer hover:border-[var(--primary)] hover:bg-[var(--primary-light)] transition-all justify-between"
+                     onClick={() => setSelected(s.id)}>
+                  <div>
+                    <div className="font-semibold text-sm">{s.label}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">{s.desc}</div>
+                  </div>
+                  <span className="text-xl text-[var(--text-secondary)]">→</span>
                 </div>
-                <span className="text-xl text-[var(--text-secondary)]">→</span>
-              </div>
-            ))}
+              ))}
+            </div>
+            {fetchError && <div className="text-xs text-red-600 mt-2">{fetchError}</div>}
           </div>
         </div>
       </div>
@@ -161,138 +167,137 @@ export default function Compliance({ API }) {
 
   return (
     <div className="animate-fadeIn">
-      <div className="mb-8 flex justify-between items-start">
-        <div>
-          <button className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap text-xs mb-2" onClick={() => setSelected(null)}>
-            ← Back to Standards
+      <div className="mb-8">
+        <button className="btn btn-ghost text-xs mb-2" onClick={() => setSelected(null)}>
+            {t('compliance.back')}
           </button>
-          <h2 className="text-3xl font-bold text-[var(--text-primary)] m-0">{currentStd?.label || selected}</h2>
-          <p className="mt-1 text-[var(--text-secondary)]">{currentStd?.desc} — Clause-level compliance assessment</p>
+        <div className="page-header">
+          <h2>{currentStd?.label || selected}</h2>
+          <p>{currentStd?.desc} — {t('compliance.clause_assessment')}</p>
         </div>
       </div>
 
       <div className="grid gap-5 mb-8 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Compliance Score</h3>
-          <div className={`text-3xl font-bold ${scoredClauses >= 80 ? 'text-green-600' : scoredClauses >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+        <div className="stat-card">
+          <div className="stat-card-value" style={{ color: scoredClauses >= 80 ? 'var(--green-600)' : scoredClauses >= 50 ? 'var(--amber-600)' : 'var(--red-600)' }}>
             {scoredClauses}%
           </div>
-          <div className="text-xs mt-1 text-[var(--text-secondary)]">
-            {compliantCount} compliant, {partialCount} partial, {nonCompliantCount} non-compliant
-          </div>
-        </div>
-        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Clauses</h3>
-          <div className="text-3xl font-bold text-[var(--primary)]">{assessed.length}/{totalClauses}</div>
-          <div className="text-xs mt-1 text-[var(--text-secondary)]">
-            {totalClauses - assessed.length} remaining
-          </div>
-        </div>
-        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Non-Compliant</h3>
-          <div className="text-3xl font-bold text-red-600">{nonCompliantCount}</div>
-          {nonCompliantCount > 0 && (
-            <div className="text-xs mt-1 text-red-600">
-              Requires corrective action
-            </div>
-          )}
-        </div>
-        <div className="rounded-xl p-6 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-xs font-semibold uppercase tracking-wider mb-2 text-[var(--text-secondary)]">Progress Bar</h3>
-          <div className="w-full h-2 rounded-full overflow-hidden mb-3 bg-gray-200 mt-2">
-            <div className="h-full rounded-full transition-[width] duration-500 bg-[var(--primary)]" style={{
+          <div className="stat-card-label">{t('compliance.score')}</div>
+          <div className="progress-bar" style={{ marginTop: 8 }}>
+            <div className="progress-bar-fill" style={{
               width: `${scoredClauses}%`,
               background: scoredClauses >= 80 ? 'var(--green-600)' : scoredClauses >= 50 ? 'var(--amber-600)' : 'var(--red-600)',
             }} />
           </div>
+          <div className="stat-card-trend">
+            {`${compliantCount} ${t('compliance.compliant').toLowerCase()}, ${partialCount} ${t('compliance.partial').toLowerCase()}, ${nonCompliantCount} ${t('compliance.non_compliant').toLowerCase()}`}
+          </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-value" style={{ color: 'var(--primary)' }}>{assessed.length}/{totalClauses}</div>
+          <div className="stat-card-label">{t('compliance.clauses_label')}</div>
+          <div className="stat-card-trend">{totalClauses - assessed.length} {t('compliance.remaining')}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-value" style={{ color: nonCompliantCount > 0 ? 'var(--red-600)' : 'var(--text-primary)' }}>
+            {nonCompliantCount}
+          </div>
+          <div className="stat-card-label">{t('compliance.non_compliant_label')}</div>
+          {nonCompliantCount > 0 && (
+            <div className="stat-card-trend" style={{ color: 'var(--red-600)' }}>
+              {t('compliance.requires_corrective')}
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Clause Checklist</h3>
+      <div className="card mb-5">
+        <div className="card-header flex items-center justify-between">
+          <h3 className="m-0">{t('compliance.clause_checklist')}</h3>
           <div className="flex gap-2">
             {['all', 'compliant', 'partial', 'non_compliant', 'untouched'].map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`${filter === f
-                  ? 'bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] border-none'
-                  : 'bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800'}
-                  px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap`}
+                className={`btn ${filter === f ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ fontSize: 11, padding: '4px 8px' }}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
+                {t('compliance.' + f)}
               </button>
             ))}
           </div>
         </div>
-
-        {loading ? (
-          <div className="animate-fadeIn"><Skeleton variant="table-row" count={8} className="mb-2" /></div>
-        ) : visible.length === 0 ? (
-          <div className="text-center p-12 text-[var(--text-secondary)]">No clauses match the selected filter.</div>
-        ) : (
-          <div className="animate-slideIn">
-            {visible.map(c => {
-              const status = getStatus(c.id)
-              return (
-                <div key={c.id} className="border-b border-[var(--border-color)]" style={{
-                  padding: 12,
-                  background: status !== 'untouched' ? STATUS_COLORS[status]?.bg : 'transparent',
-                  borderRadius: status !== 'untouched' ? 8 : 0,
-                  marginBottom: status !== 'untouched' ? 4 : 0,
-                }}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm text-[var(--text-primary)]">
-                        Clause {c.id}: {c.title}
-                      </div>
-                      {c.description && (
-                        <div className="text-xs mt-1 text-[var(--text-secondary)]">
-                          {c.description.substring(0, 200)}
+        <div className="card-body">
+          {loading ? (
+            <div className="animate-fadeIn"><Skeleton variant="table-row" count={8} className="mb-2" /></div>
+          ) : visible.length === 0 ? (
+            <div className="text-center p-12 text-[var(--text-secondary)]">{t('compliance.no_match')}</div>
+          ) : (
+            <div className="animate-slideIn">
+              {visible.map(c => {
+                const status = getStatus(c.id)
+                return (
+                  <div key={c.id} className="border-b border-[var(--border-color)]" style={{
+                    padding: 12,
+                    background: status !== 'untouched' ? STATUS_COLORS[status]?.bg : 'transparent',
+                    borderRadius: status !== 'untouched' ? 8 : 0,
+                    marginBottom: status !== 'untouched' ? 4 : 0,
+                  }}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-[var(--text-primary)]">
+                          Clause {c.id}: {c.title}
                         </div>
-                      )}
-                    </div>
-                    <div className="flex gap-1 ml-3 flex-wrap">
-                      {STATUS_ORDER.map(s => (
-                        <button key={s} onClick={() => setStatus(c.id, status === s ? 'untouched' : s)}
-                          className="text-xs px-2.5 py-1 rounded-md font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap"
-                          style={{
-                            fontSize: 10, padding: '3px 8px',
-                            background: status === s ? STATUS_COLORS[s].bg : 'transparent',
-                            color: status === s ? STATUS_COLORS[s].color : 'var(--text-secondary)',
-                            border: `1px solid ${status === s ? STATUS_COLORS[s].color : 'var(--border-color)'}`,
-                          }}>
-                          {STATUS_LABELS[s]}
-                        </button>
-                      ))}
+                        {c.description && (
+                          <div className="text-xs mt-1 text-[var(--text-secondary)]">
+                            {c.description.substring(0, 200)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-1 ml-3 flex-wrap">
+                        {STATUS_ORDER.map(s => (
+                          <button key={s} onClick={() => setStatus(c.id, status === s ? 'untouched' : s)}
+                            className="text-xs px-2.5 py-1 rounded-md font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap"
+                            style={{
+                              fontSize: 10, padding: '3px 8px',
+                              background: status === s ? STATUS_COLORS[s].bg : 'transparent',
+                              color: status === s ? STATUS_COLORS[s].color : 'var(--text-secondary)',
+                              border: `1px solid ${status === s ? STATUS_COLORS[s].color : 'var(--border-color)'}`,
+                            }}>
+                            {t('compliance.status_' + s)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {annexKeys.length > 0 && (
-        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Annex A Controls</h3>
-          <div className="text-sm mb-3 text-[var(--text-secondary)]">
-            {selected === 'iso_27001' ? `${annexKeys.length} control themes from Annex A (93 controls)` :
-             selected === 'iso_42001' ? `${annexKeys.length} control objectives from Annex A` :
-             `${annexKeys.length} annex sections`}
+        <div className="card mb-5">
+          <div className="card-header">
+            <h3>Annex A Controls</h3>
           </div>
-          <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-            {annexKeys.map(key => (
-              <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] cursor-default hover:border-[var(--primary)] hover:bg-[var(--primary-light)] transition-all">
-                {key}
-              </div>
-            ))}
+          <div className="card-body">
+            <div className="text-sm mb-3 text-[var(--text-secondary)]">
+              {selected === 'iso_27001' ? `${annexKeys.length} ${t('compliance.annex_themes')}` :
+               selected === 'iso_42001' ? `${annexKeys.length} ${t('compliance.annex_objectives')}` :
+               `${annexKeys.length} ${t('compliance.annex_sections')}`}
+            </div>
+            <div className="grid gap-2 grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+              {annexKeys.map(key => (
+                <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs border border-[var(--border-color)] cursor-default hover:border-[var(--primary)] hover:bg-[var(--primary-light)] transition-all">
+                  {key}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
       <div className="text-center p-4 text-xs text-[var(--text-secondary)]">
-        Assessment data synced to server (localStorage fallback).
+        {t('compliance.synced')}
       </div>
     </div>
   )

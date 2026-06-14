@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react'
 import AuditProgram from '../AuditProgram'
 
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+globalThis.fetch = mockFetch
 
 const API = '/api'
 
