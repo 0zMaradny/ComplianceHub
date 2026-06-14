@@ -38,18 +38,19 @@ jobs:
       run: python -m pyflakes app/
 
     - name: Check imports load
-      run: python -c "
-from app.config import ISO_STANDARDS, OUTPUT_DOCUMENTS
-from app.services.ai import create_provider
-from app.services.ai.model_registry import FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES
-from app.services.ai.debugger import Autodebugger, REQUIRED_FIELDS
-print(f'OK: {len(ISO_STANDARDS)} standards, {len(OUTPUT_DOCUMENTS)} docs, router tiers: frontier={len(FRONTIER_NAMES)}, strong={len(STRONG_NAMES)}, groq={len(GROQ_NAMES)}')
-for name in ['nemotron_ultra', 'kimi_k26', 'llama_70b', 'groq_llama']:
-    p = create_provider(name)
-    print(f'  Provider {name}: {type(p).__name__}')
-for t in REQUIRED_FIELDS:
-    print(f'  Debugger schema: {t} ({len(REQUIRED_FIELDS[t])} fields)')
-"
+      run: |
+        python << 'PYEOF'
+        from app.config import ISO_STANDARDS, OUTPUT_DOCUMENTS
+        from app.services.ai import create_provider
+        from app.services.ai.model_registry import FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES
+        from app.services.ai.debugger import Autodebugger, REQUIRED_FIELDS
+        print(f'OK: {len(ISO_STANDARDS)} standards, {len(OUTPUT_DOCUMENTS)} docs, router tiers: frontier={len(FRONTIER_NAMES)}, strong={len(STRONG_NAMES)}, groq={len(GROQ_NAMES)}')
+        for name in ['nemotron_ultra', 'kimi_k26', 'llama_70b', 'groq_llama']:
+            p = create_provider(name)
+            print(f'  Provider {name}: {type(p).__name__}')
+        for t in REQUIRED_FIELDS:
+            print(f'  Debugger schema: {t} ({len(REQUIRED_FIELDS[t])} fields)')
+        PYEOF
 
     - name: Run tests
       run: python -m pytest tests/ -v --tb=short
@@ -76,3 +77,6 @@ for t in REQUIRED_FIELDS:
 
     - name: Build
       run: npm run build
+
+    - name: Run tests
+      run: npm test -- --run

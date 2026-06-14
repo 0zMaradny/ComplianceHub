@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import './App.css'
+import { useToast } from './components/Toast'
+import usePreferences from './hooks/usePreferences'
+import useNotifications from './hooks/useNotifications'
+import NotificationBell from './components/NotificationBell'
+import PreferencesModal from './components/PreferencesModal'
 import Dashboard from './pages/Dashboard'
 import Audit from './pages/Audit'
 import Compliance from './pages/Compliance'
@@ -14,6 +20,7 @@ import Chat from './pages/Chat'
 import Reporting from './pages/Reporting'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
+import LanguageSwitcher from './components/LanguageSwitcher'
 
 const API = '/api'
 
@@ -32,7 +39,6 @@ const ICONS = {
       <polyline points="14 2 14 8 20 8"/>
       <line x1="16" y1="13" x2="8" y2="13"/>
       <line x1="16" y1="17" x2="8" y2="17"/>
-      <polyline points="10 9 9 9 8 9"/>
     </svg>
   ),
   compliance: (
@@ -96,100 +102,287 @@ const ICONS = {
       <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
     </svg>
   ),
+  link: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+    </svg>
+  ),
+  settings: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  ),
+  copy: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+    </svg>
+  ),
 }
 
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-  { id: 'audit', label: 'Audit Generator', icon: 'audit' },
-  { id: 'history', label: 'History', icon: 'history' },
-  { id: 'compliance', label: 'Compliance', icon: 'compliance' },
-  { id: 'templates', label: 'Templates', icon: 'templates' },
-  { id: 'projects', label: 'Projects', icon: 'projects' },
-  { id: 'audit_plan', label: 'Audit Plan', icon: 'audit' },
-  { id: 'audit_program', label: 'Audit Execution', icon: 'projects' },
-  { id: 'analytics', label: 'Analytics', icon: 'analytics' },
-  { id: 'surveillance', label: 'Surveillance', icon: 'projects' },
-  { id: 'chat', label: 'AI Chat', icon: 'chat' },
-  { id: 'reporting', label: 'Reporting', icon: 'download' },
+const PAGE_ORDER = ['dashboard','audit','history','compliance','audit_plan','audit_program','surveillance','templates','projects','analytics','chat','reporting']
+
+const NAV_SECTIONS = [
+  {
+    labelKey: 'nav.main',
+    items: [
+      { id: 'dashboard', labelKey: 'nav.dashboard', icon: 'dashboard' },
+      { id: 'audit', labelKey: 'nav.audit_generator', icon: 'audit' },
+      { id: 'history', labelKey: 'nav.history', icon: 'history' },
+    ],
+  },
+  {
+    labelKey: 'nav.compliance_section',
+    items: [
+      { id: 'compliance', labelKey: 'nav.compliance', icon: 'compliance' },
+      { id: 'audit_plan', labelKey: 'nav.audit_plan', icon: 'audit' },
+      { id: 'audit_program', labelKey: 'nav.audit_execution', icon: 'projects' },
+      { id: 'surveillance', labelKey: 'nav.surveillance', icon: 'templates' },
+    ],
+  },
+  {
+    labelKey: 'nav.tools',
+    items: [
+      { id: 'templates', labelKey: 'nav.templates', icon: 'templates' },
+      { id: 'projects', labelKey: 'nav.projects', icon: 'projects' },
+      { id: 'analytics', labelKey: 'nav.analytics', icon: 'analytics' },
+      { id: 'chat', labelKey: 'nav.ai_chat', icon: 'chat' },
+      { id: 'reporting', labelKey: 'nav.reporting', icon: 'download' },
+    ],
+  },
 ]
 
+function PageTransition({ children, direction }) {
+  const anim = direction > 0 ? 'animate-slideIn' : 'animate-fadeIn'
+  return <div className={anim}>{children}</div>
+}
+
 function App() {
+  const { t, i18n } = useTranslation()
   const [page, setPage] = useState('dashboard')
+  const [prevPage, setPrevPage] = useState('dashboard')
   const [standards, setStandards] = useState(null)
+  const [hasApiKeys, setHasApiKeys] = useState(false)
+  const [tunnelUrl, setTunnelUrl] = useState('')
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [tunnelMode, setTunnelMode] = useState('auto')
+  const [prefs, updatePref] = usePreferences()
+  const [showPrefs, setShowPrefs] = useState(false)
+  const { notifications, unreadCount, dismissNotification, clearAll, markAllRead } = useNotifications(API)
 
   useEffect(() => {
-    fetch(`${API}/standards`)
-      .then(r => r.json())
-      .then(data => setStandards(data))
-      .catch(() => {})
+    const load = () => {
+      fetch(`${API}/standards`)
+        .then(r => r.json())
+        .then(data => setStandards(data))
+        .catch(() => {})
+      fetch(`${API}/config`)
+        .then(r => r.json())
+        .then(data => {
+          setHasApiKeys(data.has_api_keys)
+          if (data.tunnel_url) setTunnelUrl(data.tunnel_url)
+        })
+        .catch(() => {})
+      fetch(`${API}/tunnel`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.tunnel_mode) setTunnelMode(data.tunnel_mode)
+          if (data.tunnel_url) setTunnelUrl(data.tunnel_url)
+        })
+        .catch(() => {})
+    }
+    load()
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.dir = i18n.language?.startsWith('ar') ? 'rtl' : 'ltr'
     localStorage.setItem('theme', theme)
-  }, [theme])
+  }, [theme, i18n.language])
 
   useEffect(() => {
-    const handler = (e) => { setPage(e.detail); setSidebarOpen(false) }
+    const handler = (e) => { setPrevPage(page); setPage(e.detail); setSidebarOpen(false) }
     window.addEventListener('navigate', handler)
     return () => window.removeEventListener('navigate', handler)
-  }, [])
+  }, [page])
+
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    let gPressed = false
+    const handler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.contentEditable === 'true') return
+
+      if (e.key === 'Escape') {
+        window.dispatchEvent(new CustomEvent('key-escape'))
+        return
+      }
+
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('key-search'))
+        return
+      }
+
+      if (e.key === 'g' && !e.ctrlKey && !e.metaKey) {
+        gPressed = true
+        setTimeout(() => { gPressed = false }, 500)
+        return
+      }
+
+      if (gPressed) {
+        gPressed = false
+        const map = { d: 'dashboard', a: 'audit', h: 'history', c: 'compliance', t: 'templates', p: 'projects', n: 'analytics', x: 'chat', r: 'reporting', s: 'surveillance', l: 'audit_plan', m: 'audit_program' }
+        if (map[e.key]) {
+          e.preventDefault()
+          showToast(`Go to ${map[e.key]}`, 'info')
+          window.dispatchEvent(new CustomEvent('navigate', { detail: map[e.key] }))
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [showToast])
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light')
+
+  const copyUrl = useCallback(() => {
+    if (tunnelUrl) {
+      navigator.clipboard.writeText(tunnelUrl).then(() => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      })
+    }
+  }, [tunnelUrl])
+
+  const renderPage = () => {
+    const props = { API, key: page }
+    switch (page) {
+      case 'dashboard': return <Dashboard {...props} tunnelUrl={tunnelUrl} onCopyUrl={copyUrl} copied={copied} />
+      case 'audit': return <Audit {...props} standards={standards} hasApiKeys={hasApiKeys} />
+      case 'history': return <History {...props} />
+      case 'compliance': return <Compliance {...props} />
+      case 'templates': return <Templates {...props} />
+      case 'projects': return <Projects {...props} />
+      case 'audit_plan': return <AuditPlan {...props} />
+      case 'audit_program': return <AuditProgram {...props} />
+      case 'analytics': return <Analytics {...props} />
+      case 'surveillance': return <Surveillance {...props} />
+      case 'chat': return <Chat {...props} />
+      case 'reporting': return <Reporting {...props} />
+      default: return <Dashboard {...props} />
+    }
+  }
 
   return (
     <ToastProvider>
     <div className="app-layout">
-      <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Menu">
+      <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label={t('app.menu')}>
         {sidebarOpen ? ICONS.x : ICONS.menu}
       </button>
-      {sidebarOpen && <div className="overlay" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div>
-            <h1>ComplianceHub</h1>
-            <span>Audit & Compliance Platform</span>
+          <div className="sidebar-header">
+            <div className="sidebar-logo">
+              <div className="sidebar-logo-icon">CH</div>
+              <div>
+                <div className="sidebar-logo-text">{t('app.name')}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>{t('app.subtitle')}</div>
+              </div>
+            </div>
           </div>
-        </div>
+
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.id}
-              className={`nav-item ${page === item.id ? 'active' : ''}`}
-              onClick={() => { setPage(item.id); setSidebarOpen(false) }}
-            >
-              <span className="nav-icon">{ICONS[item.icon]}</span>
-              {item.label}
-            </button>
+          {NAV_SECTIONS.map(section => (
+            <div key={section.labelKey}>
+              <div className="sidebar-section-label">{t(section.labelKey)}</div>
+              {section.items.map(item => (
+                <button
+                  key={item.id}
+                  className={`nav-item ${page === item.id ? 'active' : ''}`}
+                  onClick={() => { setPage(item.id); setSidebarOpen(false) }}
+                >
+                  <span className="nav-icon">{ICONS[item.icon]}</span>
+                  {t(item.labelKey)}
+                </button>
+              ))}
+            </div>
           ))}
         </nav>
+
         <div className="sidebar-footer">
-          <button className="theme-toggle" onClick={toggleTheme}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 8px' }}>
+            <LanguageSwitcher />
+            <NotificationBell
+              notifications={notifications} unreadCount={unreadCount}
+              onDismiss={dismissNotification} onClearAll={clearAll} onMarkAllRead={markAllRead} />
+            <button onClick={() => setShowPrefs(true)}
+              className="nav-item" style={{ width: 32, height: 32, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title={t('preferences.title')}>
+              <span className="nav-icon">{ICONS.settings}</span>
+            </button>
+            {tunnelUrl ? (
+              <div className="sidebar-url" style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', flexShrink: 0 }} />
+                <a href={tunnelUrl} target="_blank" rel="noopener noreferrer" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tunnelUrl.replace(/^https?:\/\//, '')}</a>
+              </div>
+            ) : (
+              <div className="sidebar-url" style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, overflow: 'hidden' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6b7280', flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{t('nav.offline')}</span>
+              </div>
+            )}
+          </div>
+          <div style={{ padding: '0 16px 4px', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <span style={{
+              fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              color: tunnelUrl ? 'rgba(74,222,128,0.7)' : 'rgba(255,255,255,0.3)',
+              background: tunnelUrl ? 'rgba(74,222,128,0.1)' : 'transparent',
+              padding: '1px 6px', borderRadius: 4,
+            }}>{tunnelMode}</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>
+              {tunnelUrl ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
+          <button
+            onClick={toggleTheme}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 16px', width: '100%', textAlign: 'left',
+              fontSize: 13, fontWeight: 500,
+              color: 'var(--sidebar-text)', background: 'transparent',
+              border: 'none', borderRadius: 8, cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--sidebar-bg-hover)'; e.currentTarget.style.color = 'var(--sidebar-text-active)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--sidebar-text)' }}
+          >
             <span className="nav-icon">{theme === 'light' ? ICONS.moon : ICONS.sun}</span>
-            {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+            {theme === 'light' ? t('nav.dark_mode') : t('nav.light_mode')}
           </button>
         </div>
       </aside>
 
       <main className="main-content">
         <ErrorBoundary>
-          {page === 'dashboard' && <Dashboard API={API} />}
-          {page === 'audit' && <Audit API={API} standards={standards} />}
-          {page === 'history' && <History API={API} />}
-          {page === 'compliance' && <Compliance API={API} />}
-          {page === 'templates' && <Templates API={API} />}
-          {page === 'projects' && <Projects API={API} />}
-          {page === 'audit_plan' && <AuditPlan API={API} />}
-          {page === 'audit_program' && <AuditProgram API={API} />}
-          {page === 'analytics' && <Analytics API={API} />}
-          {page === 'surveillance' && <Surveillance API={API} />}
-          {page === 'chat' && <Chat API={API} />}
-          {page === 'reporting' && <Reporting API={API} />}
+          <PageTransition direction={PAGE_ORDER.indexOf(page) - PAGE_ORDER.indexOf(prevPage)}>{renderPage()}</PageTransition>
         </ErrorBoundary>
       </main>
+
+      {showPrefs && (
+        <PreferencesModal
+          prefs={prefs}
+          onUpdate={updatePref}
+          onClose={() => setShowPrefs(false)}
+          standards={standards?.standards}
+        />
+      )}
     </div>
     </ToastProvider>
   )
