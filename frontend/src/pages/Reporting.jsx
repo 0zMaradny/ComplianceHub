@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useToast } from '../components/Toast'
+import { useTranslation } from 'react-i18next'
+import { useToast } from '../hooks/useToast'
 import Spinner from '../components/Spinner'
 
 function downloadBlob(url, filename) {
@@ -10,6 +11,7 @@ function downloadBlob(url, filename) {
 }
 
 export default function Reporting({ API }) {
+  const { t } = useTranslation()
   const showToast = useToast()
   const [reportType, setReportType] = useState('compliance_summary')
   const [projectId, setProjectId] = useState('')
@@ -24,13 +26,13 @@ export default function Reporting({ API }) {
       const params = new URLSearchParams({ report_type: reportType })
       if (projectId) params.set('project_id', projectId)
       const resp = await fetch(`${API}/export/report?${params}`)
-      if (!resp.ok) { const err = await resp.text(); setMessage(`Error: ${err}`); showToast(err, 'error'); return }
+      if (!resp.ok) { const err = await resp.text(); setMessage(t('reporting.error') + err); showToast(err, 'error'); return }
       const blob = await resp.blob()
       const url = URL.createObjectURL(blob)
       downloadBlob(url, reportType === 'project_overview' ? 'project_overview.pdf' : 'compliance_summary.pdf')
       URL.revokeObjectURL(url)
-      setMessage('PDF downloaded successfully'); showToast('PDF downloaded', 'success')
-    } catch (e) { setMessage(`Error: ${e.message}`); showToast(e.message, 'error') }
+      setMessage(t('reporting.pdf_success')); showToast(t('reporting.pdf_success'), 'success')
+    } catch (e) { setMessage(t('reporting.error') + e.message); showToast(e.message, 'error') }
     finally { setGenerating(false) }
   }
 
@@ -40,21 +42,21 @@ export default function Reporting({ API }) {
       const params = new URLSearchParams({ dataset: csvDataset, months: String(months) })
       if (projectId) params.set('project_id', projectId)
       const resp = await fetch(`${API}/export/csv?${params}`)
-      if (!resp.ok) { const err = await resp.text(); setMessage(`Error: ${err}`); showToast(err, 'error'); return }
+      if (!resp.ok) { const err = await resp.text(); setMessage(t('reporting.error') + err); showToast(err, 'error'); return }
       const blob = await resp.blob()
       const url = URL.createObjectURL(blob)
       downloadBlob(url, `${csvDataset}.csv`)
       URL.revokeObjectURL(url)
-      setMessage('CSV downloaded successfully'); showToast('CSV downloaded', 'success')
-    } catch (e) { setMessage(`Error: ${e.message}`); showToast(e.message, 'error') }
+      setMessage(t('reporting.csv_success')); showToast(t('reporting.csv_success'), 'success')
+    } catch (e) { setMessage(t('reporting.error') + e.message); showToast(e.message, 'error') }
     finally { setGenerating(false) }
   }
 
   return (
     <div className="animate-fadeIn">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-[var(--text-primary)]">Reporting</h2>
-        <p className="mt-1 text-[var(--text-secondary)]">Generate and export compliance reports and data</p>
+      <div className="page-header">
+        <h2>{t('reporting.title')}</h2>
+        <p>{t('reporting.subtitle')}</p>
       </div>
 
       {message && (
@@ -65,60 +67,62 @@ export default function Reporting({ API }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* PDF Report */}
-        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">PDF Summary Report</h3>
-          <div className="mt-3">
-            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Report Type</label>
+        <div className="card">
+          <h3 className="card-header">{t('reporting.pdf_report')}</h3>
+          <div className="card-body">
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">{t('reporting.report_type')}</label>
             <select value={reportType} onChange={e => setReportType(e.target.value)}
-              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]">
-              <option value="compliance_summary">Compliance Summary</option>
-              <option value="project_overview">Project Overview</option>
+              className="input mb-3">
+              <option value="compliance_summary">{t('reporting.compliance_summary')}</option>
+              <option value="project_overview">{t('reporting.project_overview')}</option>
             </select>
-            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Project ID (optional)</label>
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">{t('reporting.project_id')}</label>
             <input type="text" value={projectId} onChange={e => setProjectId(e.target.value)}
-              placeholder="Leave empty for all projects"
-              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]" />
-            <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap w-full" onClick={generatePdf} disabled={generating}>
-              {generating ? <><Spinner size="sm" className="mr-1.5" />Generating...</> : 'Download PDF Report'}
+              placeholder={t('reporting.project_id_hint')}
+              className="input mb-3" />
+            <button className="btn btn-primary w-full" onClick={generatePdf} disabled={generating}>
+              {generating ? <><Spinner size="sm" className="mr-1.5" />{t('reporting.generating')}</> : t('reporting.download_pdf')}
             </button>
           </div>
         </div>
 
         {/* CSV Export */}
-        <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)]">
-          <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">CSV Data Export</h3>
-          <div className="mt-3">
-            <label className="block mb-2 text-sm text-[var(--text-secondary)]">Dataset</label>
+        <div className="card">
+          <h3 className="card-header">{t('reporting.csv_export')}</h3>
+          <div className="card-body">
+            <label className="block mb-2 text-sm text-[var(--text-secondary)]">{t('reporting.dataset')}</label>
             <select value={csvDataset} onChange={e => setCsvDataset(e.target.value)}
-              className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]">
-              <option value="nc_trends">NC Trends</option>
-              <option value="project_health">Project Health</option>
-              <option value="capa_metrics">CAPA Metrics</option>
-              <option value="ai_usage">AI Usage</option>
+              className="input mb-3">
+              <option value="nc_trends">{t('reporting.nc_trends')}</option>
+              <option value="project_health">{t('reporting.project_health')}</option>
+              <option value="capa_metrics">{t('reporting.capa_metrics')}</option>
+              <option value="ai_usage">{t('reporting.ai_usage')}</option>
             </select>
             {csvDataset === 'nc_trends' && (
               <>
-                <label className="block mb-2 text-sm text-[var(--text-secondary)]">Months</label>
+                <label className="block mb-2 text-sm text-[var(--text-secondary)]">{t('reporting.months')}</label>
                 <input type="number" value={months} onChange={e => setMonths(Number(e.target.value))} min={1} max={24}
-                  className="w-full p-2 rounded-md text-sm mb-3 border border-[var(--border-color)]" />
+                  className="input mb-3" />
               </>
             )}
-            <button className="bg-[var(--primary)] text-white hover:bg-[var(--primary-dark)] disabled:opacity-50 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center border-none transition-all duration-150 cursor-pointer whitespace-nowrap w-full" onClick={downloadCsv} disabled={generating}>
-              {generating ? <><Spinner size="sm" className="mr-1.5" />Downloading...</> : 'Download CSV'}
+            <button className="btn btn-primary w-full" onClick={downloadCsv} disabled={generating}>
+              {generating ? <><Spinner size="sm" className="mr-1.5" />{t('reporting.downloading')}</> : t('reporting.download_csv')}
             </button>
           </div>
         </div>
       </div>
 
       {/* Quick export buttons for Dashboard integration */}
-      <div className="rounded-xl p-6 mb-5 bg-[var(--bg-card)] border border-[var(--border-color)] mt-4">
-        <h3 className="text-base font-semibold mb-4 text-[var(--text-primary)] m-0">Quick Links</h3>
-        <div className="flex gap-3 flex-wrap mt-2">
-          {['dashboard', 'analytics', 'compliance'].map(page => (
-            <a key={page} href={`#${page}`}
-              onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: page })) }}
-              className="bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 dark:bg-gray-200 dark:text-gray-800 px-5 py-2.5 rounded-lg text-sm font-semibold inline-flex items-center justify-center transition-all duration-150 cursor-pointer whitespace-nowrap capitalize">{page}</a>
-          ))}
+      <div className="card mt-4">
+        <h3 className="card-header">{t('reporting.quick_links')}</h3>
+        <div className="card-body">
+          <div className="flex gap-3 flex-wrap">
+            {['dashboard', 'analytics', 'compliance'].map(page => (
+              <a key={page} href={`#${page}`}
+                onClick={e => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate', { detail: page })) }}
+                className="btn btn-secondary capitalize">{t('reporting.link_' + page)}</a>
+            ))}
+          </div>
         </div>
       </div>
     </div>

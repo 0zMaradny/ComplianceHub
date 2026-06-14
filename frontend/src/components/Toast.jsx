@@ -1,11 +1,26 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { ToastContext } from '../hooks/useToast'
 
-const ToastContext = createContext(null)
+function ToastItem({ toast, onRemove }) {
+  const barRef = useRef(null)
 
-export function useToast() {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within ToastProvider')
-  return ctx
+  useEffect(() => {
+    if (barRef.current) {
+      barRef.current.style.animationDuration = toast.duration + 'ms'
+    }
+    const timer = setTimeout(() => onRemove(toast.id), toast.duration)
+    return () => clearTimeout(timer)
+  }, [toast, onRemove])
+
+  const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' }
+
+  return (
+    <div className={`toast toast-${toast.type}`} onClick={() => onRemove(toast.id)}>
+      <span className="toast-icon">{icons[toast.type] || 'ℹ'}</span>
+      <span className="toast-message">{toast.message}</span>
+      <div ref={barRef} className="toast-bar" />
+    </div>
+  )
 }
 
 export function ToastProvider({ children }) {
@@ -13,10 +28,7 @@ export function ToastProvider({ children }) {
 
   const showToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-    }, duration)
+    setToasts(prev => [...prev, { id, message, type, duration }])
   }, [])
 
   const removeToast = useCallback((id) => {
@@ -28,12 +40,7 @@ export function ToastProvider({ children }) {
       {children}
       <div className="toast-container">
         {toasts.map(t => (
-          <div key={t.id} className={`toast toast-${t.type} animate-slideIn`} onClick={() => removeToast(t.id)}>
-            <span className="toast-icon">{
-              t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : t.type === 'warning' ? '⚠' : 'ℹ'
-            }</span>
-            <span className="toast-message">{t.message}</span>
-          </div>
+          <ToastItem key={t.id} toast={t} onRemove={removeToast} />
         ))}
       </div>
     </ToastContext.Provider>

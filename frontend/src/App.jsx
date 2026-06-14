@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import './App.css'
-import { useToast } from './components/Toast'
+import { useToast } from './hooks/useToast'
 import usePreferences from './hooks/usePreferences'
 import useNotifications from './hooks/useNotifications'
 import NotificationBell from './components/NotificationBell'
