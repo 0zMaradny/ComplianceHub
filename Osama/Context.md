@@ -3,34 +3,7 @@
 Loads at the start of every session. Claude reads this to feel "experienced" — not starting from scratch every time. Last updated: June 2026
 
 ## Who I Am
-
-**Base:** Riyadh, Saudi Arabia (Resident)
-**Origin:** Egyptian — Home city: Alexandria
-**Travel Pattern:** Alexandria 2x/year · Frequent trips to Makkah & Madinah
-**Communication:** Direct, structured, no fluff. Arabic for documents. English for technical work.
-**Contact:** osmaradny@gmail.com · +966 54 596 1021
-**LinkedIn:** linkedin.com/in/osama-el-maradny-2b2833117
-
-## Career Status & Trajectory
-
-**Employer:** TÜV Austria GCC (Feb 2023–present)
-
-**Additional Certifications In Progress:**
-- ISO 42001 LI (PECB) — exam preparation in progress
-- PMP (PMI) — 36-hour training completed 2019 · exam pending · target before July 2026
-
-**Platform In Development:** ComplianceHub — full-stack audit & compliance platform
-**Repo:** https://github.com/0zMaradny/ComplianceHub
-
-**Education:**
-- B.Sc. Mechanical Power Engineering — Grade A+ · AAST 2016
-- M.Sc. Quality Management — AAST
-
-**Key Certifications:**
-ISO 27001:2022 LA (Robere 2023) · ISO 50001 LA · ISO 20000-1 LA · ISO 14001 LA · ISO 45001 LA
-ISO 9001:2015 LA (CQI 2019) · ISO 27001:2013 LA
-NEBOSH · NCFE L2 Risk · Primavera P6 · Revit MEP
-CQI/IRCA Accredited Trainer
+→ See USER.md — single source for personal and professional facts.
 
 ## Professional Identity — Dual Role
 
@@ -192,13 +165,13 @@ Template — populate when confirmed.
 |-------|------------|------|
 | Backend | Python · FastAPI · Uvicorn | 8000 |
 | Frontend | React · Vite · Tailwind CSS | 5173 |
-| AI Router | Multi-provider: Gemini → OpenAI → Claude → HF → Ollama → Local → Offline | — |
-| Local AI | llama.cpp server — qwen-0.5b/1.5b.gguf | 8080 |
-| Data | clause_data.py — data-driven clause database for all 13 standards | — |
+| AI Router | 5-tier: Claude (Anthropic) → OpenRouter frontier → OpenRouter strong → Groq → Local Qwen3-4B | — |
+| Local AI | llama.cpp server — qwen3-4b.gguf (preferred) / qwen-3b.gguf / qwen-0.5b.gguf | 8080 |
+| Data | clause_data.py — data-driven clause database for all 14 standards | — |
 | Doc Gen | python-docx with TÜV branding (TUV_BLUE #003D7A · TUV_RED #C00000) | — |
 | PDF | LibreOffice headless conversion | — |
 
-### Supported Standards (13)
+### Supported Standards (14)
 
 | Key | Standard | Structure |
 |-----|----------|-----------|
@@ -206,6 +179,7 @@ Template — populate when confirmed.
 | iso_14001 | ISO 14001:2015 — Environmental | HLS Clause 1-10 |
 | iso_45001 | ISO 45001:2018 — OH&S | HLS Clause 1-10 |
 | iso_50001 | ISO 50001:2018 — Energy | HLS Clause 1-10 |
+| iso_13485 | ISO 13485:2016 — Medical Devices | HLS Clause 1-10 |
 | iso_27001 | ISO 27001:2022 — InfoSec | HLS + Annex A (4 themes, 93 controls) |
 | iso_20000 | ISO 20000-1:2018 — Service Mgmt | HLS Clause 1-10 |
 | iso_22301 | ISO 22301:2019 — Business Continuity | HLS Clause 1-10 |
@@ -229,28 +203,26 @@ Template — populate when confirmed.
 | TNL | Test / Nonconformity Log |
 | Certificate | Certificate |
 
-### AI Task Routing (per doc type)
+### AI Task Routing (5-tier fallback chain)
 
-| Task | Primary → Fallback Chain |
-|------|--------------------------|
-| extract_shared_context | gemini → openai → claude → hf → local |
-| Audit_Plan_Stage_1 | openai → claude → gemini → hf → local |
-| Audit_Plan_Stage_2 | openai → claude → gemini → hf → local |
-| Participation_List | openai → gemini → claude → hf → local |
-| Audit_Report | claude → openai → gemini → hf → local |
-| ISO_Checklist | gemini → openai → claude → hf → local |
-| Certificate_Text | claude → openai → gemini → hf → local |
-| Certificate | claude → openai → gemini → hf → local |
-| TNL | openai → claude → gemini → hf → local |
+All tasks route through the same 5-tier chain — no per-task provider assignment:
+
+```
+Tier 0: Claude (Anthropic) — premium, best quality (skipped if ANTHROPIC_API_KEY truncated)
+Tier 1: OpenRouter frontier — nemotron_ultra, qwen3_coder, kimi_k26, owl_alpha (4 parallel, all free)
+Tier 2: OpenRouter strong — nemotron_super, llama_70b, qwen3_next, hermes_405b (4 parallel, all free)
+Tier 3: Groq — groq_llama (Llama 3.3 70B, ~800 t/s, free)
+Tier 4: Local AI — qwen3-4b / qwen-3b / qwen-0.5b (Q4_K_M GGUF, localhost:8080)
+Fallback: Offline generator — static templates, instant, no AI needed
+```
 
 ### AI Content Modes
 
 | Mode | API Key | Provider Chain | Speed | Quality |
 |------|---------|----------------|-------|---------|
-| HF Free | HF_API_KEY set | hf → local → offline | Fast | 7/8 docs via Llama-3-8B |
-| Cloud AI | Valid Gemini/OpenAI/Claude key | per task routing above | Fast | Best (all 8) |
-| Local AI | Empty (+ llama.cpp running) | local → offline | Slow | ~6-7/8 docs |
-| Offline | Empty (no model) | offline only | Instant | Professional templates |
+| Free Cloud | OPENROUTER_API_KEY + GROQ_API_KEY set | OpenRouter frontier → strong → Groq → local | Fast | Good (Nemotron 550B best) |
+| Local AI | No keys (llama.cpp running) | local only | Slow | ~40s/doc qwen3-4b |
+| Offline | No keys, no model | offline generator only | Instant | Professional templates |
 
 ### Key Backend Modules
 
@@ -260,28 +232,39 @@ Template — populate when confirmed.
 | `app/main.py` | FastAPI app, upload/generate endpoints, background job processing, progress_store |
 | `app/services/clause_data.py` | Data-driven clause database: HLS_CORE, CLAUSE_8 variants, ANNEX_A_27001/42001, PIMS_27701, FRAMEWORK_31000/10002, SUPPORTING_STANDARDS_EVIDENCE |
 | `app/services/ai_pipeline.py` | Shared context extraction + AI doc generation with family context injection + few-shot examples |
-| `app/services/ai/router.py` | Multi-provider routing with Autodebugger integration, key validation, fallback chains |
+| `app/services/ai/router.py` | 5-tier fallback chain: Claude → OpenRouter frontier → OpenRouter strong → Groq → Local. ThreadPoolExecutor + cache + rate limiter + health tracking |
 | `app/services/ai/debugger.py` | Autodebugger class: input validation, output validation, placeholder detection, self-heal retries |
-| `app/services/ai/gemini_provider.py` | Gemini provider |
-| `app/services/ai/openai_provider.py` | OpenAI provider |
-| `app/services/ai/claude_provider.py` | Claude provider |
-| `app/services/ai/hf_provider.py` | HuggingFace provider |
-| `app/services/ai/local_provider.py` | Local llama.cpp provider |
-| `app/services/ai/ollama_provider.py` | Ollama provider |
+| `app/services/ai/anthropic_provider.py` | Claude API client (Tier 0, premium, key truncated = fast-fail skipped) |
+| `app/services/ai/openrouter_provider.py` | OpenRouter client for all frontier + strong free models (Tiers 1+2) |
+| `app/services/ai/groq_provider.py` | Groq client — Llama 3.3 70B (Tier 3, ~800 t/s) |
+| `app/services/ai/local_provider.py` | Local llama.cpp provider — qwen3-4b/qwen-3b/qwen-0.5b (Tier 4) |
+| `app/services/ai/model_registry.py` | 14 models: PREMIUM + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE |
+| `app/services/ai/rate_limiter.py` | Per-provider sliding window rate limiter |
+| `app/services/ai/json_utils.py` | JSON extraction utilities |
 | `app/services/offline_generator.py` | Dynamic standard-specific checklists — no hardcoded ISO 9001 sections |
 | `app/services/document_generator.py` | python-docx document generation with TÜV branding, RTL support, page numbers, landscape mode |
 | `app/services/file_parser.py` | DOCX + TXT parsing, audit notes extraction, manday data extraction via regex |
 | `app/services/pdf_converter.py` | LibreOffice headless PDF conversion |
 | `app/services/template_manager.py` | Template upload and management |
 | `app/services/doc_schemas.py` | Document schemas/validation |
+| `app/services/manday_calculator.py` | IAF MD 5 manday reference for all 14 standards |
+| `app/services/surveillance.py` | 3-year surveillance cycle management |
 
 ### Frontend Pages
 
 | Page | Purpose |
 |------|---------|
-| Dashboard | Stats overview, quick actions, standards list |
-| Audit | Upload audit notes + manday → select standards → generate 8 doc types with progress polling |
+| Dashboard | Stats overview, compliance health ring, quick actions, tunnel URL |
+| Audit | Upload audit notes + manday → select standards → generate 8 docs |
+| AuditPlan | Stage 1/2 audit plan generation |
 | Compliance | Framework viewer with pillar-based checklists |
+| Projects | Project management and tracking |
+| History | Past audits and document history |
+| Analytics | Compliance analytics and dashboards |
+| Surveillance | 3-year surveillance cycle management |
+| Chat | AI chat interface |
+| Templates | Document template management |
+| Reporting | Reports and exports |
 
 ### TÜV Branded Templates (in repo)
 
@@ -310,28 +293,27 @@ cd frontend && npm run build
 cd frontend && npm run lint
 
 # Local AI (llama.cpp)
-/opt/llama-server/llama-server -m models/qwen-1.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080
+/opt/llama-server/llama-server -m /opt/llama-server/models/qwen3-4b.gguf -c 32768 -t 4 -b 2048 --mlock --port 8080
+/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-3b.gguf -c 8192 -t 4 -b 2048 --mlock --port 8080
+/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080
 
 # API smoke test
 curl http://localhost:8000/api/standards
 ```
 
 ### AI Keys (backend/.env)
-- GEMINI_API_KEY (prefix: AIza)
-- OPENAI_API_KEY (prefix: sk-)
-- CLAUDE_API_KEY (prefix: sk-ant-)
-- HF_API_KEY (prefix: hf_)
-- HF default model: meta-llama/Meta-Llama-3-8B-Instruct
-- HF_MODEL env var to override
+- OPENROUTER_API_KEY (prefix: sk-or-v1) — free frontier + strong models
+- GROQ_API_KEY (prefix: gsk_) — Llama 3.3 70B, free
+- ANTHROPIC_API_KEY (prefix: sk-ant-api) — Claude Sonnet 4, paid (truncated key = fast-fail skip)
+- HF_API_KEY (prefix: hf_) — HuggingFace free inference (optional backup)
 
 ### Git
 - Auto-pushes every commit on main via .git/hooks/post-commit
 - PAT token stored in ~/.git-credentials
 
 ### Python Dependencies
-fastapi==0.115.6 · uvicorn[standard]==0.34.0 · python-docx==1.1.2 · python-multipart==0.0.20
-openpyxl==3.1.5 · lxml==6.1.1 · pydantic==2.13.4 · aiofiles==24.1.0
-google-genai==2.7.0 · openai>=1.55.0 · anthropic>=0.49.0 · requests>=2.34.2
+fastapi · uvicorn · python-docx · python-multipart · openpyxl · lxml · pydantic · aiofiles
+fpdf2 · pypdf2 · requests · psycopg2-binary · pytest · httpx · pyflakes
 
 ## Legacy React Artifact (TÜV Austria Hellas)
 
@@ -345,7 +327,7 @@ google-genai==2.7.0 · openai>=1.55.0 · anthropic>=0.49.0 · requests>=2.34.2
 - NO Gemini API (generativelanguage.googleapis.com)
 - NO process.env · NO require() · NO useTransition (React 18 only)
 - YES AI: https://api.anthropic.com/v1/messages — no key needed in artifact
-- YES Model: claude-sonnet-4-20250514 — response: content[0].text
+- YES Model: claude-sonnet-4-6 — response: content[0].text
 - YES CDN: cdnjs.cloudflare.com for mammoth + XLSX
 - YES Excel: window.XLSX.utils.aoa_to_sheet + writeFile — NOT HTML blob
 - YES Checklist IDs: deterministic — std-clause_with_underscores
@@ -388,16 +370,7 @@ Step 1 Context → Step 2 Stakeholders → Step 3 Impact Categories (10) → Ste
 10 mandatory impact categories: Fairness · Privacy · Safety · Security · Explainability · Accountability · Societal · Economic · Legal · Human Autonomy.
 
 ## Technical Defaults
-
-- **Excel:** Always openpyxl · formulas not hardcoded values · scripts/recalc.py after build
-- **Word/Arabic:** python-docx · RTL paragraph alignment · explicit bidi run property
-- **Arabic voice:** first-person practitioner — active voice, never passive
-- **Code:** Python · modular · CONFIG block at top · locally deployable
-- **Outputs:** Always complete, print-ready, professional-grade — no placeholder templates
-- **File naming:** Match client doc codes exactly — e.g. UACC-EnMS-ROR-01, MSD-MOI-GRC-STRAT-001
-- **Client isolation:** Never mix formulas, colors, or vocabulary between clients
-- **Dual role clarity:** Auditor output = identify only · Implementer output = solve and deliver
-- **React artifacts:** Follow all sandbox hard rules above (legacy only — new work is full-stack)
+→ See MEMORY.md — Confirmed Preferences section. Single source of truth.
 
 ## Claude Prompt Quick Reference (Merged Anatomy Framework)
 

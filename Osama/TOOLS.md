@@ -37,8 +37,8 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
 |--------|--------|
 | MSD-MOI | `MSD-MOI-GRC-` |
 | UACC | `UACC-EnMS-` |
-| SAGCO | TBD |
-| Al-Ahsa Municipality | TBD |
+| SAGCO | SAGCO-IMS- |
+| Al-Ahsa Municipality | AHSA-ISMS- |
 
 ## Excel Defaults
 

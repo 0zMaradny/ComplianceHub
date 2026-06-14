@@ -48,8 +48,8 @@ My complete digital team. Each agent has a fixed role, personality, and scope. C
 **Client-Specific Formulas — load correct set per client, never mix:**
 - **MSD-MOI:** Latent S = O×Q · Residual V = S×(1−U/4) · VLOOKUP Treatment Plan
 - **UACC:** EnMS Rating L×S · Nested IF Risk Level
-- **SAGCO:** TBD per deliverable — establish before starting
-- **Al-Ahsa:** ISO 27001 likelihood × impact matrix
+- **SAGCO:** L×S (Risk Rating) · L×S×R (Environmental Significance) — see Context.md Client 3
+- **Al-Ahsa:** L×I (Risk Score) · Nested IF Risk Level — see Context.md Client 4
 - **New client:** establish formula architecture in Context.md before any deliverable
 
 **CAPA Structure (always in this order):** Root Cause Analysis (5-Whys) → Immediate Containment → Corrective Action → Preventive Action → Effectiveness Verification

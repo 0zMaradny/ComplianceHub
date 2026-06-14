@@ -42,7 +42,7 @@ This file updates after each session. It stores what Claude has learned: prefere
   - NO require() — must use ES module import
   - Use window.storage API (get/set/delete) for persistence — key: 'tuv_platform_data'
   - AI: Anthropic API only — https://api.anthropic.com/v1/messages — no key needed in artifact
-  - Model: claude-sonnet-4-20250514 — response in content[0].text
+  - Model: claude-sonnet-4-6 — response in content[0].text
   - CDN allowed: cdnjs.cloudflare.com (mammoth, XLSX)
 - Checklist IDs: deterministic — ${std}-${clause.replace(/\./g,'_')} — NEVER random hash
 - State management: all bulk document generation must accumulate then call setAuditProjects ONCE

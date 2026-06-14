@@ -188,6 +188,19 @@ Standardized processes. Claude runs these without re-explanation. **All skills a
 | 6 | Determine Residual Impact | Residual Severity × Residual Likelihood = Overall Residual Impact Level |
 | 7 | Governance Decision & Review | Accept / Conditionally Accept / Escalate / Reject + documented rationale + action plan |
 
+### AIIA Audit Key Points (checklist for auditors):
+- AI system purpose and intended use documented
+- All stakeholder groups identified including vulnerable groups
+- All 10 impact categories assessed (N/A requires justification)
+- Each impact scored: Severity (1–5) × Likelihood (1–5)
+- Controls identified and evaluated for adequacy
+- Additional mitigations planned with responsible owners and target dates
+- Residual impact determined after controls applied
+- Governance body has reviewed and recorded decision (Accept/Escalate/Reject)
+- Action plan exists for all conditional acceptances
+- Monitoring and periodic review schedule defined
+- Communication to affected stakeholders documented
+
 ### 10 ISO 42005 Impact Categories:
 
 | # | Category | What to Check |
@@ -505,7 +518,7 @@ Standardized processes. Claude runs these without re-explanation. **All skills a
 **Hard Rules (never violate if maintaining legacy):**
 - ❌ NO import from "firebase/..." — use window.storage only
 - ❌ NO process.env · NO require() · NO Gemini API
-- ✅ AI: https://api.anthropic.com/v1/messages — claude-sonnet-4-20250514
+- ✅ AI: https://api.anthropic.com/v1/messages — claude-sonnet-4-6
 - ✅ CDN: cdnjs.cloudflare.com (mammoth, XLSX)
 - ✅ Excel: window.XLSX.utils.aoa_to_sheet + writeFile — NOT HTML blob
 - ✅ Checklist IDs: deterministic — `${std}-${clause.replace(/\./g,'_')}`
