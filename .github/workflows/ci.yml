@@ -26,6 +26,9 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Install test dependencies
+      run: pip install pytest httpx
+
     - name: Check all Python syntax
       run: |
         python -m compileall . -q
