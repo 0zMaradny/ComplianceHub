@@ -1,16 +1,16 @@
 <#
 .SYNOPSIS
-  Launch ComplianceHub from Windows via WSL.
-  Thin wrapper around go.sh running inside WSL (Ubuntu).
+  Launch ComplianceHub from Windows.
+  Uses WSL if available, falls back to native Python backend.
 
 .PARAMETER ai
-  Start with local AI
+  Start with local AI (WSL mode only)
 .PARAMETER cloudflare
-  Cloudflare tunnel only
+  Start Cloudflare tunnel (requires cloudflared.exe in PATH or repo)
 .PARAMETER serveo
-  Serveo tunnel only
+  Serveo tunnel (WSL mode only)
 .PARAMETER serveoSubdomain
-  Fixed Serveo subdomain (use with -serveo)
+  Fixed Serveo subdomain (WSL mode only)
 .PARAMETER noTunnel
   Localhost only
 .PARAMETER help
@@ -26,61 +26,156 @@ param(
   [switch]$help
 )
 
+$BOLD = [char]27 + "[1m"
+$GREEN = [char]27 + "[32m"
+$YELLOW = [char]27 + "[33m"
+$CYAN = [char]27 + "[36m"
+$RED = [char]27 + "[31m"
+$NC = [char]27 + "[0m"
+
+$ROOT_DIR = $PSScriptRoot
+$URL_FILE = "$ROOT_DIR\Osama\.tunnel-url"
+
 # ── Help ──
 if ($help) {
-  Write-Host "Usage: .\go.ps1 [-ai] [-cloudflare|-serveo|-noTunnel] [-serveoSubdomain NAME]"
-  Write-Host "  Default: auto tunnel, no AI"
+  Write-Host "Usage: .\go.ps1 [-cloudflare|-noTunnel]"
+  Write-Host "  Default: no tunnel, localhost only"
+  Write-Host "  WSL mode: also supports -ai -serveo -serveoSubdomain"
   exit 0
 }
 
-# ── Detect WSL distro ──
-$WSL_DISTRO = "Ubuntu"
-$wslList = wsl -l -q 2>$null
-if ($wslList -match "Ubuntu") {
+# ── Check for WSL ──
+$HAS_WSL = $false
+try {
+  $wslCheck = wsl --status 2>&1
+  if ($LASTEXITCODE -eq 0) { $HAS_WSL = $true }
+} catch {}
+
+# ── WSL MODE: delegate to go.sh ──
+if ($HAS_WSL) {
   $WSL_DISTRO = "Ubuntu"
-} elseif ($wslList -match "docker-desktop") {
-  # Skip docker-desktop, try first real distro
-  $first = ($wslList -split "`n" | Where-Object { $_ -ne "" -and $_ -notlike "*docker*" -and $_ -notlike "*Windows*" } | Select-Object -First 1)
-  if ($first) { $WSL_DISTRO = $first.Trim() }
+  $wslList = wsl -l -q 2>$null
+  if ($wslList -match "Ubuntu") {
+    $WSL_DISTRO = "Ubuntu"
+  } elseif ($wslList -match "docker-desktop") {
+    $first = ($wslList -split "`n" | Where-Object { $_ -ne "" -and $_ -notlike "*docker*" -and $_ -notlike "*Windows*" } | Select-Object -First 1)
+    if ($first) { $WSL_DISTRO = $first.Trim() }
+  }
+
+  $WSL_REPO = ""
+  $wslPath = wsl -d $WSL_DISTRO -e wslpath "$ROOT_DIR" 2>$null
+  if ($LASTEXITCODE -eq 0 -and $wslPath) {
+    $WSL_REPO = $wslPath.Trim()
+  } else {
+    $drive = $ROOT_DIR.Substring(0,1).ToLower()
+    $rest = $ROOT_DIR.Substring(2) -replace '\\', '/'
+    $WSL_REPO = "/mnt/$drive$rest"
+  }
+
+  $ARGS = @()
+  if ($ai) { $ARGS += "--ai" }
+  if ($cloudflare -and -not $serveo) { $ARGS += "--cloudflare" }
+  if ($serveo) { $ARGS += "--serveo" }
+  if ($serveoSubdomain) { $ARGS += "--serveo-subdomain=$serveoSubdomain" }
+  if ($noTunnel) { $ARGS += "--no-tunnel" }
+
+  $CMD = "cd '$WSL_REPO' && bash go.sh $($ARGS -join ' ')"
+
+  Write-Host "${CYAN}ComplianceHub — WSL mode ($WSL_DISTRO)${NC}"
+  Write-Host "  Repo: $WSL_REPO"
+  if ($ARGS.Count -gt 0) { Write-Host "  Args: $($ARGS -join ' ')" }
+  Write-Host ""
+
+  wsl -d $WSL_DISTRO -e bash -c $CMD
+
+  $URL = wsl -d $WSL_DISTRO -e sh -c "cat /tmp/compliancehub-url.txt 2>/dev/null || cat $WSL_REPO/Osama/.tunnel-url 2>/dev/null" 2>$null
+  if ($URL) {
+    Write-Host ""
+    Write-Host "Tunnel URL: $URL" -ForegroundColor Green
+  }
+  exit 0
 }
 
-# ── Resolve repo path ──
-$WIN_PATH = $PSScriptRoot
-$WSL_REPO = ""
-$wslPath = wsl -d $WSL_DISTRO -e wslpath "$WIN_PATH" 2>$null
-if ($LASTEXITCODE -eq 0 -and $wslPath) {
-  $WSL_REPO = $wslPath.Trim()
-}
-if (-not $WSL_REPO) {
-  # Fallback: assume mounted at /mnt/c/...
-  $drive = $WIN_PATH.Substring(0,1).ToLower()
-  $rest = $WIN_PATH.Substring(2) -replace '\\', '/'
-  $WSL_REPO = "/mnt/$drive$rest"
-}
-
-# ── Build args ──
-$ARGS = @()
-if ($ai) { $ARGS += "--ai" }
-if ($cloudflare) { $ARGS += "--cloudflare" }
-if ($serveo) { $ARGS += "--serveo" }
-if ($serveoSubdomain) { $ARGS += "--serveo-subdomain=$serveoSubdomain" }
-if ($noTunnel) { $ARGS += "--no-tunnel" }
-
-$CMD = "cd '$WSL_REPO' && bash go.sh $($ARGS -join ' ')"
-
-Write-Host "ComplianceHub — launching via WSL ($WSL_DISTRO)" -ForegroundColor Cyan
-Write-Host "  Repo: $WSL_REPO" -ForegroundColor Gray
-if ($ARGS.Count -gt 0) {
-  Write-Host "  Args: $($ARGS -join ' ')" -ForegroundColor Gray
-}
+# ── NATIVE MODE (no WSL) ──
+Write-Host "${CYAN}ComplianceHub — native mode${NC}"
 Write-Host ""
 
-# ── Launch ──
-wsl -d $WSL_DISTRO -e bash -c $CMD
-
-# ── Read back tunnel URL ──
-$URL = wsl -d $WSL_DISTRO -e sh -c "cat /tmp/compliancehub-url.txt 2>/dev/null || cat $WSL_REPO/Osama/.tunnel-url 2>/dev/null" 2>$null
-if ($URL) {
-  Write-Host ""
-  Write-Host "Tunnel URL: $URL" -ForegroundColor Green
+# Check Python
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+  Write-Host "${RED}Python not found. Install Python and add to PATH.${NC}"
+  exit 1
 }
+
+$BACKEND_DIR = "$ROOT_DIR\backend"
+if (-not (Test-Path "$BACKEND_DIR\app\main.py")) {
+  Write-Host "${RED}Backend not found at $BACKEND_DIR. Run from ComplianceHub repo root.${NC}"
+  exit 1
+}
+
+# ── Start backend ──
+Write-Host "Starting backend on http://localhost:8000 ..."
+$pythonArgs = @("-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000")
+$backendProcess = Start-Process -FilePath "python" -ArgumentList $pythonArgs -WorkingDirectory $BACKEND_DIR -WindowStyle Hidden -PassThru -RedirectStandardOutput "$ROOT_DIR\.backend.log" -RedirectStandardError "$ROOT_DIR\.backend.err.log"
+Start-Sleep -Seconds 2
+
+# Check if it started
+$backendRunning = Get-Process -Id $backendProcess.Id -ErrorAction SilentlyContinue
+if (-not $backendRunning) {
+  Write-Host "${RED}Backend failed to start. Check .backend.err.log${NC}"
+  exit 1
+}
+Write-Host "${GREEN}  ✓ Backend started (PID: $($backendProcess.Id))${NC}"
+
+# ── Cloudflare tunnel (optional) ──
+$CLOUDFLARED = "cloudflared.exe"
+if (-not (Get-Command $CLOUDFLARED -ErrorAction SilentlyContinue)) {
+  $CLOUDFLARED = "$ROOT_DIR\cloudflared.exe"
+}
+
+$TUNNEL_URL = ""
+if ($cloudflare -and (Test-Path $CLOUDFLARED)) {
+  Write-Host "Starting Cloudflare tunnel..."
+  $tunnelArgs = @("tunnel", "--url", "http://localhost:8000", "--protocol", "http2")
+  $tunnelProcess = Start-Process -FilePath $CLOUDFLARED -ArgumentList $tunnelArgs -WindowStyle Hidden -PassThru -RedirectStandardOutput "$ROOT_DIR\.tunnel.log" -RedirectStandardError "$ROOT_DIR\.tunnel.err.log"
+  Start-Sleep -Seconds 3
+  
+  $TUNNEL_URL = "http://localhost:8000"
+  Write-Host "${GREEN}  ✓ Tunnel starting... Check .tunnel.log for URL${NC}"
+  Write-Host "${YELLOW}  Run 'type $ROOT_DIR\.tunnel.log | findstr try' to get the URL${NC}"
+} elseif ($cloudflare) {
+  Write-Host "${YELLOW}  ⚠ cloudflared.exe not found. Download from:${NC}"
+  Write-Host "     https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/"
+  Write-Host "     Save to $ROOT_DIR\cloudflared.exe"
+}
+
+# ── Save URL ──
+if ($TUNNEL_URL) {
+  Set-Content -Path $URL_FILE -Value $TUNNEL_URL -NoNewline
+}
+
+# ── Print info ──
+Write-Host ""
+Write-Host "${GREEN}${BOLD}ComplianceHub is running${NC}"
+Write-Host "  Backend:  http://localhost:8000"
+Write-Host "  Status:   http://localhost:8000/api/health"
+Write-Host "  PID:      $($backendProcess.Id)"
+Write-Host ""
+Write-Host "${YELLOW}Git sync:${NC}"
+Write-Host "  bash sync.sh   (or manually: git pull, git push)"
+Write-Host ""
+Write-Host "${YELLOW}Android tunnel URL (after sync):${NC}"
+if (Test-Path $URL_FILE) {
+  $url = Get-Content $URL_FILE -TotalCount 1
+  Write-Host "  $url"
+} else {
+  Write-Host "  Run 'git pull' then 'type Osama\.tunnel-url'"
+}
+Write-Host ""
+Write-Host "Press Enter to stop the backend..."
+Read-Host
+
+# ── Cleanup ──
+Write-Host "Stopping..."
+Stop-Process -Id $backendProcess.Id -Force -ErrorAction SilentlyContinue
+if ($tunnelProcess) { Stop-Process -Id $tunnelProcess.Id -Force -ErrorAction SilentlyContinue }
+Write-Host "${GREEN}Done${NC}"
