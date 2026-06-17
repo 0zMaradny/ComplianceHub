@@ -13,7 +13,7 @@ from docx.oxml import OxmlElement
 from app.utils import sanitize_filename
 from app.config import DEFAULT_LOGO_PATH
 from app.services.client_config import get_client
-from app.services.bilingual import t, TABLE_HEADERS, COVER_LABELS, METHODOLOGY, CONFIDENTIALITY
+from app.services.bilingual import t, TABLE_HEADERS, SECTION_HEADERS, COVER_LABELS, METHODOLOGY, CONFIDENTIALITY
 
 logger = logging.getLogger(__name__)
 
@@ -327,11 +327,14 @@ def _resolve_client(client_key: str = None):
         if client:
             lang = client.language
             rtl = client.visual.rtl
-            header_color = RGBColor(
-                int(client.visual.primary_header[1:3], 16),
-                int(client.visual.primary_header[3:5], 16),
-                int(client.visual.primary_header[5:7], 16),
-            )
+            try:
+                header_color = RGBColor(
+                    int(client.visual.primary_header[1:3], 16),
+                    int(client.visual.primary_header[3:5], 16),
+                    int(client.visual.primary_header[5:7], 16),
+                )
+            except (ValueError, IndexError, AttributeError):
+                header_color = TUV_BLUE
     return client, lang, rtl, header_color
 
 
@@ -850,6 +853,70 @@ def generate_audit_report(data, output_path, client_key: str = None):
     return output_path
 
 
+def _build_checklist_grouped_table(doc, sections, lang="en", client_key=None):
+    add_section_heading(doc, SECTION_HEADERS["checklist_qa"], client_key=client_key)
+    qa_headers = TABLE_HEADERS["checklist_qa"]
+    table = doc.add_table(rows=1, cols=len(qa_headers))
+    table.style = 'Table Grid'
+    add_header_row(table, qa_headers, client_key=client_key)
+
+    for section in sections:
+        aq = section.get('audit_questions', '')
+        ec = section.get('evidence_to_check', '')
+        qa_parts = []
+        if aq:
+            lines = [f'• {l.strip()}' for l in aq.split('\n') if l.strip()]
+            qa_parts.append('Audit Questions:\n' + '\n'.join(lines))
+        if ec:
+            lines = [f'• {l.strip()}' for l in ec.split('\n') if l.strip()]
+            qa_parts.append('Evidence to Check:\n' + '\n'.join(lines))
+        qa_text = '\n\n'.join(qa_parts)
+
+        add_data_row(table, [
+            section.get('clause', ''),
+            qa_text,
+            '',
+            '',
+        ], client_key=client_key)
+
+    set_col_widths(table, [12, 38, 12, 38], available_inches=9.5)
+
+    doc.add_paragraph()
+    add_section_heading(doc, SECTION_HEADERS["checklist_findings"], client_key=client_key)
+    findings_headers = TABLE_HEADERS["checklist_findings"]
+    table2 = doc.add_table(rows=1, cols=len(findings_headers))
+    table2.style = 'Table Grid'
+    add_header_row(table2, findings_headers, client_key=client_key)
+
+    for section in sections:
+        status = section.get('status', '')
+        checkbox = '☐'
+        row_color = None
+        if status == 'Conformant':
+            checkbox = '☒'
+        elif status == 'Non-Conformant':
+            checkbox = '☒'
+            row_color = TUV_RED
+        elif status == 'Partially Conformant':
+            checkbox = '☒'
+            row_color = RGBColor(0xCC, 0x7A, 0x00)
+
+        evidence = section.get('evidence', '')
+        notes = section.get('notes', '')
+        findings_text = evidence
+        if notes:
+            findings_text += '\nNotes: ' + notes
+
+        add_data_row(table2, [
+            section.get('clause', ''),
+            findings_text,
+            f'{checkbox} {status}',
+            section.get('reference', ''),
+        ], color=row_color, client_key=client_key)
+
+    set_col_widths(table2, [12, 48, 20, 20], available_inches=9.5)
+
+
 def generate_iso_checklist(data, output_path, template_path=None, client_key: str = None):
     client = get_client(client_key) if client_key else None
     lang = client.language if client else "en"
@@ -895,11 +962,13 @@ def generate_iso_checklist(data, output_path, template_path=None, client_key: st
         overall = data.get('overall_assessment', '')
         if overall:
             for p in doc.paragraphs:
-                text = p.text.strip().lower()
-                if ('overall' in text or 'assessment' in text) and len(text) < 40:
+                text = p.text.strip()
+                if text.lower() == 'overall assessment' and len(text) < 40:
                     run = p.add_run(f'\n{overall}')
                     run.font.size = Pt(10)
                     break
+            else:
+                doc.add_paragraph(f'\n{overall}')
         doc.save(output_path)
         return output_path
 
@@ -913,32 +982,8 @@ def generate_iso_checklist(data, output_path, template_path=None, client_key: st
                    client_key=client_key)
 
     add_section_heading(doc, t("checklist_results", lang), client_key=client_key)
+    _build_checklist_grouped_table(doc, data.get('sections') or [], lang=lang, client_key=client_key)
 
-    table = doc.add_table(rows=1, cols=6)
-    table.style = 'Table Grid'
-    add_header_row(table, TABLE_HEADERS[lang]["checklist"], client_key=client_key)
-    for section in data.get('sections', []):
-        status = section.get('status', '')
-        checkbox = '☐'
-        row_color = None
-        if status == 'Conformant':
-            checkbox = '☒'
-        elif status == 'Non-Conformant':
-            checkbox = '☒'
-            row_color = TUV_RED
-        elif status == 'Partially Conformant':
-            checkbox = '☒'
-            row_color = RGBColor(0xCC, 0x7A, 0x00)
-        add_data_row(table, [
-            section.get('clause', ''),
-            section.get('requirement', ''),
-            f'{checkbox} {status}',
-            section.get('evidence', ''),
-            section.get('notes', ''),
-            section.get('reference', ''),
-        ], color=row_color, client_key=client_key)
-
-    doc.add_paragraph()
     add_section_heading(doc, t("overall_assessment", lang), client_key=client_key)
     add_body_text(doc, data.get('overall_assessment', ''), client_key=client_key)
 

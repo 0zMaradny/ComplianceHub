@@ -1,17 +1,39 @@
 @import "tailwindcss";
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 :root {
   --primary: #003D7A;
   --primary-dark: #002a55;
   --primary-light: #e8f0f8;
+  --primary-gradient: linear-gradient(135deg, #003D7A 0%, #0050A0 50%, #0066C5 100%);
+  --primary-gradient-subtle: linear-gradient(135deg, #e8f0f8 0%, #f0f6fc 100%);
   --accent: #C00000;
   --accent-light: #fff0f0;
+  --accent-gradient: linear-gradient(135deg, #C00000 0%, #D93030 100%);
+
+  --warm: #D4A017;
+  --warm-light: #fef7e6;
+  --warm-gradient: linear-gradient(135deg, #D4A017 0%, #F5A623 100%);
+
+  --teal: #0D9488;
+  --teal-light: #e6f9f7;
+  --teal-gradient: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+
+  --emerald: #059669;
+  --emerald-light: #e6f7ef;
+
+  --rose: #E11D48;
+  --rose-light: #ffe6eb;
+
+  --purple: #7C3AED;
+  --purple-light: #f0e8ff;
+
+  --indigo: #4F46E5;
+  --indigo-light: #e8e6ff;
+
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -22,70 +44,140 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
+
   --green-50: #f0fdf4;
+  --green-100: #dcfce7;
   --green-600: #16a34a;
+  --green-700: #15803d;
+
   --red-50: #fef2f2;
+  --red-100: #fee2e2;
   --red-600: #dc2626;
+  --red-700: #b91c1c;
+
   --amber-50: #fffbeb;
+  --amber-100: #fef3c7;
   --amber-600: #d97706;
+  --amber-700: #b45309;
+
   --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
   --blue-600: #2563eb;
+
+  --standard-9001: #0D9488;
+  --standard-14001: #059669;
+  --standard-45001: #D4A017;
+  --standard-50001: #7C3AED;
+  --standard-13485: #2563eb;
+  --standard-27001: #4F46E5;
+  --standard-20000: #0891B2;
+  --standard-22301: #BE123C;
+  --standard-37301: #6D28D9;
+  --standard-42001: #9333EA;
+  --standard-30401: #CA8A04;
+  --standard-27701: #1D4ED8;
+  --standard-31000: #15803D;
+  --standard-10002: #B91C1C;
+
   --sidebar-width: 260px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 61, 122, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 61, 122, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 61, 122, 0.12);
+  --shadow-xl: 0 12px 40px rgba(0, 61, 122, 0.16);
+
   --bg-body: var(--gray-50);
   --bg-card: #ffffff;
+  --bg-card-hover: #f8faff;
   --text-primary: var(--gray-900);
   --text-secondary: var(--gray-500);
   --border-color: var(--gray-200);
+  --border-color-hover: var(--gray-300);
   --input-bg: #ffffff;
   --input-border: var(--gray-300);
-  --sidebar-text: rgba(255,255,255,0.75);
+  --sidebar-text: rgba(255, 255, 255, 0.75);
+  --sidebar-text-active: #ffffff;
+  --sidebar-bg: var(--primary);
+  --sidebar-bg-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-bg-active: rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="dark"] {
   --primary: #4a8bc2;
   --primary-dark: #3570a0;
   --primary-light: #1a2a3a;
-  --gray-50: #1a1a2e;
-  --gray-100: #16213e;
-  --gray-200: #1e2a4a;
+  --primary-gradient: linear-gradient(135deg, #1a2a3a 0%, #2a4060 50%, #3a5a80 100%);
+  --primary-gradient-subtle: linear-gradient(135deg, #1a2a3a 0%, #1e3048 100%);
+
+  --gray-50: #0f1923;
+  --gray-100: #12202f;
+  --gray-200: #1a2a3a;
   --gray-300: #2a3a5c;
-  --gray-400: #6b7fa0;
-  --gray-500: #8fa3c4;
-  --gray-600: #b0c4de;
-  --gray-700: #c8d8ea;
-  --gray-800: #dce8f5;
+  --gray-400: #4a6a8a;
+  --gray-500: #6a8aaa;
+  --gray-600: #8fa3c4;
+  --gray-700: #b0c4e0;
+  --gray-800: #d0dff0;
   --gray-900: #eef4fb;
+
+  --warm: #F5A623;
+  --warm-light: #2a2000;
+  --teal: #14B8A6;
+  --teal-light: #002a24;
+  --emerald: #34D399;
+  --emerald-light: #003320;
+  --rose: #FB7185;
+  --rose-light: #3b0010;
+  --purple: #A78BFA;
+  --purple-light: #1a0033;
+  --indigo: #818CF8;
+  --indigo-light: #0a0033;
+
+  --green-50: #052e16;
+  --green-100: #0a3d1f;
+  --green-600: #4ade80;
+  --green-700: #22c55e;
+
+  --red-50: #3b0a0a;
+  --red-100: #4a1515;
+  --red-600: #f87171;
+  --red-700: #ef4444;
+
+  --amber-50: #3b2a06;
+  --amber-100: #4a3510;
+  --amber-600: #fbbf24;
+  --amber-700: #f59e0b;
+
+  --blue-50: #0a1a3b;
+  --blue-100: #142a4a;
+  --blue-600: #60a5fa;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 12px 40px rgba(0, 0, 0, 0.6);
+
   --bg-body: #0f1923;
   --bg-card: #16213e;
+  --bg-card-hover: #1a2a4a;
   --text-primary: #eef4fb;
   --text-secondary: #8fa3c4;
   --border-color: #1e2a4a;
+  --border-color-hover: #2a3a5c;
   --input-bg: #1a2a3a;
   --input-border: #2a3a5c;
-  --green-50: #0a2e1a;
-  --green-600: #4ade80;
-  --red-50: #2e0a0a;
-  --red-600: #f87171;
-  --amber-50: #2e2a0a;
-  --amber-600: #fbbf24;
-  --blue-50: #0a1e2e;
-  --blue-600: #60a5fa;
-  --sidebar-text: rgba(255,255,255,0.6);
+  --sidebar-text: rgba(255, 255, 255, 0.6);
+  --sidebar-text-active: #ffffff;
+  --sidebar-bg: #0f1923;
+  --sidebar-bg-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-bg-active: rgba(255, 255, 255, 0.12);
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--text-primary);
   background: var(--bg-body);
-  line-height: 1.5;
   transition: background 0.3s, color 0.3s;
-}
-
-button {
-  cursor: pointer;
-  font-family: inherit;
-}
-
-input, select, textarea {
-  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

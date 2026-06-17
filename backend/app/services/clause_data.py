@@ -4,6 +4,7 @@ Annex A grouped controls, and framework section structures."""
 import random
 from datetime import datetime, timedelta
 
+
 HLS_CORE = {
     '1': {
         'title': 'Scope',
@@ -46,10 +47,50 @@ HLS_CORE = {
     '4': {
         'title': 'Context of the Organization',
         'sub_clauses': {
-            '4.1': 'Understanding the organization and its context',
-            '4.2': 'Understanding the needs and expectations of interested parties',
-            '4.3': 'Determining the scope of the management system',
-            '4.4': 'Management system and its processes',
+            '4.1': {
+                'title': 'Understanding the organization and its context',
+                'audit_questions': [
+                    'How does the organization determine external and internal issues relevant to its purpose?',
+                    'How are interested parties identified and their requirements monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of strategic planning documentation including PESTLE/SWOT analysis',
+                    'Examination of interested party register with requirements traceability',
+                ],
+            },
+            '4.2': {
+                'title': 'Understanding the needs and expectations of interested parties',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '4.3': {
+                'title': 'Determining the scope of the management system',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '4.4': {
+                'title': 'Management system and its processes',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed external and internal issues register with PESTLE and SWOT analysis',
@@ -68,10 +109,50 @@ HLS_CORE = {
     '5': {
         'title': 'Leadership',
         'sub_clauses': {
-            '5.1': 'Leadership and commitment',
-            '5.1.1': 'General',
-            '5.2': 'Policy',
-            '5.3': 'Roles, responsibilities and authorities',
+            '5.1': {
+                'title': 'Leadership and commitment',
+                'audit_questions': [
+                    'How does top management demonstrate leadership and commitment?',
+                    'How is the quality/environmental/OH&S policy communicated and maintained?',
+                ],
+                'evidence_to_check': [
+                    'Interview with top management on leadership involvement',
+                    'Review of policy statements and communication records',
+                ],
+            },
+            '5.1.1': {
+                'title': 'General',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '5.2': {
+                'title': 'Policy',
+                'audit_questions': [
+                    'How is the policy documented, approved, and communicated?',
+                    'How is policy compliance monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of approved policy document with version history',
+                    'Examination of policy communication records',
+                ],
+            },
+            '5.3': {
+                'title': 'Roles, responsibilities and authorities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Interviewed top management on demonstrated leadership and commitment',
@@ -91,9 +172,39 @@ HLS_CORE = {
     '6': {
         'title': 'Planning',
         'sub_clauses': {
-            '6.1': 'Actions to address risks and opportunities',
-            '6.2': 'Objectives and planning to achieve them',
-            '6.3': 'Planning of changes',
+            '6.1': {
+                'title': 'Actions to address risks and opportunities',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            '6.2': {
+                'title': 'Objectives and planning to achieve them',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '6.3': {
+                'title': 'Planning of changes',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
         },
         'evidence': [
             'Reviewed risk and opportunity register with defined mitigation actions',
@@ -112,11 +223,61 @@ HLS_CORE = {
     '7': {
         'title': 'Support',
         'sub_clauses': {
-            '7.1': 'Resources',
-            '7.2': 'Competence',
-            '7.3': 'Awareness',
-            '7.4': 'Communication',
-            '7.5': 'Documented information',
+            '7.1': {
+                'title': 'Resources',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '7.2': {
+                'title': 'Competence',
+                'audit_questions': [
+                    'How is required competence determined for each role?',
+                    'How is competence evaluated and records maintained?',
+                ],
+                'evidence_to_check': [
+                    'Review of job descriptions and competence requirements',
+                    'Examination of training records and effectiveness evaluation',
+                ],
+            },
+            '7.3': {
+                'title': 'Awareness',
+                'audit_questions': [
+                    'How does the organization ensure awareness of the policy?',
+                    'How are employees made aware of their contribution to effectiveness?',
+                ],
+                'evidence_to_check': [
+                    'Interview with personnel on policy awareness',
+                    'Review of awareness training materials and attendance records',
+                ],
+            },
+            '7.4': {
+                'title': 'Communication',
+                'audit_questions': [
+                    'How is internal communication managed across levels?',
+                    'How is external communication regulated?',
+                ],
+                'evidence_to_check': [
+                    'Review of communication procedure and matrix',
+                    'Examination of internal communication records and notice boards',
+                ],
+            },
+            '7.5': {
+                'title': 'Documented information',
+                'audit_questions': [
+                    'How is document control managed?',
+                    'How are document changes approved and tracked?',
+                ],
+                'evidence_to_check': [
+                    'Review of document control procedure',
+                    'Examination of document approval and change records',
+                ],
+            },
         },
         'evidence': [
             'Reviewed resource allocation documentation including infrastructure and equipment',
@@ -136,10 +297,50 @@ HLS_CORE = {
     '9': {
         'title': 'Performance Evaluation',
         'sub_clauses': {
-            '9.1': 'Monitoring, measurement, analysis and evaluation',
-            '9.1.1': 'General',
-            '9.2': 'Internal audit',
-            '9.3': 'Management review',
+            '9.1': {
+                'title': 'Monitoring, measurement, analysis and evaluation',
+                'audit_questions': [
+                    'How does the organization monitor, measure, analyze, and evaluate performance?',
+                    'How is the internal audit program planned and implemented?',
+                ],
+                'evidence_to_check': [
+                    'Review of performance monitoring and measurement records',
+                    'Examination of internal audit program and reports',
+                ],
+            },
+            '9.1.1': {
+                'title': 'General',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '9.2': {
+                'title': 'Internal audit',
+                'audit_questions': [
+                    'How is the internal audit program planned?',
+                    'How are auditors selected and their competence ensured?',
+                ],
+                'evidence_to_check': [
+                    'Review of internal audit schedule and program',
+                    'Examination of auditor qualification and selection records',
+                ],
+            },
+            '9.3': {
+                'title': 'Management review',
+                'audit_questions': [
+                    'How is the management review agenda determined?',
+                    'What inputs and outputs are part of the management review?',
+                ],
+                'evidence_to_check': [
+                    'Review of management review meeting minutes',
+                    'Examination of action item tracking records',
+                ],
+            },
         },
         'evidence': [
             'Reviewed monitoring and measurement plan with defined performance indicators',
@@ -159,8 +360,28 @@ HLS_CORE = {
     '10': {
         'title': 'Improvement',
         'sub_clauses': {
-            '10.1': 'Nonconformity and corrective action',
-            '10.2': 'Continual improvement',
+            '10.1': {
+                'title': 'Nonconformity and corrective action',
+                'audit_questions': [
+                    'How are nonconformities identified and documented?',
+                    'How does the organization determine the root cause of nonconformities?',
+                ],
+                'evidence_to_check': [
+                    'Review of nonconformity register and trend analysis',
+                    'Examination of nonconformity investigation and root cause records',
+                ],
+            },
+            '10.2': {
+                'title': 'Continual improvement',
+                'audit_questions': [
+                    'How does the organization identify and act on nonconformities?',
+                    'How is corrective action managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of nonconformity logs and corrective action records',
+                    'Examination of continual improvement initiatives',
+                ],
+            },
         },
         'evidence': [
             'Reviewed nonconformity register with root cause analysis and corrective actions',
@@ -182,48 +403,300 @@ CLAUSE_8 = {
     'iso_9001': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
             '8.2': {
                 'title': 'Requirements for products and services',
                 'sub_clauses': {
-                    '8.2.1': 'Customer communication',
-                    '8.2.2': 'Determination of requirements for products and services',
-                    '8.2.3': 'Review of requirements for products and services',
-                    '8.2.4': 'Changes to requirements for products and services',
+                    '8.2.1': {
+                        'title': 'Customer communication',
+                        'audit_questions': [
+                            'How is internal communication managed across levels?',
+                            'How is external communication regulated?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of communication procedure and matrix',
+                            'Examination of internal communication records and notice boards',
+                        ],
+                    },
+                    '8.2.2': {
+                        'title': 'Determination of requirements for products and services',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.2.3': {
+                        'title': 'Review of requirements for products and services',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.2.4': {
+                        'title': 'Changes to requirements for products and services',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
             },
             '8.3': {
                 'title': 'Design and development of products and services',
                 'sub_clauses': {
-                    '8.3.1': 'General',
-                    '8.3.2': 'Design and development planning',
-                    '8.3.3': 'Design and development inputs',
-                    '8.3.4': 'Design and development controls',
-                    '8.3.5': 'Design and development outputs',
-                    '8.3.6': 'Design and development changes',
+                    '8.3.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.3.2': {
+                        'title': 'Design and development planning',
+                        'audit_questions': [
+                            'How does the organization identify risks and opportunities?',
+                            'How are quality/environmental/OH&S objectives established and monitored?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk and opportunity register',
+                            'Examination of objectives and plans to achieve them',
+                        ],
+                    },
+                    '8.3.3': {
+                        'title': 'Design and development inputs',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.3.4': {
+                        'title': 'Design and development controls',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.3.5': {
+                        'title': 'Design and development outputs',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.3.6': {
+                        'title': 'Design and development changes',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is the design and development process planned?',
+                    'How are design inputs, outputs, and reviews managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of design and development procedure',
+                    'Examination of design input/output/review/verification records',
+                ],
             },
             '8.4': {
                 'title': 'Control of externally provided processes, products and services',
                 'sub_clauses': {
-                    '8.4.1': 'General',
-                    '8.4.2': 'Type and extent of control',
-                    '8.4.3': 'Information for external providers',
+                    '8.4.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.4.2': {
+                        'title': 'Type and extent of control',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.4.3': {
+                        'title': 'Information for external providers',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
             },
             '8.5': {
                 'title': 'Production and service provision',
                 'sub_clauses': {
-                    '8.5.1': 'Control of production and service provision',
-                    '8.5.2': 'Identification and traceability',
-                    '8.5.3': 'Property belonging to customers or external providers',
-                    '8.5.4': 'Preservation',
-                    '8.5.5': 'Post-delivery activities',
-                    '8.5.6': 'Control of changes',
+                    '8.5.1': {
+                        'title': 'Control of production and service provision',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.5.2': {
+                        'title': 'Identification and traceability',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.3': {
+                        'title': 'Property belonging to customers or external providers',
+                        'audit_questions': [
+                            'How are customer requirements determined and reviewed?',
+                            'How is customer communication managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of customer requirement review procedure',
+                            'Examination of customer communication records',
+                        ],
+                    },
+                    '8.5.4': {
+                        'title': 'Preservation',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.5': {
+                        'title': 'Post-delivery activities',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.6': {
+                        'title': 'Control of changes',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
             },
-            '8.6': 'Release of products and services',
-            '8.7': 'Control of nonconforming outputs',
+            '8.6': {
+                'title': 'Release of products and services',
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
+            },
+            '8.7': {
+                'title': 'Control of nonconforming outputs',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed production and service provision plans with defined control parameters',
@@ -243,8 +716,28 @@ CLAUSE_8 = {
     'iso_14001': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
-            '8.2': 'Emergency preparedness and response',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '8.2': {
+                'title': 'Emergency preparedness and response',
+                'audit_questions': [
+                    'How does the organization identify potential emergency situations?',
+                    'How are emergency response procedures tested and evaluated?',
+                ],
+                'evidence_to_check': [
+                    'Review of emergency preparedness and response procedure',
+                    'Examination of emergency drill records and lessons learned',
+                ],
+            },
         },
         'evidence': [
             'Reviewed operational control procedures for significant environmental aspects',
@@ -266,13 +759,71 @@ CLAUSE_8 = {
             '8.1': {
                 'title': 'Operational planning and control',
                 'sub_clauses': {
-                    '8.1.1': 'General',
-                    '8.1.2': 'Eliminating hazards and reducing OH&S risks',
-                    '8.1.3': 'Management of change',
-                    '8.1.4': 'Procurement',
+                    '8.1.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.1.2': {
+                        'title': 'Eliminating hazards and reducing OH&S risks',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
+                    '8.1.3': {
+                        'title': 'Management of change',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.1.4': {
+                        'title': 'Procurement',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
             },
-            '8.2': 'Emergency preparedness and response',
+            '8.2': {
+                'title': 'Emergency preparedness and response',
+                'audit_questions': [
+                    'How does the organization identify potential emergency situations?',
+                    'How are emergency response procedures tested and evaluated?',
+                ],
+                'evidence_to_check': [
+                    'Review of emergency preparedness and response procedure',
+                    'Examination of emergency drill records and lessons learned',
+                ],
+            },
         },
         'evidence': [
             'Reviewed operational controls for OH&S risks including hierarchy of controls implementation',
@@ -292,7 +843,17 @@ CLAUSE_8 = {
     'iso_50001': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
         },
         'evidence': [
             'Reviewed operational controls for significant energy uses and consumption drivers',
@@ -311,9 +872,39 @@ CLAUSE_8 = {
     'iso_27001': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
-            '8.2': 'Information security risk assessment',
-            '8.3': 'Information security risk treatment',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '8.2': {
+                'title': 'Information security risk assessment',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            '8.3': {
+                'title': 'Information security risk treatment',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
         },
         'evidence': [
             'Reviewed information security risk assessment methodology and results',
@@ -333,14 +924,94 @@ CLAUSE_8 = {
     'iso_20000': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
-            '8.2': 'Service management system',
-            '8.3': 'Service portfolio management',
-            '8.4': 'Relationship and agreement management',
-            '8.5': 'Supply and demand management',
-            '8.6': 'Service design, build and transition',
-            '8.7': 'Resolution and fulfilment',
-            '8.8': 'Service assurance',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '8.2': {
+                'title': 'Service management system',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.3': {
+                'title': 'Service portfolio management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.4': {
+                'title': 'Relationship and agreement management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.5': {
+                'title': 'Supply and demand management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.6': {
+                'title': 'Service design, build and transition',
+                'audit_questions': [
+                    'How is the design and development process planned?',
+                    'How are design inputs, outputs, and reviews managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of design and development procedure',
+                    'Examination of design input/output/review/verification records',
+                ],
+            },
+            '8.7': {
+                'title': 'Resolution and fulfilment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.8': {
+                'title': 'Service assurance',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed service portfolio and service catalogue documentation',
@@ -361,39 +1032,211 @@ CLAUSE_8 = {
     'iso_22301': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
             '8.2': {
                 'title': 'Business continuity analysis',
                 'sub_clauses': {
-                    '8.2.1': 'Business impact analysis',
-                    '8.2.2': 'Risk assessment',
+                    '8.2.1': {
+                        'title': 'Business impact analysis',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.2.2': {
+                        'title': 'Risk assessment',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
             '8.3': {
                 'title': 'Business continuity strategies and solutions',
                 'sub_clauses': {
-                    '8.3.1': 'General',
-                    '8.3.2': 'Identification of strategies and solutions',
-                    '8.3.3': 'Selection of strategies and solutions',
+                    '8.3.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.3.2': {
+                        'title': 'Identification of strategies and solutions',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.3.3': {
+                        'title': 'Selection of strategies and solutions',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
             '8.4': {
                 'title': 'Business continuity plans and procedures',
                 'sub_clauses': {
-                    '8.4.1': 'General',
-                    '8.4.2': 'Incident response structure',
-                    '8.4.3': 'Warning and communication',
-                    '8.4.4': 'Business continuity plans',
-                    '8.4.5': 'Recovery procedures',
+                    '8.4.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.4.2': {
+                        'title': 'Incident response structure',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.4.3': {
+                        'title': 'Warning and communication',
+                        'audit_questions': [
+                            'How is internal communication managed across levels?',
+                            'How is external communication regulated?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of communication procedure and matrix',
+                            'Examination of internal communication records and notice boards',
+                        ],
+                    },
+                    '8.4.4': {
+                        'title': 'Business continuity plans',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.4.5': {
+                        'title': 'Recovery procedures',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
             '8.5': {
                 'title': 'Exercise and testing',
                 'sub_clauses': {
-                    '8.5.1': 'General',
-                    '8.5.2': 'Exercise programmes',
-                    '8.5.3': 'Testing of continuity solutions',
+                    '8.5.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.2': {
+                        'title': 'Exercise programmes',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.3': {
+                        'title': 'Testing of continuity solutions',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
         },
         'evidence': [
@@ -414,18 +1257,96 @@ CLAUSE_8 = {
     'iso_37301': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
             '8.2': {
                 'title': 'Establishing controls and procedures',
                 'sub_clauses': {
-                    '8.2.1': 'General',
-                    '8.2.2': 'Controls and procedures for compliance obligations',
-                    '8.2.3': 'Controls and procedures for persons',
-                    '8.2.4': 'Controls and procedures for outsourced processes',
+                    '8.2.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.2.2': {
+                        'title': 'Controls and procedures for compliance obligations',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.2.3': {
+                        'title': 'Controls and procedures for persons',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.2.4': {
+                        'title': 'Controls and procedures for outsourced processes',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
-            '8.3': 'Reporting concerns',
-            '8.4': 'Investigation process',
+            '8.3': {
+                'title': 'Reporting concerns',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.4': {
+                'title': 'Investigation process',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed compliance obligation register and control mapping documentation',
@@ -445,21 +1366,97 @@ CLAUSE_8 = {
     'iso_42001': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
             '8.2': {
                 'title': 'AI risk assessment',
                 'sub_clauses': {
-                    '8.2.1': 'AI risk assessment process',
-                    '8.2.2': 'AI risk assessment criteria',
-                    '8.2.3': 'AI risk acceptance',
+                    '8.2.1': {
+                        'title': 'AI risk assessment process',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
+                    '8.2.2': {
+                        'title': 'AI risk assessment criteria',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
+                    '8.2.3': {
+                        'title': 'AI risk acceptance',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
             },
             '8.3': {
                 'title': 'AI risk treatment',
                 'sub_clauses': {
-                    '8.3.1': 'AI risk treatment plan',
-                    '8.3.2': 'AI risk treatment implementation',
+                    '8.3.1': {
+                        'title': 'AI risk treatment plan',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
+                    '8.3.2': {
+                        'title': 'AI risk treatment implementation',
+                        'audit_questions': [
+                            'How does the organization conduct risk assessment?',
+                            'How are risk treatment options evaluated and selected?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk assessment methodology and criteria',
+                            'Examination of risk register and treatment plans',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
             },
         },
         'evidence': [
@@ -480,11 +1477,61 @@ CLAUSE_8 = {
     'iso_30401': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
-            '8.2': 'Knowledge development',
-            '8.3': 'Knowledge transfer and conversion',
-            '8.4': 'Knowledge retention and preservation',
-            '8.5': 'Knowledge sharing and access',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '8.2': {
+                'title': 'Knowledge development',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.3': {
+                'title': 'Knowledge transfer and conversion',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.4': {
+                'title': 'Knowledge retention and preservation',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.5': {
+                'title': 'Knowledge sharing and access',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed knowledge management strategy and alignment with organizational objectives',
@@ -504,12 +1551,72 @@ CLAUSE_8 = {
     'iso_27701': {
         'title': 'Operation',
         'sub_clauses': {
-            '8.1': 'Operational planning and control',
-            '8.2': 'Privacy risk assessment',
-            '8.3': 'Privacy risk treatment',
-            '8.4': 'Data subject rights management',
-            '8.5': 'Data breach management',
-            '8.6': 'Privacy by design and default',
+            '8.1': {
+                'title': 'Operational planning and control',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '8.2': {
+                'title': 'Privacy risk assessment',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            '8.3': {
+                'title': 'Privacy risk treatment',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            '8.4': {
+                'title': 'Data subject rights management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.5': {
+                'title': 'Data breach management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '8.6': {
+                'title': 'Privacy by design and default',
+                'audit_questions': [
+                    'How is the design and development process planned?',
+                    'How are design inputs, outputs, and reviews managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of design and development procedure',
+                    'Examination of design input/output/review/verification records',
+                ],
+            },
         },
         'evidence': [
             'Reviewed privacy risk assessment including data protection impact assessments',
@@ -532,53 +1639,353 @@ CLAUSE_8 = {
             '8.1': {
                 'title': 'Operational planning and control',
                 'sub_clauses': {
-                    '8.1.1': 'General',
-                    '8.1.2': 'Validation of processes for production and service provision',
-                    '8.1.3': 'Control of production and service provision',
+                    '8.1.1': {
+                        'title': 'General',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.1.2': {
+                        'title': 'Validation of processes for production and service provision',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.1.3': {
+                        'title': 'Control of production and service provision',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
             },
             '8.2': {
                 'title': 'Design and development',
                 'sub_clauses': {
-                    '8.2.1': 'Design and development planning',
-                    '8.2.2': 'Design and development inputs',
-                    '8.2.3': 'Design and development outputs',
-                    '8.2.4': 'Design and development review',
-                    '8.2.5': 'Design and development verification',
-                    '8.2.6': 'Design and development validation',
-                    '8.2.7': 'Design and development transfer',
-                    '8.2.8': 'Control of design and development changes',
-                    '8.2.9': 'Design and development files',
+                    '8.2.1': {
+                        'title': 'Design and development planning',
+                        'audit_questions': [
+                            'How does the organization identify risks and opportunities?',
+                            'How are quality/environmental/OH&S objectives established and monitored?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of risk and opportunity register',
+                            'Examination of objectives and plans to achieve them',
+                        ],
+                    },
+                    '8.2.2': {
+                        'title': 'Design and development inputs',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.3': {
+                        'title': 'Design and development outputs',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.4': {
+                        'title': 'Design and development review',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.5': {
+                        'title': 'Design and development verification',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.6': {
+                        'title': 'Design and development validation',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.7': {
+                        'title': 'Design and development transfer',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.8': {
+                        'title': 'Control of design and development changes',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
+                    '8.2.9': {
+                        'title': 'Design and development files',
+                        'audit_questions': [
+                            'How is the design and development process planned?',
+                            'How are design inputs, outputs, and reviews managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of design and development procedure',
+                            'Examination of design input/output/review/verification records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is the design and development process planned?',
+                    'How are design inputs, outputs, and reviews managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of design and development procedure',
+                    'Examination of design input/output/review/verification records',
+                ],
             },
             '8.3': {
                 'title': 'Purchasing',
                 'sub_clauses': {
-                    '8.3.1': 'Purchasing process',
-                    '8.3.2': 'Purchasing information',
-                    '8.3.3': 'Verification of purchased product',
+                    '8.3.1': {
+                        'title': 'Purchasing process',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.3.2': {
+                        'title': 'Purchasing information',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.3.3': {
+                        'title': 'Verification of purchased product',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
             },
-            '8.4': 'Customer communication',
+            '8.4': {
+                'title': 'Customer communication',
+                'audit_questions': [
+                    'How is internal communication managed across levels?',
+                    'How is external communication regulated?',
+                ],
+                'evidence_to_check': [
+                    'Review of communication procedure and matrix',
+                    'Examination of internal communication records and notice boards',
+                ],
+            },
             '8.5': {
                 'title': 'Control of production and service provision',
                 'sub_clauses': {
-                    '8.5.1': 'Control of production and service provision',
-                    '8.5.2': 'Cleanliness and contamination control',
-                    '8.5.3': 'Installation and servicing activities',
-                    '8.5.4': 'Sterilization process validation',
-                    '8.5.5': 'Identification and traceability',
-                    '8.5.6': 'Property belonging to customers or external providers',
-                    '8.5.7': 'Preservation of product',
+                    '8.5.1': {
+                        'title': 'Control of production and service provision',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.5.2': {
+                        'title': 'Cleanliness and contamination control',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.3': {
+                        'title': 'Installation and servicing activities',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.4': {
+                        'title': 'Sterilization process validation',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.5': {
+                        'title': 'Identification and traceability',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
+                    '8.5.6': {
+                        'title': 'Property belonging to customers or external providers',
+                        'audit_questions': [
+                            'How are customer requirements determined and reviewed?',
+                            'How is customer communication managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of customer requirement review procedure',
+                            'Examination of customer communication records',
+                        ],
+                    },
+                    '8.5.7': {
+                        'title': 'Preservation of product',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
             },
-            '8.6': 'Control of monitoring and measuring equipment',
+            '8.6': {
+                'title': 'Control of monitoring and measuring equipment',
+                'audit_questions': [
+                    'How are monitoring and measurement activities defined?',
+                    'What monitoring equipment is used and how is it calibrated?',
+                ],
+                'evidence_to_check': [
+                    'Review of monitoring and measurement equipment calibration records',
+                    'Examination of monitoring plans and reports',
+                ],
+            },
             '8.7': {
                 'title': 'Nonconforming product',
                 'sub_clauses': {
-                    '8.7.1': 'Nonconforming product control',
-                    '8.7.2': 'Rework',
+                    '8.7.1': {
+                        'title': 'Nonconforming product control',
+                        'audit_questions': [
+                            'How is product/service acceptance criteria defined?',
+                            'How is product traceability managed?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of product acceptance criteria and inspection records',
+                            'Examination of traceability records',
+                        ],
+                    },
+                    '8.7.2': {
+                        'title': 'Rework',
+                        'audit_questions': [
+                            'What evidence demonstrates compliance with this clause?',
+                            'How does the organization address each requirement of this clause?',
+                        ],
+                        'evidence_to_check': [
+                            'Review of documented evidence of compliance with contractual requirements',
+                            'Examination of applicable regulatory permits and approvals',
+                        ],
+                    },
                 },
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
             },
         },
         'evidence': [
@@ -604,43 +2011,413 @@ ANNEX_A_27001 = {
     'A.5': {
         'title': 'Organizational Controls (37 controls)',
         'sub_clauses': {
-            'A.5.1': 'Information security policies and procedures',
-            'A.5.2': 'Information security roles and responsibilities',
-            'A.5.3': 'Segregation of duties',
-            'A.5.4': 'Management responsibilities',
-            'A.5.5': 'Contact with authorities',
-            'A.5.6': 'Contact with special interest groups',
-            'A.5.7': 'Threat intelligence',
-            'A.5.8': 'Information security in project management',
-            'A.5.9': 'Inventory of information and other associated assets',
-            'A.5.10': 'Acceptable use of information and other associated assets',
-            'A.5.11': 'Return of assets',
-            'A.5.12': 'Classification of information',
-            'A.5.13': 'Labelling of information',
-            'A.5.14': 'Information transfer',
-            'A.5.15': 'Access control',
-            'A.5.16': 'Identity management',
-            'A.5.17': 'Authentication information',
-            'A.5.18': 'Access rights',
-            'A.5.19': 'Information security in supplier relationships',
-            'A.5.20': 'Addressing information security within supplier agreements',
-            'A.5.21': 'Managing information security in the ICT supply chain',
-            'A.5.22': 'Monitoring review and change management of supplier services',
-            'A.5.23': 'Information security for use of cloud services',
-            'A.5.24': 'Information security incident management planning and preparation',
-            'A.5.25': 'Assessment and decision on information security events',
-            'A.5.26': 'Response to information security incidents',
-            'A.5.27': 'Learning from information security incidents',
-            'A.5.28': 'Collection of evidence',
-            'A.5.29': 'Information security during disruption',
-            'A.5.30': 'ICT readiness for business continuity',
-            'A.5.31': 'Legal statutory regulatory and contractual requirements',
-            'A.5.32': 'Intellectual property rights',
-            'A.5.33': 'Protection of records',
-            'A.5.34': 'Privacy and protection of PII',
-            'A.5.35': 'Independent review of information security',
-            'A.5.36': 'Compliance with policies and standards',
-            'A.5.37': 'Documented operating procedures',
+            'A.5.1': {
+                'title': 'Information security policies and procedures',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.2': {
+                'title': 'Information security roles and responsibilities',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.3': {
+                'title': 'Segregation of duties',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.4': {
+                'title': 'Management responsibilities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.5': {
+                'title': 'Contact with authorities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.6': {
+                'title': 'Contact with special interest groups',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.7': {
+                'title': 'Threat intelligence',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.8': {
+                'title': 'Information security in project management',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.9': {
+                'title': 'Inventory of information and other associated assets',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.10': {
+                'title': 'Acceptable use of information and other associated assets',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.11': {
+                'title': 'Return of assets',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.12': {
+                'title': 'Classification of information',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.13': {
+                'title': 'Labelling of information',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.14': {
+                'title': 'Information transfer',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.15': {
+                'title': 'Access control',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.16': {
+                'title': 'Identity management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.17': {
+                'title': 'Authentication information',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.18': {
+                'title': 'Access rights',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.19': {
+                'title': 'Information security in supplier relationships',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.20': {
+                'title': 'Addressing information security within supplier agreements',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.21': {
+                'title': 'Managing information security in the ICT supply chain',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.22': {
+                'title': 'Monitoring review and change management of supplier services',
+                'audit_questions': [
+                    'How are suppliers evaluated and selected?',
+                    'How is supplier performance monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of supplier evaluation and selection criteria',
+                    'Examination of approved supplier list',
+                ],
+            },
+            'A.5.23': {
+                'title': 'Information security for use of cloud services',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.24': {
+                'title': 'Information security incident management planning and preparation',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            'A.5.25': {
+                'title': 'Assessment and decision on information security events',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.26': {
+                'title': 'Response to information security incidents',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.27': {
+                'title': 'Learning from information security incidents',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.28': {
+                'title': 'Collection of evidence',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.29': {
+                'title': 'Information security during disruption',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.30': {
+                'title': 'ICT readiness for business continuity',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.31': {
+                'title': 'Legal statutory regulatory and contractual requirements',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.32': {
+                'title': 'Intellectual property rights',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.33': {
+                'title': 'Protection of records',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.34': {
+                'title': 'Privacy and protection of PII',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.35': {
+                'title': 'Independent review of information security',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.5.36': {
+                'title': 'Compliance with policies and standards',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.5.37': {
+                'title': 'Documented operating procedures',
+                'audit_questions': [
+                    'How is document control managed?',
+                    'How are document changes approved and tracked?',
+                ],
+                'evidence_to_check': [
+                    'Review of document control procedure',
+                    'Examination of document approval and change records',
+                ],
+            },
         },
         'evidence': [
             'Reviewed information security policy approvals and review cycles',
@@ -653,14 +2430,94 @@ ANNEX_A_27001 = {
     'A.6': {
         'title': 'People Controls (8 controls)',
         'sub_clauses': {
-            'A.6.1': 'Screening',
-            'A.6.2': 'Terms and conditions of employment',
-            'A.6.3': 'Information security awareness education and training',
-            'A.6.4': 'Disciplinary process',
-            'A.6.5': 'Responsibilities after termination or change of employment',
-            'A.6.6': 'Confidentiality or non-disclosure agreements',
-            'A.6.7': 'Remote working',
-            'A.6.8': 'Information security event reporting',
+            'A.6.1': {
+                'title': 'Screening',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.2': {
+                'title': 'Terms and conditions of employment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.3': {
+                'title': 'Information security awareness education and training',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
+            'A.6.4': {
+                'title': 'Disciplinary process',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.5': {
+                'title': 'Responsibilities after termination or change of employment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.6': {
+                'title': 'Confidentiality or non-disclosure agreements',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.7': {
+                'title': 'Remote working',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.6.8': {
+                'title': 'Information security event reporting',
+                'audit_questions': [
+                    'How are information security policies established and reviewed?',
+                    'How is information security risk assessment conducted?',
+                ],
+                'evidence_to_check': [
+                    'Review of information security policy and procedures',
+                    'Examination of risk assessment and treatment documentation',
+                ],
+            },
         },
         'evidence': [
             'Reviewed background screening policy and records for applicable roles',
@@ -672,20 +2529,160 @@ ANNEX_A_27001 = {
     'A.7': {
         'title': 'Physical Controls (14 controls)',
         'sub_clauses': {
-            'A.7.1': 'Physical security perimeters',
-            'A.7.2': 'Physical entry controls',
-            'A.7.3': 'Securing offices rooms and facilities',
-            'A.7.4': 'Physical security monitoring',
-            'A.7.5': 'Protection against physical and environmental threats',
-            'A.7.6': 'Working in secure areas',
-            'A.7.7': 'Clear desk and clear screen',
-            'A.7.8': 'Equipment siting and protection',
-            'A.7.9': 'Security of assets off-premises',
-            'A.7.10': 'Storage media',
-            'A.7.11': 'Supporting utilities',
-            'A.7.12': 'Cabling security',
-            'A.7.13': 'Equipment maintenance',
-            'A.7.14': 'Secure disposal or re-use of equipment',
+            'A.7.1': {
+                'title': 'Physical security perimeters',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.2': {
+                'title': 'Physical entry controls',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.3': {
+                'title': 'Securing offices rooms and facilities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.4': {
+                'title': 'Physical security monitoring',
+                'audit_questions': [
+                    'How are monitoring and measurement activities defined?',
+                    'What monitoring equipment is used and how is it calibrated?',
+                ],
+                'evidence_to_check': [
+                    'Review of monitoring and measurement equipment calibration records',
+                    'Examination of monitoring plans and reports',
+                ],
+            },
+            'A.7.5': {
+                'title': 'Protection against physical and environmental threats',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.6': {
+                'title': 'Working in secure areas',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.7': {
+                'title': 'Clear desk and clear screen',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.8': {
+                'title': 'Equipment siting and protection',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.9': {
+                'title': 'Security of assets off-premises',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.10': {
+                'title': 'Storage media',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.11': {
+                'title': 'Supporting utilities',
+                'audit_questions': [
+                    'How are resources needed for the management system determined and provided?',
+                    'How is competence of personnel ensured?',
+                ],
+                'evidence_to_check': [
+                    'Review of resource allocation documentation',
+                    'Examination of training records and competence matrices',
+                ],
+            },
+            'A.7.12': {
+                'title': 'Cabling security',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.13': {
+                'title': 'Equipment maintenance',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.7.14': {
+                'title': 'Secure disposal or re-use of equipment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed physical security perimeter controls including access control system logs',
@@ -697,40 +2694,380 @@ ANNEX_A_27001 = {
     'A.8': {
         'title': 'Technological Controls (34 controls)',
         'sub_clauses': {
-            'A.8.1': 'User endpoint devices',
-            'A.8.2': 'Privileged access rights',
-            'A.8.3': 'Information access restriction',
-            'A.8.4': 'Access to source code',
-            'A.8.5': 'Secure authentication',
-            'A.8.6': 'Capacity management',
-            'A.8.7': 'Protection against malware',
-            'A.8.8': 'Management of technical vulnerabilities',
-            'A.8.9': 'Configuration management',
-            'A.8.10': 'Information deletion',
-            'A.8.11': 'Data masking',
-            'A.8.12': 'Data leakage prevention',
-            'A.8.13': 'Information backup',
-            'A.8.14': 'Redundancy of information processing facilities',
-            'A.8.15': 'Logging',
-            'A.8.16': 'Monitoring activities',
-            'A.8.17': 'Clock synchronization',
-            'A.8.18': 'Use of privileged utility programs',
-            'A.8.19': 'Installation of software on operational systems',
-            'A.8.20': 'Networks security',
-            'A.8.21': 'Security of network services',
-            'A.8.22': 'Segregation of networks',
-            'A.8.23': 'Web filtering',
-            'A.8.24': 'Use of cryptography',
-            'A.8.25': 'Secure development lifecycle',
-            'A.8.26': 'Application security requirements',
-            'A.8.27': 'Secure system architecture and engineering principles',
-            'A.8.28': 'Secure coding',
-            'A.8.29': 'Security testing in development and acceptance',
-            'A.8.30': 'Outsourced development',
-            'A.8.31': 'Separation of development test and production environments',
-            'A.8.32': 'Change management',
-            'A.8.33': 'Test information',
-            'A.8.34': 'Protection of information systems during audit testing',
+            'A.8.1': {
+                'title': 'User endpoint devices',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.2': {
+                'title': 'Privileged access rights',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.3': {
+                'title': 'Information access restriction',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.4': {
+                'title': 'Access to source code',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.5': {
+                'title': 'Secure authentication',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.6': {
+                'title': 'Capacity management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.7': {
+                'title': 'Protection against malware',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.8': {
+                'title': 'Management of technical vulnerabilities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.9': {
+                'title': 'Configuration management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.10': {
+                'title': 'Information deletion',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.11': {
+                'title': 'Data masking',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.12': {
+                'title': 'Data leakage prevention',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.13': {
+                'title': 'Information backup',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.14': {
+                'title': 'Redundancy of information processing facilities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.15': {
+                'title': 'Logging',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.16': {
+                'title': 'Monitoring activities',
+                'audit_questions': [
+                    'How are monitoring and measurement activities defined?',
+                    'What monitoring equipment is used and how is it calibrated?',
+                ],
+                'evidence_to_check': [
+                    'Review of monitoring and measurement equipment calibration records',
+                    'Examination of monitoring plans and reports',
+                ],
+            },
+            'A.8.17': {
+                'title': 'Clock synchronization',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.18': {
+                'title': 'Use of privileged utility programs',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.19': {
+                'title': 'Installation of software on operational systems',
+                'audit_questions': [
+                    'How are operational processes planned, implemented, and controlled?',
+                    'What criteria are in place for accepting products and services?',
+                ],
+                'evidence_to_check': [
+                    'Observation of operational processes in execution',
+                    'Review of operational planning and control documentation',
+                ],
+            },
+            'A.8.20': {
+                'title': 'Networks security',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.21': {
+                'title': 'Security of network services',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.22': {
+                'title': 'Segregation of networks',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.23': {
+                'title': 'Web filtering',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.24': {
+                'title': 'Use of cryptography',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.25': {
+                'title': 'Secure development lifecycle',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.26': {
+                'title': 'Application security requirements',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.27': {
+                'title': 'Secure system architecture and engineering principles',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.28': {
+                'title': 'Secure coding',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.29': {
+                'title': 'Security testing in development and acceptance',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.30': {
+                'title': 'Outsourced development',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.31': {
+                'title': 'Separation of development test and production environments',
+                'audit_questions': [
+                    'How is product/service acceptance criteria defined?',
+                    'How is product traceability managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of product acceptance criteria and inspection records',
+                    'Examination of traceability records',
+                ],
+            },
+            'A.8.32': {
+                'title': 'Change management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.33': {
+                'title': 'Test information',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.8.34': {
+                'title': 'Protection of information systems during audit testing',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed vulnerability management reports and patching compliance records',
@@ -743,14 +3080,55 @@ ANNEX_A_27001 = {
     },
 }
 
+
 ANNEX_A_42001 = {
     'A.9.1': {
         'title': 'AI Policy (4 controls)',
         'sub_clauses': {
-            'A.9.1.1': 'AI policy framework',
-            'A.9.1.2': 'AI governance roles and responsibilities',
-            'A.9.1.3': 'AI policy communication',
-            'A.9.1.4': 'AI resource allocation',
+            'A.9.1.1': {
+                'title': 'AI policy framework',
+                'audit_questions': [
+                    'How is the policy documented, approved, and communicated?',
+                    'How is policy compliance monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of approved policy document with version history',
+                    'Examination of policy communication records',
+                ],
+            },
+            'A.9.1.2': {
+                'title': 'AI governance roles and responsibilities',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.1.3': {
+                'title': 'AI policy communication',
+                'audit_questions': [
+                    'How is the policy documented, approved, and communicated?',
+                    'How is policy compliance monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of approved policy document with version history',
+                    'Examination of policy communication records',
+                ],
+            },
+            'A.9.1.4': {
+                'title': 'AI resource allocation',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI policy framework covering ethical principles and governance requirements',
@@ -760,14 +3138,94 @@ ANNEX_A_42001 = {
     'A.9.2': {
         'title': 'AI System Lifecycle (8 controls)',
         'sub_clauses': {
-            'A.9.2.1': 'AI system planning and design',
-            'A.9.2.2': 'AI system development methodology',
-            'A.9.2.3': 'Data acquisition and preparation',
-            'A.9.2.4': 'Model training and validation',
-            'A.9.2.5': 'Model testing and evaluation',
-            'A.9.2.6': 'AI system deployment',
-            'A.9.2.7': 'AI system operation and monitoring',
-            'A.9.2.8': 'AI system retirement',
+            'A.9.2.1': {
+                'title': 'AI system planning and design',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            'A.9.2.2': {
+                'title': 'AI system development methodology',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.2.3': {
+                'title': 'Data acquisition and preparation',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.2.4': {
+                'title': 'Model training and validation',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.2.5': {
+                'title': 'Model testing and evaluation',
+                'audit_questions': [
+                    'How does the organization monitor, measure, analyze, and evaluate performance?',
+                    'How is the internal audit program planned and implemented?',
+                ],
+                'evidence_to_check': [
+                    'Review of performance monitoring and measurement records',
+                    'Examination of internal audit program and reports',
+                ],
+            },
+            'A.9.2.6': {
+                'title': 'AI system deployment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.2.7': {
+                'title': 'AI system operation and monitoring',
+                'audit_questions': [
+                    'How are operational processes planned, implemented, and controlled?',
+                    'What criteria are in place for accepting products and services?',
+                ],
+                'evidence_to_check': [
+                    'Observation of operational processes in execution',
+                    'Review of operational planning and control documentation',
+                ],
+            },
+            'A.9.2.8': {
+                'title': 'AI system retirement',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI system lifecycle procedures covering development through retirement',
@@ -778,12 +3236,72 @@ ANNEX_A_42001 = {
     'A.9.3': {
         'title': 'AI Risk Management (6 controls)',
         'sub_clauses': {
-            'A.9.3.1': 'AI risk assessment process',
-            'A.9.3.2': 'AI risk criteria and acceptance levels',
-            'A.9.3.3': 'AI risk treatment planning',
-            'A.9.3.4': 'AI risk monitoring and review',
-            'A.9.3.5': 'AI residual risk acceptance',
-            'A.9.3.6': 'AI risk register maintenance',
+            'A.9.3.1': {
+                'title': 'AI risk assessment process',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            'A.9.3.2': {
+                'title': 'AI risk criteria and acceptance levels',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            'A.9.3.3': {
+                'title': 'AI risk treatment planning',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            'A.9.3.4': {
+                'title': 'AI risk monitoring and review',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            'A.9.3.5': {
+                'title': 'AI residual risk acceptance',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            'A.9.3.6': {
+                'title': 'AI risk register maintenance',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI risk register covering all operational AI systems',
@@ -794,11 +3312,61 @@ ANNEX_A_42001 = {
     'A.9.4': {
         'title': 'AI Data Management (5 controls)',
         'sub_clauses': {
-            'A.9.4.1': 'Data quality management',
-            'A.9.4.2': 'Data provenance and lineage',
-            'A.9.4.3': 'Training data governance',
-            'A.9.4.4': 'Data bias detection and mitigation',
-            'A.9.4.5': 'Data retention and disposal',
+            'A.9.4.1': {
+                'title': 'Data quality management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.4.2': {
+                'title': 'Data provenance and lineage',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.4.3': {
+                'title': 'Training data governance',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.4.4': {
+                'title': 'Data bias detection and mitigation',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.4.5': {
+                'title': 'Data retention and disposal',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed data quality metrics and monitoring reports for training datasets',
@@ -809,10 +3377,50 @@ ANNEX_A_42001 = {
     'A.9.5': {
         'title': 'AI Transparency and Explainability (4 controls)',
         'sub_clauses': {
-            'A.9.5.1': 'AI system documentation',
-            'A.9.5.2': 'Explainability requirements',
-            'A.9.5.3': 'AI system output labelling',
-            'A.9.5.4': 'Stakeholder communication',
+            'A.9.5.1': {
+                'title': 'AI system documentation',
+                'audit_questions': [
+                    'How is document control managed?',
+                    'How are document changes approved and tracked?',
+                ],
+                'evidence_to_check': [
+                    'Review of document control procedure',
+                    'Examination of document approval and change records',
+                ],
+            },
+            'A.9.5.2': {
+                'title': 'Explainability requirements',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.5.3': {
+                'title': 'AI system output labelling',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.5.4': {
+                'title': 'Stakeholder communication',
+                'audit_questions': [
+                    'How is internal communication managed across levels?',
+                    'How is external communication regulated?',
+                ],
+                'evidence_to_check': [
+                    'Review of communication procedure and matrix',
+                    'Examination of internal communication records and notice boards',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI system documentation including purpose scope and limitations',
@@ -823,9 +3431,39 @@ ANNEX_A_42001 = {
     'A.9.6': {
         'title': 'AI Fairness and Non-Discrimination (3 controls)',
         'sub_clauses': {
-            'A.9.6.1': 'Fairness assessment',
-            'A.9.6.2': 'Discrimination monitoring',
-            'A.9.6.3': 'Remediation of unfair outcomes',
+            'A.9.6.1': {
+                'title': 'Fairness assessment',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.6.2': {
+                'title': 'Discrimination monitoring',
+                'audit_questions': [
+                    'How are monitoring and measurement activities defined?',
+                    'What monitoring equipment is used and how is it calibrated?',
+                ],
+                'evidence_to_check': [
+                    'Review of monitoring and measurement equipment calibration records',
+                    'Examination of monitoring plans and reports',
+                ],
+            },
+            'A.9.6.3': {
+                'title': 'Remediation of unfair outcomes',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed fairness metrics and assessment results across demographic groups',
@@ -836,10 +3474,50 @@ ANNEX_A_42001 = {
     'A.9.7': {
         'title': 'AI Security and Safety (4 controls)',
         'sub_clauses': {
-            'A.9.7.1': 'AI system security controls',
-            'A.9.7.2': 'Adversarial attack protection',
-            'A.9.7.3': 'AI system safety testing',
-            'A.9.7.4': 'AI incident response',
+            'A.9.7.1': {
+                'title': 'AI system security controls',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.7.2': {
+                'title': 'Adversarial attack protection',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.7.3': {
+                'title': 'AI system safety testing',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.7.4': {
+                'title': 'AI incident response',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI-specific security controls including model poisoning protections',
@@ -850,9 +3528,39 @@ ANNEX_A_42001 = {
     'A.9.8': {
         'title': 'AI Impact Assessment (3 controls)',
         'sub_clauses': {
-            'A.9.8.1': 'AI impact assessment process',
-            'A.9.8.2': 'Societal impact evaluation',
-            'A.9.8.3': 'Environmental impact of AI systems',
+            'A.9.8.1': {
+                'title': 'AI impact assessment process',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.8.2': {
+                'title': 'Societal impact evaluation',
+                'audit_questions': [
+                    'How does the organization monitor, measure, analyze, and evaluate performance?',
+                    'How is the internal audit program planned and implemented?',
+                ],
+                'evidence_to_check': [
+                    'Review of performance monitoring and measurement records',
+                    'Examination of internal audit program and reports',
+                ],
+            },
+            'A.9.8.3': {
+                'title': 'Environmental impact of AI systems',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed AI impact assessment reports for high-risk AI systems',
@@ -863,9 +3571,39 @@ ANNEX_A_42001 = {
     'A.9.9': {
         'title': 'AI Third-Party and Supply Chain (3 controls)',
         'sub_clauses': {
-            'A.9.9.1': 'Third-party AI system oversight',
-            'A.9.9.2': 'AI supply chain risk assessment',
-            'A.9.9.3': 'Open-source AI component management',
+            'A.9.9.1': {
+                'title': 'Third-party AI system oversight',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            'A.9.9.2': {
+                'title': 'AI supply chain risk assessment',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            'A.9.9.3': {
+                'title': 'Open-source AI component management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed third-party AI system assessment and approval documentation',
@@ -880,9 +3618,39 @@ PIMS_27701 = {
     '5': {
         'title': 'Leadership and Accountability',
         'sub_clauses': {
-            '5.1': 'Privacy leadership and commitment',
-            '5.2': 'Privacy policy',
-            '5.3': 'Privacy roles and responsibilities including DPO',
+            '5.1': {
+                'title': 'Privacy leadership and commitment',
+                'audit_questions': [
+                    'How does top management demonstrate leadership and commitment?',
+                    'How is the quality/environmental/OH&S policy communicated and maintained?',
+                ],
+                'evidence_to_check': [
+                    'Interview with top management on leadership involvement',
+                    'Review of policy statements and communication records',
+                ],
+            },
+            '5.2': {
+                'title': 'Privacy policy',
+                'audit_questions': [
+                    'How is the policy documented, approved, and communicated?',
+                    'How is policy compliance monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of approved policy document with version history',
+                    'Examination of policy communication records',
+                ],
+            },
+            '5.3': {
+                'title': 'Privacy roles and responsibilities including DPO',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Interviewed DPO on independence reporting line and resource adequacy',
@@ -893,10 +3661,50 @@ PIMS_27701 = {
     '6': {
         'title': 'Planning for the Privacy Information Management System',
         'sub_clauses': {
-            '6.1': 'Actions to address privacy risks and opportunities',
-            '6.2': 'Privacy objectives and planning',
-            '6.3': 'Privacy risk assessment methodology',
-            '6.4': 'Legal and regulatory requirements register',
+            '6.1': {
+                'title': 'Actions to address privacy risks and opportunities',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            '6.2': {
+                'title': 'Privacy objectives and planning',
+                'audit_questions': [
+                    'How does the organization identify risks and opportunities?',
+                    'How are quality/environmental/OH&S objectives established and monitored?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk and opportunity register',
+                    'Examination of objectives and plans to achieve them',
+                ],
+            },
+            '6.3': {
+                'title': 'Privacy risk assessment methodology',
+                'audit_questions': [
+                    'How does the organization conduct risk assessment?',
+                    'How are risk treatment options evaluated and selected?',
+                ],
+                'evidence_to_check': [
+                    'Review of risk assessment methodology and criteria',
+                    'Examination of risk register and treatment plans',
+                ],
+            },
+            '6.4': {
+                'title': 'Legal and regulatory requirements register',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed privacy risk assessment methodology aligned with ISO 29134 guidelines',
@@ -907,12 +3715,72 @@ PIMS_27701 = {
     '7': {
         'title': 'Support for the Privacy Information Management System',
         'sub_clauses': {
-            '7.1': 'Resources for privacy management',
-            '7.2': 'Privacy competence and training',
-            '7.3': 'Privacy awareness',
-            '7.4': 'Privacy communication',
-            '7.5': 'Documented information for privacy',
-            '7.6': 'Records of processing activities (ROPA)',
+            '7.1': {
+                'title': 'Resources for privacy management',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
+            '7.2': {
+                'title': 'Privacy competence and training',
+                'audit_questions': [
+                    'How is required competence determined for each role?',
+                    'How is competence evaluated and records maintained?',
+                ],
+                'evidence_to_check': [
+                    'Review of job descriptions and competence requirements',
+                    'Examination of training records and effectiveness evaluation',
+                ],
+            },
+            '7.3': {
+                'title': 'Privacy awareness',
+                'audit_questions': [
+                    'How does the organization ensure awareness of the policy?',
+                    'How are employees made aware of their contribution to effectiveness?',
+                ],
+                'evidence_to_check': [
+                    'Interview with personnel on policy awareness',
+                    'Review of awareness training materials and attendance records',
+                ],
+            },
+            '7.4': {
+                'title': 'Privacy communication',
+                'audit_questions': [
+                    'How is internal communication managed across levels?',
+                    'How is external communication regulated?',
+                ],
+                'evidence_to_check': [
+                    'Review of communication procedure and matrix',
+                    'Examination of internal communication records and notice boards',
+                ],
+            },
+            '7.5': {
+                'title': 'Documented information for privacy',
+                'audit_questions': [
+                    'How is document control managed?',
+                    'How are document changes approved and tracked?',
+                ],
+                'evidence_to_check': [
+                    'Review of document control procedure',
+                    'Examination of document approval and change records',
+                ],
+            },
+            '7.6': {
+                'title': 'Records of processing activities (ROPA)',
+                'audit_questions': [
+                    'What evidence demonstrates compliance with this clause?',
+                    'How does the organization address each requirement of this clause?',
+                ],
+                'evidence_to_check': [
+                    'Review of documented evidence of compliance with contractual requirements',
+                    'Examination of applicable regulatory permits and approvals',
+                ],
+            },
         },
         'evidence': [
             'Reviewed ROPA completeness across all business functions and systems',
@@ -923,9 +3791,39 @@ PIMS_27701 = {
     '9': {
         'title': 'Performance Evaluation of the PIMS',
         'sub_clauses': {
-            '9.1': 'Privacy monitoring and measurement',
-            '9.2': 'Internal audit of PIMS',
-            '9.3': 'Management review of PIMS',
+            '9.1': {
+                'title': 'Privacy monitoring and measurement',
+                'audit_questions': [
+                    'How are monitoring and measurement activities defined?',
+                    'What monitoring equipment is used and how is it calibrated?',
+                ],
+                'evidence_to_check': [
+                    'Review of monitoring and measurement equipment calibration records',
+                    'Examination of monitoring plans and reports',
+                ],
+            },
+            '9.2': {
+                'title': 'Internal audit of PIMS',
+                'audit_questions': [
+                    'How is the internal audit program planned?',
+                    'How are auditors selected and their competence ensured?',
+                ],
+                'evidence_to_check': [
+                    'Review of internal audit schedule and program',
+                    'Examination of auditor qualification and selection records',
+                ],
+            },
+            '9.3': {
+                'title': 'Management review of PIMS',
+                'audit_questions': [
+                    'How is the management review agenda determined?',
+                    'What inputs and outputs are part of the management review?',
+                ],
+                'evidence_to_check': [
+                    'Review of management review meeting minutes',
+                    'Examination of action item tracking records',
+                ],
+            },
         },
         'evidence': [
             'Reviewed privacy KPI reports including data subject request metrics',
@@ -936,8 +3834,28 @@ PIMS_27701 = {
     '10': {
         'title': 'Improvement of the PIMS',
         'sub_clauses': {
-            '10.1': 'Privacy nonconformities and corrective actions',
-            '10.2': 'Continual improvement of PIMS',
+            '10.1': {
+                'title': 'Privacy nonconformities and corrective actions',
+                'audit_questions': [
+                    'How does the organization initiate corrective action?',
+                    'How is the effectiveness of corrective actions evaluated?',
+                ],
+                'evidence_to_check': [
+                    'Review of corrective action procedure',
+                    'Examination of corrective action records and effectiveness verification',
+                ],
+            },
+            '10.2': {
+                'title': 'Continual improvement of PIMS',
+                'audit_questions': [
+                    'How does the organization identify and act on nonconformities?',
+                    'How is corrective action managed?',
+                ],
+                'evidence_to_check': [
+                    'Review of nonconformity logs and corrective action records',
+                    'Examination of continual improvement initiatives',
+                ],
+            },
         },
         'evidence': [
             'Reviewed privacy incident register and root cause analysis records',
@@ -949,165 +3867,19 @@ PIMS_27701 = {
 
 
 FRAMEWORK_31000 = {
-    'title': 'ISO 31000:2018 — Risk Management Framework',
+    'title': {
+    },
     'sections': {
-        '1': {
-            'title': 'Principles of Risk Management',
-            'sub_sections': {
-                '1.1': 'Integrated',
-                '1.2': 'Structured and comprehensive',
-                '1.3': 'Customized',
-                '1.4': 'Inclusive',
-                '1.5': 'Dynamic',
-                '1.6': 'Best available information',
-                '1.7': 'Human and cultural factors',
-                '1.8': 'Continual improvement',
-            },
-            'evidence': [
-                'Reviewed risk management principles integration into organizational processes',
-                'Examined how risk management is customized to organizational context',
-                'Assessed inclusiveness of stakeholder participation in risk processes',
-            ],
-        },
-        '2': {
-            'title': 'Framework Leadership and Commitment',
-            'sub_sections': {
-                '2.1': 'Integration',
-                '2.2': 'Design',
-                '2.3': 'Implementation',
-                '2.4': 'Evaluation',
-                '2.5': 'Improvement',
-            },
-            'evidence': [
-                'Reviewed risk management framework mandate and sponsorship from top management',
-                'Examined framework integration across organizational governance structures',
-                'Verified framework evaluation and improvement cycle documentation',
-            ],
-        },
-        '3': {
-            'title': 'Risk Management Process',
-            'sub_sections': {
-                '3.1': 'Communication and consultation',
-                '3.2': {
-                    'title': 'Scope context and criteria',
-                    'sub_sections': {
-                        '3.2.1': 'Defining scope',
-                        '3.2.2': 'External and internal context',
-                        '3.2.3': 'Defining risk criteria',
-                    },
-                },
-                '3.3': {
-                    'title': 'Risk assessment',
-                    'sub_sections': {
-                        '3.3.1': 'Risk identification',
-                        '3.3.2': 'Risk analysis',
-                        '3.3.3': 'Risk evaluation',
-                    },
-                },
-                '3.4': 'Risk treatment',
-                '3.5': 'Monitoring and review',
-                '3.6': 'Recording and reporting',
-            },
-            'evidence': [
-                'Reviewed risk assessment documentation including identification analysis and evaluation',
-                'Examined risk treatment plans with residual risk acceptance',
-                'Verified communication and consultation records with stakeholder engagement',
-                'Assessed risk criteria alignment with organizational risk appetite',
-                'Reviewed monitoring and review schedules for risk treatment effectiveness',
-            ],
-        },
     },
 }
+
 
 FRAMEWORK_10002 = {
-    'title': 'ISO 10002:2018 — Complaints Handling Framework',
+    'title': {
+    },
     'sections': {
-        '1': {
-            'title': 'Guiding Principles for Complaints Handling',
-            'sub_sections': {
-                '1.1': 'Visibility',
-                '1.2': 'Accessibility',
-                '1.3': 'Responsiveness',
-                '1.4': 'Objectivity',
-                '1.5': 'Charges',
-                '1.6': 'Confidentiality',
-                '1.7': 'Customer-focused approach',
-                '1.8': 'Accountability',
-                '1.9': 'Continual improvement',
-            },
-            'evidence': [
-                'Reviewed complaints policy visibility on website and customer-facing materials',
-                'Examined accessibility of complaints channels for diverse customer groups',
-                'Assessed responsiveness metrics against defined service level targets',
-            ],
-        },
-        '2': {
-            'title': 'Complaints Handling Framework',
-            'sub_sections': {
-                '2.1': 'Policy commitment',
-                '2.2': 'Objectives and targets',
-                '2.3': 'Responsibilities and authorities',
-                '2.4': 'Resource allocation',
-                '2.5': 'Competence and training',
-                '2.6': 'Documentation and records',
-            },
-            'evidence': [
-                'Reviewed complaints handling policy endorsed by top management',
-                'Examined complaints handling process documentation and procedures',
-                'Verified resource allocation for complaints handling function adequacy',
-            ],
-        },
-        '3': {
-            'title': 'Complaints Handling Process',
-            'sub_sections': {
-                '3.1': 'Receipt of complaint',
-                '3.2': 'Tracking of complaint',
-                '3.3': 'Acknowledgement of complaint',
-                '3.4': 'Initial assessment of complaint',
-                '3.5': 'Investigation of complaint',
-                '3.6': 'Response to complaint',
-                '3.7': 'Communication of decision',
-                '3.8': 'Closure of complaint',
-            },
-            'evidence': [
-                'Reviewed complaints register with tracking and status management',
-                'Examined investigation reports including root cause analysis findings',
-                'Verified response timelines and customer satisfaction with outcomes',
-                'Assessed escalation process for unresolved complaints handling',
-            ],
-        },
-        '4': {
-            'title': 'Monitoring and Analysis',
-            'sub_sections': {
-                '4.1': 'Complaint monitoring and measurement',
-                '4.2': 'Customer satisfaction measurement',
-                '4.3': 'Complaint data analysis',
-                '4.4': 'Internal audit of complaints process',
-                '4.5': 'Management review of complaints data',
-            },
-            'evidence': [
-                'Reviewed complaint trend analysis and root cause patterns',
-                'Examined customer satisfaction survey results and improvement actions',
-                'Verified management review inputs including complaint performance data',
-            ],
-        },
-        '5': {
-            'title': 'Improvement of Complaints Handling',
-            'sub_sections': {
-                '5.1': 'Corrective actions',
-                '5.2': 'Preventive actions',
-                '5.3': 'Continual improvement of complaints process',
-                '5.4': 'Complaints handling process audit',
-            },
-            'evidence': [
-                'Reviewed corrective action records from complaint investigations',
-                'Examined preventive actions identified through complaint trend analysis',
-                'Verified effectiveness of implemented improvements to complaints process',
-            ],
-        },
     },
 }
-
 
 SUPPORTING_STANDARDS_EVIDENCE = {
     'iso_9001': {
@@ -1303,22 +4075,40 @@ def flatten_clauses(clause_dict: dict, parent_key: str = '') -> list:
     return result
 
 
-def get_evidence_for_clause(clause_dict: dict, clause_id: str) -> list:
-    """Walk the clause tree to find evidence items for a specific clause ID."""
+def _walk_clause_tree(clause_dict: dict, clause_id: str) -> dict | None:
+    """Walk the clause tree to find a node by dot-notation ID.
+
+    Handles both HLS keys (single digits like '4', '5') and dotted keys
+    (Annex A like 'A.5', 'A.5.1') by trying all possible prefix lengths
+    at each level and selecting the longest match.
+    """
     parts = clause_id.split('.')
     current = clause_dict
-    for i, part in enumerate(parts):
-        if part in current:
-            val = current[part]
-            if isinstance(val, dict):
-                if i == len(parts) - 1:
-                    return val.get('evidence', [])
-                current = val.get('sub_clauses', {})
-            else:
-                return []
-        else:
-            return []
-    return []
+    i = 0
+    while i < len(parts):
+        matched_j = None
+        matched_key = None
+        for j in range(i, len(parts)):
+            prefix = '.'.join(parts[:j+1])
+            if prefix in current:
+                matched_j = j
+                matched_key = prefix
+        if matched_j is None:
+            return None
+        val = current[matched_key]
+        if not isinstance(val, dict):
+            return None
+        if matched_j == len(parts) - 1:
+            return val
+        current = val.get('sub_clauses', {})
+        i = matched_j + 1
+    return None
+
+
+def get_evidence_for_clause(clause_dict: dict, clause_id: str) -> list:
+    """Walk the clause tree to find evidence items for a specific clause ID."""
+    node = _walk_clause_tree(clause_dict, clause_id)
+    return node.get('evidence', []) if node else []
 
 
 def get_all_clause_items(standard_key: str) -> list:

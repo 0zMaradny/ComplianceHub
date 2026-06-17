@@ -1,6 +1,7 @@
 import { Component } from 'react'
+import { withTranslation } from 'react-i18next'
 
-export default class ErrorBoundary extends Component {
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
     this.state = { hasError: false, error: null }
@@ -19,6 +20,7 @@ export default class ErrorBoundary extends Component {
   }
 
   render() {
+    const { t } = this.props
     if (this.state.hasError) {
       return (
         <div style={{
@@ -26,9 +28,9 @@ export default class ErrorBoundary extends Component {
           justifyContent: 'center', minHeight: '60vh', padding: 24, textAlign: 'center',
         }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-          <h2 style={{ marginBottom: 8 }}>Something went wrong</h2>
+          <h2 style={{ marginBottom: 8 }}>{t('error.something_wrong')}</h2>
           <p style={{ color: 'var(--gray-600)', marginBottom: 20, maxWidth: 400 }}>
-            An unexpected error occurred. This has been logged. Try refreshing or resetting this section.
+            {t('error.description')}
           </p>
           {this.state.error && (
             <pre style={{
@@ -41,10 +43,10 @@ export default class ErrorBoundary extends Component {
           )}
           <div style={{ display: 'flex', gap: 12 }}>
             <button className="btn btn-primary" onClick={this.handleReset}>
-              Try Again
+              {t('error.try_again')}
             </button>
             <button className="btn btn-secondary" onClick={() => window.location.reload()}>
-              Refresh Page
+              {t('error.refresh')}
             </button>
           </div>
         </div>
@@ -53,3 +55,5 @@ export default class ErrorBoundary extends Component {
     return this.props.children
   }
 }
+
+export default withTranslation()(ErrorBoundary)

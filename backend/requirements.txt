@@ -18,3 +18,4 @@ openai==2.41.0             # OpenAI
 anthropic==0.105.2         # Claude
 requests==2.34.2           # Ollama (built-in)
 psycopg2-binary==2.9.10   # PostgreSQL (Railway / production)
+markitdown                    # Microsoft MarkItDown — file-to-Markdown conversion

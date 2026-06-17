@@ -3,8 +3,28 @@ import re
 from docx import Document
 
 
+def parse_with_markitdown(filepath):
+    try:
+        from markitdown import MarkItDown
+        md = MarkItDown()
+        result = md.convert(filepath)
+        text = result.text_content
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        return {
+            'filename': os.path.basename(filepath),
+            'paragraphs': lines,
+            'text': text,
+            'tables': [],
+        }
+    except Exception as e:
+        return {'error': str(e), 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
+
+
 def parse_docx(filepath):
-    doc = Document(filepath)
+    try:
+        doc = Document(filepath)
+    except Exception as e:
+        return {'error': str(e), 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
     tables = []
     for table in doc.tables:
@@ -34,13 +54,22 @@ def parse_txt(filepath):
 
 
 def extract_audit_notes(filepath):
-    if filepath.endswith('.txt'):
+    ext = os.path.splitext(filepath)[1].lower()
+    if ext == '.txt':
         return parse_txt(filepath)
-    return parse_docx(filepath)
+    if ext == '.docx':
+        return parse_docx(filepath)
+    return parse_with_markitdown(filepath)
 
 
 def extract_manday_data(filepath):
-    data = parse_docx(filepath)
+    try:
+        data = parse_docx(filepath)
+    except Exception as e:
+        return {'error': str(e), 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': [], 'extracted': {}}
+    if 'error' in data:
+        data['extracted'] = {}
+        return data
     full_text = data['text']
 
     fields = {}

@@ -1,27 +1,34 @@
 # ComplianceHub — Agent Instructions
 
-## AI Provider Architecture (4-Tier Fallback, 11 Models)
+## Humanized Output
+
+All responses must sound human-written. Read `HUMANIZE.md` for the full rules and blocklist. Before final output, scan for AI-sounding patterns (hedging, generic transitions, over-politeness, boilerplate) and rewrite any matches. Prefer direct statements, contractions, varied sentence lengths, and active voice. Stop when done — no summary or sign-off unless it adds value.
+
+## AI Provider Architecture (5-Tier Fallback, 14 Models)
 
 ```
 generate() / extract_structured()
   ├─ Cache check (md5, 1h TTL)
-  ├─ Tier 1: Frontier OpenRouter (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha 1M) — parallel batch=2
-  │   └─ all fail → Tier 2: Strong OpenRouter (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B) — parallel batch=2
-  │       └─ all fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
-  │           └─ all fail → Tier 4: Local AI (Qwen2.5-3B or Qwen2.5-0.5B, localhost:8080)
-  │               └─ fail → return error
+  ├─ Tier 0: Claude Sonnet 4 (Anthropic, paid, best quality)
+  │   └─ fail → Tier 1: Frontier OpenRouter (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha 1M) — parallel batch=2
+  │       └─ fail → Tier 2: Strong OpenRouter (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B) — parallel batch=2
+  │           └─ fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
+  │               └─ fail → Tier 4: Local AI (Qwen3-4B / Qwen2.5-3B / Qwen2.5-0.5B, localhost:8080)
+  │                   └─ fail → return error
 ```
 
 | Tier | Provider | Models | Cost | Context | Speed |
 |------|----------|--------|------|---------|-------|
+| **0** | Anthropic | Claude Sonnet 4 | **Paid** | 200k | Good |
 | **1** | OpenRouter | Nemotron 3 Ultra 550B, Qwen3 Coder 480B, Kimi K2.6, **Owl Alpha** | **Free** | Up to 1M | Good |
 | **2** | OpenRouter | Nemotron 3 Super 120B, Llama 3.3 70B, Qwen3 Next 80B, Hermes 405B | **Free** | Up to 1M | Good |
 | **3** | Groq | Llama 3.3 70B Versatile | **Free** (~800 t/s) | 131k | **Fastest** |
-| **4** | Local (llama-server) | Qwen2.5-3B or Qwen2.5-0.5B GGUF | $0 | 8k / 4k | ~60s / ~20s per doc |
+| **4** | Local (llama-server) | Qwen3-4B / Qwen2.5-3B / Qwen2.5-0.5B GGUF | $0 | 32k / 8k / 4k | ~40s / ~60s / ~20s per doc |
 | **Offline** | Template engine | Static generation | $0 | Instant (3.2s/8docs) | Professional |
 
 ### API Key Setup
-- `.env` keys: `OPENROUTER_API_KEY`, `GROQ_API_KEY`
+- `.env` keys: `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`
+- Anthropic: https://console.anthropic.com/ (paid, Tier 0 primary)
 - OpenRouter: https://openrouter.ai/keys (free tier available)
 - Groq: https://console.groq.com/keys (free, no CC)
 
@@ -51,7 +58,8 @@ generate() / extract_structured()
 - **`app/services/ai_pipeline.py`**: Injects standard family context (main + supporting standards) and Annex A structure into all AI prompts. Includes few-shot evidence examples for all doc types. Accepts `manday_info` — injects `{manday_summary}` block (audit type, total days, per-standard breakdown, team, IMS reduction) before raw manday text in every prompt.
 - **`app/services/manday_calculator.py`**: IAF MD 5 reference tables for all 14 standards, audit type multipliers (initial=1.0, surv=1/3, recert=2/3, transfer=2/3), IAF MD 11 IMS reduction matrix (15 per-pair reductions, max 20%), `compute_mandays()`, `detect_audit_type()`, `compute_ims_reduction()`, `compute_audit_team()`, `lookup_base_mandays()`.
 - **`app/services/template_manager.py`**: Maps doc types to TÜV template files. `CHECKLIST_TEMPLATES` covers 8 standards (iso_9001, 14001, 45001, 50001, 20000, 22301, 27001 via Excel); remaining 7 standards generate from scratch.
-- **`app/services/ai/router.py`**: 3-tier fallback architecture — Frontier OpenRouter (4 free frontier models) → Strong OpenRouter (4 free strong models) → Groq (Llama 3.3 70B, ~800 t/s). Uses `ThreadPoolExecutor` with future cancellation for parallel execution. Peak-hours awareness: weekdays 12-18 UTC, low-priority tasks skip OpenRouter, go direct to Groq. Rate limiter, health tracking, quality scoring, response cache, and autodebugger self-healing integrated per provider.
+- **`app/services/ai/router.py`**: 5-tier fallback architecture — Claude (Anthropic) → Frontier OpenRouter (4 free frontier models) → Strong OpenRouter (4 free strong models) → Groq (Llama 3.3 70B, ~800 t/s) → Local (Qwen3-4B/Qwen2.5-3B). Uses `ThreadPoolExecutor` with future cancellation for parallel execution. Peak-hours awareness: weekdays 12-18 UTC, low-priority tasks skip OpenRouter, go direct to Groq. Rate limiter, health tracking, quality scoring, response cache, and autodebugger self-healing integrated per provider.
+- **`app/services/ai/anthropic_provider.py`**: Direct HTTP client for Anthropic API (`api.anthropic.com/v1`). Model: `claude-sonnet-4-20250514`. Tier 0 primary provider — best quality for all doc types.
 - **`app/services/ai/groq_provider.py`**: OpenAI-compatible client for Groq (`api.groq.com/openai/v1`). Model: `llama-3.3-70b-versatile`. Fastest free inference (~800 t/s). Tier 3 fallback.
 - **`app/services/ai/openrouter_provider.py`**: OpenAI-compatible client for OpenRouter (`openrouter.ai/api/v1`). Handles Tier 1 (frontier) and Tier 2 (strong) free models.
 - **`frontend/src/components/MandayForm.jsx`**: Collapsible form — audit type dropdown, employee/site inputs, per-standard risk/complexity table, IMS reduction %, real-time calculation preview (total, per-standard, team). Auto-fills from `mandayExtracted`.
@@ -61,7 +69,8 @@ generate() / extract_structured()
 
 ### Run Servers
 - `bash run.sh` — Start backend + frontend (offline mode)
-- `bash run.sh --local-ai` — Start with local AI (auto-selects: qwen-3b if available, else qwen-0.5b)
+- `bash run.sh --local-ai` — Start with local AI (auto-selects: qwen3-4b > qwen-3b > qwen-0.5b)
+- `bash run.sh --local-model=qwen3-4b` — Start with Qwen3-4B (~2.5 GB, ~40s/doc, 32k context)
 - `bash run.sh --local-model=qwen-3b` — Start with Qwen2.5-3B (~2.1 GB, ~60s/doc)
 - `bash run.sh --local-model=qwen-0.5b` — Start with Qwen2.5-0.5B (469 MB, ~20s/doc)
 - `bash run.sh --no-local-ai` — Explicitly skip local AI
@@ -79,11 +88,13 @@ generate() / extract_structured()
 - `cd frontend && npm run dev` — Development server (port 5173)
 
 ### Local AI (llama.cpp server)
+- `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen3-4b.gguf -c 32768 -t 4 -b 2048 --mlock --port 8080` — Start **Qwen3-4B** (preferred, ~2.5 GB, ~40s/doc, 32k context)
 - `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-3b.gguf -c 8192 -t 4 -b 2048 --mlock --port 8080` — Start Qwen2.5-3B (~2.1 GB, ~60s/doc, 8k context)
 - `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080` — Start Qwen2.5-0.5B (469 MB, ~20s/doc)
-- Models: canonical copies at `/opt/llama-server/models/` (`qwen-3b.gguf`, `qwen-0.5b.gguf`); repo `models/` is a symlink to `/opt/llama-server/models/`
+- Models: canonical copies at `/opt/llama-server/models/` (`qwen3-4b.gguf`, `qwen-3b.gguf`, `qwen-0.5b.gguf`); repo `models/` is a symlink to `/opt/llama-server/models/`
 - ARM64 optimization: `-t 4` (4 threads, memory-bound), `-b 2048` (batch size), `--mlock` (lock in RAM), `--cache-type-k q8_0 --cache-type-v q8_0` (halve KV cache)
-- Qwen2.5-3B uses `-c 8192` (6x params, needs ~2.5 GB RAM at Q4_K_M)
+- Qwen3-4B uses `-c 32768` (needs ~3 GB RAM at Q4_K_M)
+- **LOCAL_MODEL_ID env var** — set in `.env` to auto-select at startup (default: qwen3-4b)
 - **RAM watchdog**: Background loop (5 min interval) monitors `MemAvailable` — kills non-essential processes when below 500 MB
 - **Fallback**: If no model or server not running, the pipeline falls back to offline generator automatically
 
@@ -91,13 +102,12 @@ generate() / extract_structured()
 
 | Model | Size | Context | Time/doc | JSON | Quality Score | Verdict |
 |-------|------|---------|----------|------|---------------|---------|
-| **qwen-3b** (Qwen2.5-3B Q4_K_M) | **~2.1 GB** | **8k** | **~60s** | ✅ Valid | **65** (est.) | **Best local quality** |
-| qwen-0.5b (Qwen2.5-0.5B) | 469 MB | 4k | ~20s | ✅ Valid | 45 | Reliable fallback |
-| ~~Phi-4 Mini (3.8B)~~ | ~~2.4 GB~~ | ~~4k~~ | ~~~65s~~ | ✅ Valid, nested | ~~65~~ | ❌ Removed (too slow) |
-| ~~Qwen3-4B~~ | ~~2.4 GB~~ | ~~4k~~ | ~~~90s~~ | ❌ Non-JSON | ~~50~~ | ❌ Removed (too slow) |
+| **qwen3-4b** (Qwen3-4B Q4_K_M) | **~2.5 GB** | **32k** | **~40s** | ✅ Better | **72** (est.) | **Best local quality** |
+| qwen-3b (Qwen2.5-3B Q4_K_M) | ~2.1 GB | 8k | ~60s | ✅ Valid | 65 | Good fallback |
+| qwen-0.5b (Qwen2.5-0.5B) | 469 MB | 4k | ~20s | ✅ Valid | 45 | Minimal fallback |
 
-- Qwen2.5-3B Q4_K_M (~2.1 GB) delivers **6x more parameters** than qwen-0.5b at the cost of 3x slower inference — best quality/speed tradeoff for this device.
-- Cloud AI (HF/OpenAI/Gemini/Claude) provides better quality at higher speed when API keys are available.
+- Qwen3-4B delivers **better JSON output** than Qwen2.5-3B due to newer architecture, at similar speed.
+- Cloud AI (Claude via Anthropic) provides the best quality — used as Tier 0 primary.
 - Offline mode completes all 8 docs in **3.2s total** (0.4s avg/doc) — the fastest option.
 
 ### Code Quality
@@ -106,8 +116,8 @@ generate() / extract_structured()
 - `cd frontend && npm run lint` — ESLint check
 
 ### Cloud AI Keys
-- `backend/.env` — Current keys: AGENTROUTER_API_KEY, GROQ_API_KEY, OPENROUTER_API_KEY, HF_API_KEY (legacy: GEMINI_API_KEY, OPENAI_API_KEY, CLAUDE_API_KEY)
-- AgentRouter: https://agentrouter.org — key prefix `sk-`
+- `backend/.env` — Keys: ANTHROPIC_API_KEY, OPENROUTER_API_KEY, GROQ_API_KEY, HF_API_KEY. Full env reference at `backend/.env.example` (20+ configurable vars: AI_CACHE_TTL, AI_DEGRADE_THRESHOLD, AI_BATCH_SIZE, AI_PEAK_START/END, LOCAL_AI_BASE/TIMEOUT/MAX_RETRIES, RATE_LIMIT_*, MAX_FILE_SIZE, MAX_JOB_AGE, TUNNEL_SECRET, CORS_ORIGINS, FRONTEND_STATIC_DIR, etc.)
+- Anthropic: https://console.anthropic.com/ — paid, Tier 0 primary provider (`sk-ant-` prefix)
 - Groq: https://console.groq.com/keys — free, sign up → copy key (`gsk_` prefix)
 - OpenRouter: https://openrouter.ai/keys — free tier available, key prefix `sk-or-`
 - HF: https://huggingface.co/settings/tokens — free
@@ -129,7 +139,7 @@ generate() / extract_structured()
 - `railway.json` — Dockerfile builder, healthcheck at `/api/health`, 3 retries
 - `Dockerfile.railway` — Multi-stage: Node 20 builds FE → Python 3.12-slim serves both
 - Backend runs via `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}`
-- `.env.example` documents `DATABASE_URL`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`, `HF_API_KEY`
+- `backend/.env.example` documents all 20+ env vars (AI router config, rate limits, tunnel, file size, job age, CORS, static dir)
 - First deploy: `railway login` → `railway init` → `railway up`
 - Set env vars in Railway Dashboard (Variables tab) — keys are auto-injected
 
@@ -143,9 +153,9 @@ generate() / extract_structured()
 - Upload volume persists across restarts via `uploads` named volume
 
 ### Tests
-- `cd backend && python -m pytest tests/ -v` — Run 342 tests (unit + integration)
+- `cd backend && python -m pytest tests/ -v` — Run **571 tests** (unit + integration)
 - `cd backend && python -m pytest tests/ --coverage` — With coverage report
-- Test files: `tests/test_manday_calculator.py` (55 tests), `tests/test_offline_generator.py` (25 tests), `tests/test_template_manager.py` (16 tests)
+- Test files: `test_manday_calculator.py` (55), `test_offline_generator.py` (25), `test_template_manager.py` (16), `test_integration.py` (75+), `test_surveillance.py` (15+), `test_ai_chat.py` (8+), `test_file_parser.py` (8), `test_bilingual.py` (11), `test_client_config.py` (20), `test_export_validator.py` (12), `test_ai_providers.py` (15+), `test_ai_router.py` (30+)
 
 ### End-to-End Test
 - Start: `bash run.sh` (or backend + frontend separately)
@@ -188,3 +198,143 @@ generate() / extract_structured()
 - Git auto-pushes every commit on `main` via `.git/hooks/post-commit`
 - PAT token stored in `~/.git-credentials`
 - Manual push: `git push origin main`
+
+### Self-Hosted Tunnel (Android proot → Laptop browser)
+
+The app runs on Android proot (port 8000) and is exposed via a free Cloudflare Tunnel with automatic Serveo fallback.
+
+**Quick start:**
+```bash
+bash go.sh                    # Start backend + auto tunnel (Cloudflare→Serveo fallback)
+bash go.sh --ai               # Start backend + tunnel + local AI (auto-selects best model)
+bash go.sh --cloudflare       # Cloudflare only (no fallback)
+bash go.sh --serveo           # Serveo only
+bash go.sh --serveo --serveo-subdomain=NAME  # Fixed Serveo subdomain
+bash stop.sh                  # Stop everything
+```
+
+**What happens:**
+1. Kills old processes on ports 8000/8080 (SIGTERM first, SIGKILL after 2s)
+2. Builds frontend (`npm run build`)
+3. Starts backend with `FRONTEND_STATIC_DIR` (single port serves API + SPA)
+4. Optionally starts `llama-server` with Qwen3-4B (or best available) on port 8080
+5. Launches tunnel watchdog with smart fallback, exponential backoff, health monitoring
+6. Saves URL to `/tmp/compliancehub-url.txt` and `$ROOT/.tunnel-url` (persistent)
+
+**Architecture:**
+```
+[Laptop Browser] → Tunnel URL → Cloudflare/Serveo → HTTP/2 → cloudflared/ssh → localhost:8000
+                                                                                 ├─ /api/* → FastAPI
+                                                                                 └─ /*     → React SPA (dist/)
+```
+
+**New files:**
+- `go.sh` — Master launcher with graceful shutdown via `trap`
+- `tunnel.sh` — Tunnel watchdog with fallback, backoff, health checking, log rotation
+- `stop.sh` — Graceful shutdown (SIGTERM → 2s → SIGKILL)
+
+**Tunnel options (from go.sh):**
+| Flag | Behavior | Reliability |
+|------|----------|-------------|
+| `--auto` (default) | Cloudflare first → Serveo fallback after 3 failures → loop | **Best** |
+| `--cloudflare` | Cloudflare only (no fallback) | High |
+| `--serveo` | Serveo only | Fair |
+| `--serveo --serveo-subdomain=NAME` | Serveo with fixed subdomain | **Stable URL** |
+| `--no-tunnel` | Localhost only | — |
+
+**Key enhancements (Track B):**
+| Feature | Detail |
+|---------|--------|
+| **Smart fallback** | After 3 consecutive failures, auto-switch between Cloudflare and Serveo |
+| **Exponential backoff** | 5s → 10s → 20s → 40s → 60s max, resets on connect |
+| **URL persistence** | Saved to `$ROOT/.tunnel-url`, survives restart, shown stale until live |
+| **Health monitoring** | 60s ping; 3 failures → force reconnect. Logged to `/tmp/tunnel-health.log` |
+| **Graceful shutdown** | `go.sh` traps SIGINT/SIGTERM; `stop.sh` sends SIGTERM first, then SIGKILL |
+| **Log rotation** | `tunnel.log` auto-rotates at 1MB (3 backups) |
+| **`/api/tunnel` endpoint** | Returns `{tunnel_url, tunnel_mode}` for status display |
+
+**Retrieve the URL anytime:**
+```bash
+cat /tmp/compliancehub-url.txt
+```
+
+**RAM budget (with local AI):**
+- uvicorn: ~80 MB
+- llama-server: ~2.0–2.5 GB (depends on model)
+- cloudflared: ~20 MB
+- Total: ~2.1–2.6 GB (4.3 GB available on device)
+
+**Known constraints:**
+- Cloudflare quick tunnels generate a random URL each restart
+- Mobile carrier adds 5-15s latency through the tunnel
+- Keep Android device on + connected to internet during work hours
+- proot environment cannot use UDP QUIC reliably — tunnel uses `--protocol http2`
+
+### UI/UX Design (Track A)
+
+**Color palette:**
+| Token | Usage | Examples |
+|-------|-------|----------|
+| `--primary` `#003D7A` | Brand blue, sidebar, primary buttons | Sidebar bg, gradient headers |
+| `--warm` `#D4A017` | Amber accent for quality/warning | Badges, secondary highlights |
+| `--teal` `#0D9488` | Trust/completion states | Quick action cards, certifications |
+| `--emerald` `#059669` | Success states | Donut chart, progress dots |
+| `--rose` `#E11D48` | Attention (not error) | Open NCs, pending items |
+| `--purple` `#7C3AED` | Analytics/AI | Analytics quick action |
+| 14x `--standard-*` | Per-standard color codes | Standards list left-border |
+
+**Dashboard hero area:**
+- Compliance health ring gauge (SVG donut, animated stroke-dashoffset) — shows overall compliance score
+- 4 gradient quick action cards (New Audit, Reports, Compliance, Analytics) with hover lift
+- Stat cards moved below with smaller grid (minmax 180px)
+- Tunnel URL banner between hero and stats
+
+**Typography:** `@fontsource/inter` (400/500/600/700 weights), body font set to Inter.
+
+**Page transitions:** Direction-aware — forward nav uses `slideIn`, backward uses `fadeIn`.
+
+**Micro-interactions:**
+- Stat card CSS ripple layer on hover, scale feedback on click
+- Per-doc progress dots in Audit page (pulsing amber = generating, green = done, red = error)
+- Stat card hover lift with shadow elevation
+- Standards list color-coded left-border per standard
+
+**Empty states:** Enhanced `EmptyState` component with icon circle, description, CTA button. Wired into History (→ New Audit) and Projects pages.
+
+**Build metrics:** 482KB JS / 126KB gzip (includes Inter fonts), 50KB CSS / 11KB gzip, ~920ms build time.
+
+## claude-mem Memory System
+
+A local MCP server is connected (21 tools listed). Worker runs at `http://localhost:37700`.
+
+### What Actually Works
+| Feature | Status | Details |
+|---------|--------|---------|
+| Worker web UI | ✓ | `localhost:37700` — browse indexed conversations |
+| Background indexing | ✓ | Worker captures session context to `~/.claude-mem/claude-mem.db` |
+| MCP connection | ✓ | opencode MCP server connected, 21 tools listed |
+| `smart_search`, `smart_outline`, `smart_unfold` | ✓ | Uses `tree-sitter query -p <grammar> <query> <files>` CLI. Binary installed manually (`node install.js` in tree-sitter-cli). Grammar dirs resolved via `createRequire` from marketplace node_modules. |
+| `search` | ✓ | Works via SQLite FTS5 fallback (~30s delay from chroma-mcp timeout → auto-fallback) |
+| `timeline`, `get_observations` | ✗ | Hangs — routed through chroma-mcp which can't start (no `uvx` on ARM64, `CLAUDE_MEM_CHROMA_ENABLED=false` not read by worker's env loader) |
+| `observation_*`, `memory_*`, `build_corpus`, etc. | ✗ | Server-beta cloud backend only (`CLAUDE_MEM_RUNTIME=server-beta`) |
+| `observation_add`, observation_create | ✗ | Server-beta cloud backend only |
+
+### Tree-sitter CLI Setup (for smart tools)
+
+The smart tools work by shelling out to `tree-sitter query`. This binary is not bundled by default:
+
+```bash
+# Install tree-sitter binary in both locations (binary gets purged on dependency update)
+cd /root/.claude/plugins/cache/thedotmack/claude-mem/13.6.1/node_modules/tree-sitter-cli && node install.js
+cd /root/.claude/plugins/marketplaces/thedotmack/node_modules/tree-sitter-cli && node install.js
+```
+
+The marketplace node_modules must have the binary (resolution priority over NODE_PATH).
+
+### Practical Use
+- **MEMORY.md** (git-tracked at `Osama/MEMORY.md`) is the primary shared memory — push/pull between devices
+- **Web UI** at `localhost:37700` for browsing session history
+- **Worker** indexes conversations for future search
+- **search** MCP tool queries SQLite FTS5 after ~30s chroma timeout — useful for finding prior observations by keyword
+- **smart_search/smart_outline** parse project code with tree-sitter — useful for codebase exploration
+- MCP tools are registered and opencode's model may attempt to use them during sessions

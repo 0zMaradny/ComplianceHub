@@ -7,11 +7,14 @@ the model ID from the registry based on provider_name passed at init.
 
 import os
 import json
+import logging
 import time
 import random
 import urllib.request
 import urllib.error
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from . import AIProvider
 from .model_registry import ALL_MODELS
@@ -31,7 +34,7 @@ class OpenRouterProvider(AIProvider):
         else:
             self.model = 'openrouter/auto'
 
-    def _call_with_retry(self, messages, temperature=0.3, max_tokens=4096, max_retries=2):
+    def _call_with_retry(self, messages, temperature=0.3, max_tokens=4096, max_retries=2, response_format=None):
         if not self.api_key:
             return {'error': 'OPENROUTER_API_KEY not set'}
 
@@ -41,7 +44,10 @@ class OpenRouterProvider(AIProvider):
             'messages': messages,
             'temperature': temperature,
             'max_tokens': max_tokens,
+            'provider': {'sort': 'price'},
         }
+        if response_format:
+            payload['response_format'] = response_format
         data = json.dumps(payload).encode()
         last_error = None
 
@@ -79,6 +85,12 @@ class OpenRouterProvider(AIProvider):
                 except (KeyError, IndexError):
                     return {'error': 'No response from OpenRouter'}
 
+                if response_format:
+                    try:
+                        return json.loads(text)
+                    except json.JSONDecodeError:
+                        pass
+
                 parsed = extract_json(text)
                 if parsed is not None:
                     return parsed
@@ -88,8 +100,8 @@ class OpenRouterProvider(AIProvider):
                 body = ''
                 try:
                     body = e.read().decode()
-                except Exception:
-                    pass
+                except Exception as ex:
+                    logger.debug("Failed to decode HTTP error body: %s", ex)
                 last_error = f'HTTP {e.code}: {body[:200]}'
                 if e.code == 429:
                     delay = 30 + random.uniform(0, 10)
@@ -120,7 +132,14 @@ class OpenRouterProvider(AIProvider):
 
     def extract_structured(self, prompt: str, response_mime_type: str | None = None) -> dict[str, Any]:
         messages = [{'role': 'user', 'content': prompt}]
-        return self._call_with_retry(messages, temperature=0.1, max_tokens=4096)
+        schema = {
+            'type': 'json_schema',
+            'json_schema': {
+                'name': 'response',
+                'schema': {'type': 'object'},
+            },
+        }
+        return self._call_with_retry(messages, temperature=0.1, max_tokens=4096, response_format=schema)
 
     def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
         if not self.api_key:
@@ -136,6 +155,7 @@ class OpenRouterProvider(AIProvider):
             'temperature': kwargs.get('temperature', 0.3),
             'max_tokens': kwargs.get('max_tokens', 4096),
             'stream': True,
+            'provider': {'sort': 'price'},
         }
         data = json.dumps(payload).encode()
         try:

@@ -75,8 +75,8 @@ def _commit(cur=None):
     if not _IS_POSTGRES and cur is not None:
         try:
             cur.connection.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Commit failed: %s", e)
 
 
 def init_db():

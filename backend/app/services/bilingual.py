@@ -78,7 +78,6 @@ TABLE_HEADERS = {
         "daily_schedule": ["Day", "Date", "Time", "Activity", "Auditee", "Auditor", "Clause"],
         "participants": ["Name", "Company", "Function / Department", "Closing Meeting", "Signature"],
         "nc_table": ["Clause", "Severity", "Description", "Due Date"],
-        "checklist": ["Clause", "Requirement", "Status", "Evidence", "Notes", "Reference"],
         "certificate_fields": [
             "Certificate Number", "Client", "Standard", "Audit Date", "Scope",
             "Lead Auditor", "Certification Body", "Certification Decision",
@@ -91,13 +90,33 @@ TABLE_HEADERS = {
         "daily_schedule": ["اليوم", "التاريخ", "الوقت", "النشاط", "المراجَع", "المراجع", "البند"],
         "participants": ["الاسم", "الشركة", "الوظيفة / القسم", "اجتماع الإغلاق", "التوقيع"],
         "nc_table": ["البند", "الخطورة", "الوصف", "تاريخ الاستحقاق"],
-        "checklist": ["البند", "المتطلب", "الحالة", "الدليل", "ملاحظات", "المرجع"],
         "certificate_fields": [
             "رقم الشهادة", "العميل", "المواصفة", "تاريخ المراجعة", "النطاق",
             "المراجع الرئيسي", "جهة الاعتماد", "قرار الاعتماد",
             "تاريخ الإصدار", "تاريخ الانتهاء", "المفوض بالتوقيع",
         ],
     },
+    "checklist_qa": [
+        "English Clause Reference",
+        "Audit Questions & Evidence to Check",
+        "Arabic Clause Reference",
+        "أسئلة المراجعة والأدلة",
+    ],
+    "checklist_findings": [
+        "Clause Reference",
+        "Findings / Observations",
+        "Status",
+        "Reference",
+    ],
+}
+
+# ── Section headers for two‑section checklist layout ──────────────────────
+
+SECTION_HEADERS = {
+    "checklist_qa": "Checklist — Questions & Evidence",
+    "checklist_findings": "Checklist — Findings & Status",
+    "checklist_qa_ar": "قائمة الفحص — أسئلة وأدلة",
+    "checklist_findings_ar": "قائمة الفحص — النتائج والحالة",
 }
 
 # ── Cover page labels ─────────────────────────────────────────────────────

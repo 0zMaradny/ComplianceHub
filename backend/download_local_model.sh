@@ -29,22 +29,30 @@ download_model() {
     fi
 
     echo "Downloading $name → $dest ..."
-    wget -q --show-progress -O "$dest" "$url"
+    curl -L -o "$dest" "$url" --progress-bar 2>&1
     echo "Done: $(ls -lh "$dest")"
 }
 
-case "${1:-qwen-1.5b}" in
+case "${1:-qwen3-4b}" in
     qwen-0.5b)
         download_model "qwen-0.5b" \
             "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
         ;;
-    qwen-1.5b|*)
+    qwen-1.5b)
         download_model "qwen-1.5b" \
             "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/qwen2.5-1.5b-instruct-q4_k_m.gguf"
         echo ""
-        echo "Recommended: Set LOCAL_MODEL_ID=qwen-1.5b in your .env"
-        echo "Then restart llama-server with:"
+        echo "Set LOCAL_MODEL_ID=qwen-1.5b in your .env"
+        echo "Then restart llama-server:"
         echo "  /opt/llama-server/llama-server -m $MODELS_DIR/qwen-1.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080"
+        ;;
+    qwen3-4b)
+        download_model "qwen3-4b" \
+            "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/main/Qwen3-4B-Q4_K_M.gguf"
+        echo ""
+        echo "Recommended: Set LOCAL_MODEL_ID=qwen3-4b in your .env"
+        echo "Then restart llama-server with:"
+        echo "  /opt/llama-server/llama-server -m $MODELS_DIR/qwen3-4b.gguf -c 32768 -t 4 -b 2048 --mlock --port 8080"
         ;;
     llama-3.2-3b)
         download_model "llama-3.2-3b" \

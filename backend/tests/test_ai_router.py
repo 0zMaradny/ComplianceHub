@@ -29,15 +29,16 @@ class TestModelRegistry:
 
     def test_all_models_registered(self):
         expected = [
+            'claude',
             'nemotron_ultra', 'qwen3_coder', 'kimi_k26', 'owl_alpha',
             'nemotron_super', 'llama_70b', 'qwen3_next', 'hermes_405b',
-            'groq_llama', 'local_qwen',
+            'groq_llama', 'local_qwen', 'local_qwen_3b', 'local_qwen3_4b',
             'fusion', 'auto',
         ]
         for name in expected:
             assert name in ALL_MODELS, f"Model '{name}' not in registry"
         removed = ['gpt_oss_120b', 'glm_45', 'gpt_oss_20b',
-                    'hf', 'openai', 'claude', 'gemini', 'ollama']
+                    'hf', 'openai', 'gemini', 'ollama']
         for name in removed:
             assert name not in ALL_MODELS, f"Model '{name}' should have been removed"
 
@@ -75,16 +76,19 @@ class TestResolveChain:
 
     def test_default_chain_structure(self):
         chain = resolve_chain('Audit_Report')
-        assert len(chain) == 11
+        assert len(chain) == 13
         for name in chain:
             assert name in ALL_MODELS
 
     def test_chain_has_local_last(self):
         chain = resolve_chain('Audit_Report')
+        assert 'claude' in chain
         assert 'groq_llama' in chain
         assert 'local_qwen' in chain
         assert 'local_qwen_3b' in chain
-        assert chain[-1] == 'local_qwen_3b'
+        assert 'local_qwen3_4b' in chain
+        assert chain[0] == 'claude'
+        assert chain[-1] == 'local_qwen'
 
     def test_all_task_types_resolved(self):
         task_types = [
@@ -100,7 +104,7 @@ class TestResolveChain:
 
     def test_unknown_task_gets_default_chain(self):
         chain = resolve_chain('Unknown_Task')
-        assert len(chain) == 11
+        assert len(chain) == 13
 
     def test_override_provider(self):
         chain = resolve_chain('Audit_Report', override_provider='kimi_k26')
@@ -130,6 +134,14 @@ class TestProviderHasKey:
         with patch.dict(os.environ, {'GROQ_API_KEY': 'gsk_test123'}):
             assert _provider_has_key('groq') is True
 
+    def test_anthropic_key_set(self):
+        with patch.dict(os.environ, {'ANTHROPIC_API_KEY': 'sk-ant-api03-' + 'a' * 90}):
+            assert _provider_has_key('claude') is True
+
+    def test_anthropic_key_empty(self):
+        with patch.dict(os.environ, {'ANTHROPIC_API_KEY': ''}):
+            assert _provider_has_key('claude') is False
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Model ID Resolution Tests
@@ -157,6 +169,10 @@ class TestGetModelId:
     def test_hermes_405b(self):
         mid = _get_model_id('hermes_405b')
         assert '405b' in mid
+
+    def test_claude_model_id(self):
+        mid = _get_model_id('claude')
+        assert 'claude-sonnet-4' in mid
 
     def test_unknown_falls_back_to_auto(self):
         mid = _get_model_id('nonexistent')

@@ -2,11 +2,14 @@
 without any AI API calls. Uses the clause_data module for professional, standard-specific
 evidence and compliance statuses. Outputs match the unified data contracts in doc_schemas.py."""
 
+import logging
 import random
 import re
 from datetime import datetime, timedelta
 
 from . import clause_data
+
+logger = logging.getLogger(__name__)
 
 
 # Seed is not fixed — different results each run
@@ -191,6 +194,15 @@ _CONCLUSIONS = {
 }
 
 
+def _get_clause_qa(clause_dict, clause_id):
+    node = clause_data._walk_clause_tree(clause_dict, clause_id)
+    if node:
+        qs = node.get('audit_questions', [])
+        ev = node.get('evidence_to_check', [])
+        return '\n'.join(qs) if qs else '', '\n'.join(ev) if ev else ''
+    return '', ''
+
+
 def _build_checklist_sections(standard_key: str) -> list[dict]:
     clauses = clause_data.get_clause_data(standard_key)
     annex = clause_data.get_annex_a_data(standard_key)
@@ -205,12 +217,16 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
             evidence_list = sinfo.get('evidence', [])
             evidence = evidence_list[0] if evidence_list else f'Reviewed framework area: {title}. The organization demonstrates adequate implementation of this principle.'
             status = random.choice(statuses)
+            aq = '\n'.join(sinfo.get('audit_questions', [])) if isinstance(sinfo, dict) else ''
+            ec = '\n'.join(sinfo.get('evidence_to_check', [])) if isinstance(sinfo, dict) else ''
             sections.append({
                 'clause': sid,
                 'title': title,
                 'requirement': title,
                 'status': status,
                 'evidence': evidence,
+                'audit_questions': aq,
+                'evidence_to_check': ec,
                 'notes': '',
                 'reference': standard_label,
             })
@@ -219,16 +235,22 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
                 sub_title = sub_info if isinstance(sub_info, str) else sub_info.get('title', '')
                 if sub_title:
                     sub_evidence = f'Reviewed framework element: {sub_title}. The organization has incorporated this principle into its risk management approach.'
+                    sub_aq = ''
+                    sub_ec = ''
                     if isinstance(sub_info, dict):
                         ev = sub_info.get('evidence', [])
                         if ev:
                             sub_evidence = ev[0]
+                        sub_aq = '\n'.join(sub_info.get('audit_questions', []))
+                        sub_ec = '\n'.join(sub_info.get('evidence_to_check', []))
                     sections.append({
                         'clause': sub_id,
                         'title': sub_title,
                         'requirement': sub_title,
                         'status': random.choice(statuses),
                         'evidence': sub_evidence,
+                        'audit_questions': sub_aq,
+                        'evidence_to_check': sub_ec,
                         'notes': '',
                         'reference': standard_label,
                     })
@@ -242,6 +264,7 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
             continue
         evidence_list = clause_data.get_evidence_for_clause(clauses, cid)
         evidence = evidence_list[0] if evidence_list else f'Clause {cid} ({title}) was reviewed through documentation analysis and personnel interviews. The implemented approach is consistent with the standard requirements.'
+        aq, ec = _get_clause_qa(clauses, cid)
         status = random.choice(statuses)
 
         supporting_refs = []
@@ -258,6 +281,8 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
             'requirement': f'The organization shall {title.lower()} as defined in {standard_label} Clause {cid}.',
             'status': status,
             'evidence': evidence,
+            'audit_questions': aq,
+            'evidence_to_check': ec,
             'notes': '',
             'reference': reference,
         })
@@ -269,6 +294,7 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
                 continue
             evidence_list = clause_data.get_evidence_for_clause(annex, cid)
             evidence = evidence_list[0] if evidence_list else f'Annex A control {cid} ({title}) was assessed. The implemented controls are commensurate with the identified risks.'
+            aq, ec = _get_clause_qa(annex, cid)
             status = random.choice(statuses)
             sections.append({
                 'clause': cid,
@@ -276,6 +302,8 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
                 'requirement': f'Annex A control: {title} as per {standard_label} {cid}.',
                 'status': status,
                 'evidence': evidence,
+                'audit_questions': aq,
+                'evidence_to_check': ec,
                 'notes': '',
                 'reference': f'{standard_label} Annex A',
             })
@@ -2039,8 +2067,8 @@ def generate_incident_management_log(data: dict) -> dict:
                 r = datetime.strptime(inc['resolved'], '%d/%m/%Y %H:%M')
                 rp = datetime.strptime(inc['reported'], '%d/%m/%Y %H:%M')
                 resolved_times.append((r - rp).total_seconds() / 3600)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to parse dates for incident %s: %s", inc.get('id'), e)
 
     avg_res = f'{sum(resolved_times) / len(resolved_times):.1f} hrs' if resolved_times else 'N/A'
 

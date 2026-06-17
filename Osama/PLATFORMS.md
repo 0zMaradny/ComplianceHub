@@ -1,4 +1,5 @@
 # PLATFORMS.md — Loading Profiles
+_See also: CHERRY_STUDIO_ASSISTANTS.md (9-assistant mapping) · AGENTS.md (roles) · Context.md (clients + platform) · MEMORY.md (preferences)_
 
 Osama's actual platform ecosystem as of June 2026. Different tools need different slices of the Osama/ files. Load the right profile for each platform.
 

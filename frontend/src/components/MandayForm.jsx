@@ -1,18 +1,5 @@
 import { useState, useMemo } from 'react'
-
-const AUDIT_TYPES = [
-  { value: 'initial', label: 'Initial Certification' },
-  { value: 'surveillance_1', label: 'Surveillance 1' },
-  { value: 'surveillance_2', label: 'Surveillance 2' },
-  { value: 'recertification', label: 'Recertification' },
-  { value: 'transfer', label: 'Transfer' },
-]
-
-const COMPLEXITY_LEVELS = [
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-]
+import { useTranslation } from 'react-i18next'
 
 function roundHalf(v) {
   return Math.round(v * 2) / 2
@@ -85,6 +72,22 @@ export default function MandayForm({
   mandayExtracted,
   onMandayConfigChange,
 }) {
+  const { t } = useTranslation()
+
+  const AUDIT_TYPES = [
+    { value: 'initial', label: t('manday.initial_cert') },
+    { value: 'surveillance_1', label: t('manday.surveillance_1') },
+    { value: 'surveillance_2', label: t('manday.surveillance_2') },
+    { value: 'recertification', label: t('manday.recertification') },
+    { value: 'transfer', label: t('manday.transfer') },
+  ]
+
+  const COMPLEXITY_LEVELS = [
+    { value: 'low', label: t('manday.low') },
+    { value: 'medium', label: t('manday.medium') },
+    { value: 'high', label: t('manday.high') },
+  ]
+
   const [expanded, setExpanded] = useState(false)
   const [auditType, setAuditType] = useState(
     () => mandayExtracted?.audit_type || 'initial'
@@ -136,11 +139,11 @@ export default function MandayForm({
         onClick={() => setExpanded(!expanded)}
       >
         <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-          {expanded ? '\u25BC' : '\u25B6'} Manday Calculation
+          {expanded ? t('manday.title_expanded') : t('manday.title_collapsed')}
         </span>
         {computed && (
           <span className="text-xs text-gray-500 dark:text-gray-400">
-            {computed.total_mandays} days | {auditType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} | {employeeCount} emp
+            {computed.total_mandays} {t('manday.days_count')} | {AUDIT_TYPES.find(a => a.value === auditType)?.label || auditType} | {employeeCount} {t('manday.emp_count')}
           </span>
         )}
       </div>
@@ -149,7 +152,7 @@ export default function MandayForm({
         <div className="px-4 pb-4 border-t border-[var(--border-color)]">
           <div className="flex gap-4 mt-3 flex-wrap">
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Audit Type</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('manday.audit_type')}</label>
               <select
                 value={auditType}
                 onChange={e => setAuditType(e.target.value)}
@@ -161,17 +164,17 @@ export default function MandayForm({
               </select>
             </div>
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Employees</label>
-              <input
-                type="number"
-                value={employeeCount}
-                onChange={e => setEmployeeCount(Number(e.target.value))}
-                className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
-                min={1}
-              />
-            </div>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('manday.employees')}</label>
+                <input
+                  type="number"
+                  value={employeeCount}
+                  onChange={e => setEmployeeCount(Number(e.target.value))}
+                  className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
+                  min={1}
+                />
+              </div>
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Sites</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('manday.sites')}</label>
               <input
                 type="number"
                 value={siteCount}
@@ -184,13 +187,13 @@ export default function MandayForm({
 
           {stdCount > 0 && (
             <div className="mt-3">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Per-Standard Details</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('manday.per_standard')}</label>
               <table className="w-full border-collapse text-sm mt-1">
                 <thead>
                   <tr>
-                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Standard</th>
-                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Risk / Complexity</th>
-                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">Base Mandays (from DOCX or table)</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">{t('manday.standard_header')}</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">{t('manday.risk_header')}</th>
+                    <th className="text-left px-2 py-1.5 border-b-2 border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-600 dark:text-gray-400">{t('manday.base_mandays')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -218,7 +221,7 @@ export default function MandayForm({
                             className="w-20 px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                             min={0}
                             step={0.5}
-                            placeholder="Auto"
+                            placeholder={t('manday.auto')}
                           />
                         </td>
                       </tr>
@@ -232,7 +235,7 @@ export default function MandayForm({
           {stdCount >= 2 && (
           <div className="flex gap-4 mt-3 flex-wrap">
             <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">IMS Reduction (IAF MD 11) %</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">{t('manday.ims_reduction')}</label>
                 <input
                   type="number"
                   value={imsReduction !== null ? Math.round(imsReduction * 100) : ''}
@@ -240,7 +243,7 @@ export default function MandayForm({
                   className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded text-sm bg-[var(--input-bg)] text-[var(--text-primary)] box-border"
                   min={0}
                   max={20}
-                  placeholder={`Auto (${(stdCount >= 2 ? 20 : 0)})`}
+                  placeholder={stdCount >= 2 ? t('manday.ims_auto_20') : t('manday.ims_auto_0')}
                 />
               </div>
             </div>
@@ -248,14 +251,14 @@ export default function MandayForm({
 
           {computed && (
             <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800">
-              <div className="font-bold text-xs text-green-700 dark:text-green-400 mb-2">Calculated Mandays</div>
+              <div className="font-bold text-xs text-green-700 dark:text-green-400 mb-2">{t('manday.calculated')}</div>
               <div className="flex flex-col gap-1.5">
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Total Mandays</span>
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">{t('manday.total')}</span>
                   <span className="text-gray-800 dark:text-gray-200 font-semibold">{computed.total_mandays}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Per Standard</span>
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">{t('manday.per_standard')}</span>
                   <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {Object.entries(computed.mandays_per_standard).map(([k, v]) =>
                       `${k.replace('iso_', '').toUpperCase()}: ${v}`
@@ -263,17 +266,17 @@ export default function MandayForm({
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Team</span>
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">{t('manday.team')}</span>
                   <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {computed.team_composition.map(t => `${t.role} x${t.count} (${t.days}d)`).join(', ')}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">Base</span>
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">{t('manday.base')}</span>
                   <span className="text-gray-800 dark:text-gray-200 font-semibold">
                     {selectedStandards.map(s => {
                       const b = baseMandays[s]
-                      return `${s.replace('iso_', '').toUpperCase()}: ${b || 'auto'}`
+                      return `${s.replace('iso_', '').toUpperCase()}: ${b || t('manday.auto_label')}`
                     }).join(', ')}
                   </span>
                 </div>

@@ -255,6 +255,8 @@ class TestDocumentGenerators:
                     "requirement": "Understanding the organization",
                     "status": "Conformant",
                     "evidence": "Documented context analysis available",
+                    "audit_questions": "How does the organization determine external issues?",
+                    "evidence_to_check": "Review of strategic planning documentation",
                     "notes": "", "reference": "Doc-001"
                 }
             ],
@@ -263,6 +265,37 @@ class TestDocumentGenerators:
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
             path = generate_iso_checklist(data, f.name, client_key="uacc")
             assert os.path.exists(path)
+            assert os.path.getsize(path) > 0
+            os.unlink(path)
+
+    def test_checklist_docx_two_section_layout(self):
+        from app.services.document_generator import generate_iso_checklist
+        from docx import Document
+        data = {
+            "client_name": "Test Corp", "standard": "ISO 9001:2015",
+            "audit_date": "15/06/2026", "auditor": "John Doe",
+            "sections": [
+                {
+                    "clause": "4.1", "title": "Context",
+                    "requirement": "Understanding the organization",
+                    "status": "Conformant",
+                    "evidence": "Documented context analysis available",
+                    "audit_questions": "How are external issues identified?",
+                    "evidence_to_check": "Strategic planning documents",
+                    "notes": "", "reference": "Doc-001"
+                }
+            ],
+            "overall_assessment": "The organization demonstrates conformity."
+        }
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+            path = generate_iso_checklist(data, f.name, client_key="uacc")
+            doc = Document(path)
+            para_text = ' '.join(p.text for p in doc.paragraphs)
+            assert 'Questions' in para_text and 'Evidence' in para_text
+            assert 'Findings' in para_text and 'Status' in para_text
+            cell_text = ' '.join(c.text for t in doc.tables for r in t.rows for c in r.cells)
+            assert 'How are external issues identified?' in cell_text
+            assert 'Strategic planning documents' in cell_text
             os.unlink(path)
 
 
@@ -421,3 +454,172 @@ class TestCodeQuality:
             cwd=os.path.join(os.path.dirname(__file__), '..')
         )
         assert r.returncode == 0, f"Pyflakes: {r.stdout.decode()}"
+
+
+class TestSSEEndpoint:
+    def test_progress_sse_unknown_job(self):
+        with TestClient(app) as c:
+            with c.stream("GET", "/api/progress/nonexistent_job") as res:
+                assert res.status_code == 200
+                chunks = list(res.iter_lines())
+                assert any('job_not_found' in (c or '') for c in chunks)
+
+    def test_progress_sse_has_content_type(self):
+        with TestClient(app) as c:
+            with c.stream("GET", "/api/progress/nonexistent") as res:
+                assert res.headers.get("content-type", "").startswith("text/event-stream")
+
+    def test_progress_sse_headers_present(self):
+        with TestClient(app) as c:
+            with c.stream("GET", "/api/progress/nonexistent") as res:
+                assert "X-Response-Time" in res.headers
+
+
+class TestUploadPipe:
+    def test_upload_rejects_no_standards(self):
+        with TestClient(app) as c:
+            res = c.post("/api/upload", data={})
+            assert res.status_code in (400, 422)
+
+    def test_upload_rejects_no_files(self):
+        with TestClient(app) as c:
+            res = c.post("/api/upload", data={"standards": '["iso_9001"]'})
+            assert res.status_code in (400, 422)
+
+    def test_upload_rejects_invalid_manday(self):
+        with TestClient(app) as c:
+            res = c.post("/api/upload", files={
+                "audit_notes": ("notes.txt", b"plain text", "text/plain"),
+                "manday": ("bad.exe", b"\x00\x00\x00\x00", "application/octet-stream"),
+            }, data={"standards": '["iso_9001"]'})
+            assert res.status_code == 400
+            assert "manday" in res.text.lower() or "docx" in res.text.lower()
+
+    def test_upload_rejects_invalid_template(self):
+        import tempfile
+        from docx import Document as DocxDocument
+        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
+            doc = DocxDocument()
+            doc.save(f.name)
+            valid_docx = open(f.name, "rb").read()
+            os.unlink(f.name)
+        with TestClient(app) as c:
+            res = c.post("/api/upload", files={
+                "audit_notes": ("notes.txt", b"plain text", "text/plain"),
+                "manday": ("calc.docx", valid_docx, "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+                "checklist_template": ("bad.template", b"not a zip", "application/octet-stream"),
+            }, data={"standards": '["iso_9001"]'})
+            assert res.status_code == 400
+            assert "template" in res.text.lower()
+
+    def test_health_endpoint_enhanced(self):
+        with TestClient(app) as c:
+            res = c.get("/api/health")
+            assert res.status_code == 200
+            data = res.json()
+            assert "database" in data
+            assert "disk_free_mb" in data
+            assert "version" in data
+
+
+class TestGenerateEndpoint:
+    def test_generate_missing_job(self):
+        with TestClient(app) as c:
+            r = c.post("/api/generate", data={"job_id": "nonexistent", "standards": '["iso_9001"]'})
+            assert r.status_code == 400
+
+    def test_generate_rejects_empty_job_id(self):
+        with TestClient(app) as c:
+            r = c.post("/api/generate", data={"job_id": "", "standards": '["iso_9001"]'})
+            assert r.status_code in (400, 422)
+
+    def test_generate_returns_proper_body(self):
+        with TestClient(app) as c:
+            r = c.post("/api/generate", data={"job_id": "nonexistent", "standards": '["iso_9001"]'})
+            data = r.json()
+            assert "detail" in data
+
+
+class TestTimingMiddleware:
+    def test_timing_header_on_standards_endpoint(self):
+        with TestClient(app) as c:
+            r = c.get("/api/standards")
+            assert "X-Response-Time" in r.headers
+
+    def test_timing_header_on_health_endpoint(self):
+        with TestClient(app) as c:
+            r = c.get("/api/health")
+            assert "X-Response-Time" in r.headers
+
+    def test_timing_header_on_config_endpoint(self):
+        with TestClient(app) as c:
+            r = c.get("/api/config")
+            assert "X-Response-Time" in r.headers
+
+    def test_timing_header_on_clients_endpoint(self):
+        with TestClient(app) as c:
+            r = c.get("/api/clients")
+            assert "X-Response-Time" in r.headers
+
+    def test_timing_header_value_is_number(self):
+        with TestClient(app) as c:
+            r = c.get("/api/standards")
+            val = float(r.headers["X-Response-Time"].rstrip("ms"))
+            assert val > 0
+
+
+class TestAIPipelineFallback:
+    def test_build_prompt_all_doc_types(self):
+        from app.services.ai_pipeline import _build_prompt
+        doc_types = ["Audit_Report", "ISO_Checklist", "Certificate_Text",
+                     "TNL", "Audit_Plan_Stage_1", "Participation_List"]
+        for dt in doc_types:
+            prompt = _build_prompt(
+                "Test notes", "Test manday",
+                ["ISO 27001:2022"], dt, client_key="uacc"
+            )
+            assert "Test notes" in prompt
+            label_map = {
+                "Audit_Report": "Audit Report",
+                "ISO_Checklist": "Checklist",
+                "Certificate_Text": "Certificate",
+                "TNL": "Nonconformity",
+                "Audit_Plan_Stage_1": "Audit Plan",
+                "Participation_List": "Participation",
+            }
+            assert label_map[dt] in prompt
+
+    def test_build_prompt_handles_empty_notes(self):
+        from app.services.ai_pipeline import _build_prompt
+        prompt = _build_prompt("", "", ["ISO 9001:2015"], "Audit_Report")
+        assert prompt is not None
+        assert "Audit Report" in prompt
+
+    def test_build_prompt_includes_standard_family_context(self):
+        from app.services.ai_pipeline import _build_prompt
+        prompt = _build_prompt(
+            "Test notes", "Test manday",
+            ["ISO 27001:2022"], "ISO_Checklist", client_key="uacc"
+        )
+        assert "ISO 27001" in prompt or "Annex A" in prompt or "27001" in prompt
+
+    def test_offline_generate_known_standard(self):
+        from app.services.offline_generator import generate_all
+        results = generate_all(
+            "Test audit notes",
+            "Lead Auditor: John Doe\nTotal Mandays: 5",
+            ["ISO 9001:2015"], ["iso_9001"]
+        )
+        assert len(results) >= 32
+        for doc_type, data in results.items():
+            assert data.get("client_name") is not None
+
+    def test_offline_generate_blank_notes(self):
+        from app.services.offline_generator import generate_all
+        results = generate_all(
+            "",
+            "",
+            ["ISO 9001:2015"], ["iso_9001"]
+        )
+        assert len(results) >= 32
+        assert "error" not in results.get("Audit_Plan_Stage_1", {})

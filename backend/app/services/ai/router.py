@@ -27,7 +27,7 @@ from typing import Any
 from . import create_provider
 from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
-from .model_registry import FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
+from .model_registry import ANTHROPIC_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -129,10 +129,10 @@ _load_perf()
 _rate_limiter = ProviderRateLimiter()
 
 _provider_health: dict[str, int] = {}
-_PROVIDER_DEGRADE_THRESHOLD = 3
+_PROVIDER_DEGRADE_THRESHOLD = int(os.environ.get('AI_DEGRADE_THRESHOLD', '3'))
 
 _response_cache: dict[str, tuple[float, dict]] = {}
-_CACHE_TTL = 3600
+_CACHE_TTL = int(os.environ.get('AI_CACHE_TTL', '3600'))
 
 OPENROUTER_MODELS = {
     m.openrouter_name: m.model_id
@@ -140,10 +140,10 @@ OPENROUTER_MODELS = {
     if m.provider == "openrouter"
 }
 
-BATCH_SIZE = 2
+BATCH_SIZE = int(os.environ.get('AI_BATCH_SIZE', '2'))
 
-PEAK_HOURS_START = 12
-PEAK_HOURS_END = 18
+PEAK_HOURS_START = int(os.environ.get('AI_PEAK_START', '12'))
+PEAK_HOURS_END = int(os.environ.get('AI_PEAK_END', '18'))
 
 
 def _is_openrouter_peak_hours() -> bool:
@@ -165,7 +165,7 @@ def resolve_chain(
 ) -> list[str]:
     if override_provider:
         return [override_provider]
-    return FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+    return ANTHROPIC_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def set_api_key(provider_name: str, api_key: str):
@@ -178,6 +178,8 @@ def set_api_key(provider_name: str, api_key: str):
         os.environ['OPENROUTER_API_KEY'] = api_key
     elif provider_name == 'groq':
         os.environ['GROQ_API_KEY'] = api_key
+    elif model and model.provider == 'anthropic':
+        os.environ['ANTHROPIC_API_KEY'] = api_key
 
 
 def _cache_key(task_type: str, prompt: str) -> str:
@@ -228,6 +230,9 @@ def _provider_has_key(provider_name: str) -> bool:
         return bool(os.environ.get('OPENROUTER_API_KEY', '').strip())
     if model and model.provider == 'local':
         return True  # local server doesn't need an API key
+    if model and model.provider == 'anthropic':
+        key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+        return bool(key and len(key) >= 100)
     env = env_map.get(provider_name)
     if env:
         return bool(os.environ.get(env, '').strip())

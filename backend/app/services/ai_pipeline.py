@@ -4,10 +4,25 @@ from .ai.router import generate as router_generate, extract_structured as router
 from . import clause_data
 from ..config import ISO_STANDARDS, STANDARD_FAMILIES
 
-SYSTEM_PROMPT = """You are a TÜV AUSTRIA ISO lead auditor. Return ONLY valid JSON. Never use placeholders ([Client Name], TBD). Every evidence/description field = 2-3 professional sentences with specific observations. Use ISO terminology (conformant, non-conformant, OFI). Dates = DD/MM/YYYY. Numbers must match Manday data exactly. Document must be complete and ready to issue. methodology = {approach, sampling, criteria, methods}.
+SYSTEM_PROMPT = """=== ROLE ===
+Act as Senior Lead Auditor at UKAS-accredited Certification Body (TÜV AUSTRIA). You are Track A — The Judge. Your priority is non-conformity precision over general advice. You identify findings ONLY — never offer solutions or implementation advice.
 
-== ARCHITECTURE ==
-generate(doc_type, prompt) → structured JSON → DOCX+PDF | 3-tier router: OpenRouter frontier (Nemotron550B, Qwen3Coder480B, KimiK2.6, OwlAlpha) → OpenRouter strong (Nemotron120B, Llama70B, Qwen3Next80B, Hermes405B) → Groq (Llama3.3 70B, 800t/s). Quality scored per doc type (threshold 40-70). Failures cascade to next tier."""
+=== TASK ===
+Generate complete, ready-to-issue ISO certification audit documents from the provided audit notes, manday data, and ISO clause structure. Each document must be independently usable by a certification body. Return ONLY valid JSON.
+
+=== RULES ===
+- Clause-by-clause output format: Clause | Compliance Status | Evidence Required | NC Severity
+- Use formal certification body English — precise, objective, evidence-based
+- Plain English — short, concrete, specific words. No leverage · no utilize · no synergies
+- Every evidence/description field = 2-3 professional sentences with specific observations
+- ISO terminology: conformant, non-conformant, partially conformant, OFI, not reviewed
+- Dates in DD/MM/YYYY format. Numbers must match provided Manday data exactly
+- Never use placeholders ([Client Name], TBD, etc.). Every field must be populated
+- Never offer solutions or implementation advice — identify and describe only
+- Document must be complete and ready to issue as-is
+
+=== PUSH ===
+Ship it like a real TÜV client deliverable. Think before answering (maximum reasoning)."""
 
 SHARED_CONTEXT_PROMPT = """Extract shared facts from ISO audit docs. Return ONLY JSON.
 
@@ -27,7 +42,7 @@ Manday Data:
 {manday_text}"""
 
 
-def _get_standard_key(standard_label: str) -> str:
+def _get_standard_key(standard_label: str) -> str | None:
     for k, v in ISO_STANDARDS.items():
         if v.startswith(standard_label.split(' —')[0]) or standard_label in v:
             return k
@@ -41,13 +56,15 @@ def _get_standard_key(standard_label: str) -> str:
     for prefix, key in key_map.items():
         if prefix in standard_label:
             return key
-    return 'iso_9001'
+    return None
 
 
 def _build_family_context(standards: list[str]) -> str:
     lines = []
     for s in standards:
         key = _get_standard_key(s)
+        if key is None:
+            continue
         family = STANDARD_FAMILIES.get(key, {})
         if family:
             main = family.get('main', s)
@@ -252,12 +269,14 @@ Return JSON with:
 - audit_date: string
 - standard: string
 - auditor: string
-- sections: list of {{
+-     sections: list of {{
     clause: string (e.g. "4.1"),
     title: string,
     requirement: string,
     status: string ("Conformant" / "Partially Conformant" / "Non-Conformant" / "Not Reviewed"),
     evidence: string (2-3 professional sentences),
+    audit_questions: string (2-3 specific questions for the auditor to ask),
+    evidence_to_check: string (2-3 specific documents or records to examine),
     notes: string,
     reference: string
   }} — include 20-40 sections covering ALL relevant clauses
@@ -835,6 +854,23 @@ Return JSON with:
 - services: list of {{service_id: string, service_name: string, target_availability: string, actual_availability: string, downtime_hours: string, number_of_outages: int, mtbf: string, mttr: string, sla_breached: string ("Yes"/"No"), notes: string}} — include 5-8 services
 - summary: {{total_services: int, sla_met: int, sla_breached: int, overall_availability: string}}""",
     }
+
+    # Append quality check block to every prompt
+    quality_check = """
+
+=== QUALITY CHECK ===
+Before submitting, verify:
+- Every clause has evidence (2-3 specific sentences each)
+- Every NC has a severity rating (Major/Minor)
+- Every OFI references an ISO clause
+- No placeholders remain — all fields populated
+- Dates in DD/MM/YYYY format
+- Formal certification body English throughout
+- Compliance Status uses only: Conformant / Partially Conformant / Non-Conformant / Not Reviewed
+- Clause | Compliance Status | Evidence Required | NC Severity format maintained"""
+    for key in list(prompts.keys()):
+        prompts[key] += quality_check
+
     return prompts.get(doc_type, prompts['Audit_Report'])
 
 

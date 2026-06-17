@@ -17,8 +17,8 @@ def _reset_surveillance_data():
 @pytest.fixture(autouse=True)
 def _reset_rate_limiter():
     """Reset rate limiter between tests to prevent 429 errors."""
-    import app.main as _main
-    _main._rate_limit_store.clear()
+    from app.routes import _rate_limit_store
+    _rate_limit_store.clear()
     yield
 
 

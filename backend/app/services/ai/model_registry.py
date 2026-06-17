@@ -123,16 +123,16 @@ GROQ_FREE = [
     ),
 ]
 
-# Local: llama.cpp
+# Local: llama.cpp — ordered best-first
 LOCAL_FREE = [
     ModelCaps(
-        model_id="qwen-0.5b",
-        openrouter_name="local_qwen",
+        model_id="qwen3-4b",
+        openrouter_name="local_qwen3_4b",
         provider="local",
         tier="local",
-        context_length=4096,
-        strengths=("chat_query",),
-        notes="Qwen2.5-0.5B via local llama-server (localhost:8080). ~20s/doc, CPU-only ARM64 fallback.",
+        context_length=32768,
+        strengths=("chat_query", "ISO_Checklist", "Audit_Report", "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "TNL"),
+        notes="Qwen3-4B (Q4_K_M) via local llama-server. ~40s/doc, best local quality. Needs ~3 GB RAM.",
     ),
     ModelCaps(
         model_id="qwen-3b",
@@ -142,6 +142,43 @@ LOCAL_FREE = [
         context_length=8192,
         strengths=("chat_query", "ISO_Checklist", "Audit_Plan_Stage_1", "Audit_Plan_Stage_2"),
         notes="Qwen2.5-3B (Q4_K_M) via local llama-server. ~60s/doc, 6x params over qwen-0.5b. Needs ~2.5 GB RAM.",
+    ),
+    ModelCaps(
+        model_id="qwen-0.5b",
+        openrouter_name="local_qwen",
+        provider="local",
+        tier="local",
+        context_length=4096,
+        strengths=("chat_query",),
+        notes="Qwen2.5-0.5B via local llama-server (localhost:8080). ~20s/doc, CPU-only ARM64 fallback, lowest quality.",
+    ),
+]
+
+# Premium: Claude via Anthropic API (paid, best quality)
+PREMIUM = [
+    ModelCaps(
+        model_id="claude-sonnet-4-20250514",
+        openrouter_name="claude",
+        provider="anthropic",
+        tier="premium",
+        context_length=200_000,
+        strengths=(
+            "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
+            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Participation_List", "TNL",
+            "Management_Review_Minutes", "Corrective_Action_Report", "Gap_Analysis_Report",
+            "Statement_of_Applicability", "Business_Impact_Analysis",
+            "Records_of_Processing_Activities", "Risk_Treatment_Plan",
+            "Incident_Investigation_Report", "Internal_Audit_Program",
+            "Environmental_Aspect_Register", "Hazard_Identification_Register",
+            "Energy_Review", "Compliance_Obligations_Register",
+            "Service_Portfolio", "Service_Catalogue", "Supplier_Agreement_Register",
+            "Business_Relationship_Register", "Capacity_Management_Plan",
+            "Change_Management_Register", "Release_Deployment_Plan",
+            "Incident_Management_Log", "Problem_Management_Register",
+            "Service_Continuity_Plan", "Availability_Management_Report",
+            "extract_shared_context", "chat_query",
+        ),
+        notes="Claude Sonnet 4 — best quality for all audit docs. Paid API. Used as Tier 0.",
     ),
 ]
 
@@ -173,13 +210,14 @@ LOCAL_NAMES = [m.openrouter_name for m in LOCAL_FREE]
 # ═══════════════════════════════════════════════════════════════════════════
 
 ALL_MODELS: dict[str, ModelCaps] = {}
-for _m in FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
+for _m in PREMIUM + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
     ALL_MODELS[_m.openrouter_name] = _m
 
+ANTHROPIC_NAMES = [m.openrouter_name for m in PREMIUM]
 FRONTIER_NAMES = [m.openrouter_name for m in FRONTIER_FREE]
 STRONG_NAMES = [m.openrouter_name for m in STRONG_FREE]
 GROQ_NAMES = [m.openrouter_name for m in GROQ_FREE]
-ALL_API_NAMES = FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+ALL_API_NAMES = ANTHROPIC_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def get_tier_models(tier: str) -> list[ModelCaps]:

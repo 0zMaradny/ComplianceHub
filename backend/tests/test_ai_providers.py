@@ -41,6 +41,25 @@ class TestProviderInstantiation:
 
     def test_local_qwen_has_generate(self):
         p = create_provider('local_qwen')
+        assert isinstance(p, AIProvider)
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_claude_is_ai_provider(self):
+        p = create_provider('claude')
+        assert isinstance(p, AIProvider)
+
+    def test_claude_has_generate(self):
+        p = create_provider('claude')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_local_qwen3_4b_is_ai_provider(self):
+        p = create_provider('local_qwen3_4b')
+        assert isinstance(p, AIProvider)
+
+    def test_local_qwen3_4b_has_generate(self):
+        p = create_provider('local_qwen3_4b')
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
@@ -57,6 +76,14 @@ class TestErrorPaths:
     def test_openrouter_no_key(self):
         from app.services.ai.openrouter_provider import OpenRouterProvider
         p = OpenRouterProvider()
+        p.api_key = ''
+        result = p.generate('test prompt')
+        assert 'error' in result
+        assert 'not set' in result['error'].lower()
+
+    def test_anthropic_no_key(self):
+        from app.services.ai.anthropic_provider import AnthropicProvider
+        p = AnthropicProvider()
         p.api_key = ''
         result = p.generate('test prompt')
         assert 'error' in result
@@ -79,3 +106,15 @@ class TestInitialization:
             p = OpenRouterProvider()
             assert p.api_key == 'sk-or-test'
             assert p.model == 'openrouter/free'
+
+    def test_anthropic_reads_env(self):
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setenv('ANTHROPIC_API_KEY', 'sk-ant-test-key')
+            from app.services.ai.anthropic_provider import AnthropicProvider
+            p = AnthropicProvider()
+            assert p.api_key == 'sk-ant-test-key'
+            assert p.model == 'claude-sonnet-4-20250514'
+
+    def test_anthropic_init_with_name(self):
+        p = create_provider('claude')
+        assert isinstance(p, AIProvider)

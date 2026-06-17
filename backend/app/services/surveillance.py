@@ -10,11 +10,14 @@ Manages post-certification surveillance audit cycles:
 
 import os
 import json
+import logging
 import uuid
 import threading
 from datetime import datetime
 from dataclasses import dataclass, asdict
 from app.services.clause_data import get_clause_data
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -228,8 +231,8 @@ def generate_surveillance_scope(project_id, cycle_id):
                             if isinstance(sub, dict):
                                 for sub_id in sub:
                                     all_clauses.add(sub_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to collect clauses: %s", e)
 
     # Always include critical clauses
     included = set(CRITICAL_CLAUSES)

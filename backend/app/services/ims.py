@@ -310,7 +310,7 @@ def get_integrated_clause_list(standards: list) -> list:
 
     clauses = []
     seen = set()
-    # Start with HLS core clauses
+    # Start with HLS core clauses (including sub-clauses)
     for clause_num, clause_info in HLS_CORE.items():
         seen.add(clause_num)
         clause_entry = {
@@ -319,27 +319,37 @@ def get_integrated_clause_list(standards: list) -> list:
             "mapping": mapping["clauses"].get(clause_num, {}),
         }
         clauses.append(clause_entry)
+        for sub_num, sub_info in clause_info.get('sub_clauses', {}).items():
+            if sub_num not in seen:
+                seen.add(sub_num)
+                clauses.append({
+                    "clause": sub_num,
+                    "title": sub_info["title"],
+                    "mapping": mapping["clauses"].get(sub_num, {}),
+                })
 
-    # Add Clause 8 variants
+    # Add Clause 8 variants (skip metadata keys)
+    CLAUSE8_SKIP = {'title', 'sub_clauses', 'evidence', 'typical_findings'}
     for std in standards:
         c8 = CLAUSE_8.get(std, {})
         if isinstance(c8, dict):
             for clause_num, clause_info in c8.items():
-                if clause_num not in seen and clause_num != "title":
-                    seen.add(clause_num)
-                    title = clause_info.get("title", "") if isinstance(clause_info, dict) else str(clause_info)
-                    clauses.append({
-                        "clause": clause_num,
-                        "title": title,
-                        "mapping": {"mapping_type": "unique", "standards": {std: {"title": title}}},
-                    })
+                if clause_num in seen or clause_num in CLAUSE8_SKIP:
+                    continue
+                seen.add(clause_num)
+                title = clause_info.get("title", "") if isinstance(clause_info, dict) else str(clause_info)
+                clauses.append({
+                    "clause": clause_num,
+                    "title": title,
+                    "mapping": {"mapping_type": "unique", "standards": {std: {"title": title}}},
+                })
 
     def clause_sort_key(x):
+        c = x["clause"]
         try:
-            c = x["clause"]
-            return float(c) if "." in c else int(c)
+            return tuple(int(p) for p in c.split("."))
         except (ValueError, TypeError):
-            return 999
+            return (999,)
 
     return sorted(clauses, key=clause_sort_key)
 

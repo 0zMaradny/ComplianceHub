@@ -21,9 +21,28 @@ Write-Host "  ║   ComplianceHub — Windows Setup      ║"
 Write-Host "  ╚══════════════════════════════════════╝"
 Write-Host "${NC}"
 
+# ── Find Git (auto-detect portable, GitHub Desktop, or PATH) ──
+function Find-Git {
+  $locations = @(
+    "$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe",
+    "$env:USERPROFILE\Downloads\PortableGit\cmd\git.exe",
+    "$env:USERPROFILE\PortableGit\cmd\git.exe",
+    "$env:ProgramFiles\Git\cmd\git.exe",
+    "${env:ProgramFiles(x86)}\Git\cmd\git.exe"
+  )
+  foreach ($pattern in $locations) {
+    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
+    if ($matches) { return $matches[0].FullName }
+  }
+  $cmd = Get-Command git -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  return $null
+}
+
 # ── 1. Check prerequisites ──
+$GIT_PATH = Find-Git
 $missing = @()
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) { $missing += "Git" }
+if (-not $GIT_PATH) { $missing += "Git" }
 if (-not (Get-Command node -ErrorAction SilentlyContinue)) { $missing += "Node.js" }
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) { $missing += "Python" }
 
@@ -36,7 +55,8 @@ if ($missing.Count -gt 0) {
   exit 1
 }
 
-Write-Host "${GREEN}  ✓ Git: $(git --version)${NC}"
+$gitVersion = & $GIT_PATH --version
+Write-Host "${GREEN}  ✓ Git: $gitVersion${NC}"
 Write-Host "${GREEN}  ✓ Node: $(node --version)${NC}"
 Write-Host "${GREEN}  ✓ Python: $(python --version)${NC}"
 
@@ -47,7 +67,7 @@ if (Test-Path "$REPO_DIR\backend\app\main.py") {
   Write-Host "${GREEN}  ✓ Repo found at $REPO_DIR${NC}"
 } else {
   Write-Host "${CYAN}  Cloning ComplianceHub...${NC}"
-  git clone https://github.com/0zMaradny/ComplianceHub.git $REPO_DIR
+  & $GIT_PATH clone https://github.com/0zMaradny/ComplianceHub.git $REPO_DIR
   if ($LASTEXITCODE -ne 0) {
     Write-Host "${RED}  ✗ Clone failed. Check network or URL.${NC}"
     exit 1

@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "instructions": ["AGENTS.md"],
+  "instructions": ["AGENTS.md", "HUMANIZE.md"],
   "permission": {
     "read": "allow",
     "edit": "allow",
@@ -14,5 +14,23 @@
   },
   "skills": {
     "paths": [".opencode/skills"]
+  },
+  "agent": {
+    "humanizer": {
+      "description": "Reviews output for AI-sounding patterns and rewrites in natural human voice",
+      "file": ".opencode/agents/humanizer.md"
+    }
+  },
+  "mcp": {
+    "claude-mem": {
+      "type": "local",
+      "command": ["node", "/root/.claude/plugins/marketplaces/thedotmack/plugin/scripts/mcp-server.cjs"],
+      "environment": {
+        "NODE_PATH": "/root/.claude/plugins/cache/thedotmack/claude-mem/13.6.1/node_modules",
+        "CLAUDE_MEM_CHROMA_ENABLED": "false"
+      },
+      "enabled": true,
+      "timeout": 10000
+    }
   }
 }

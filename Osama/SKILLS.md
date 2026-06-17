@@ -1,4 +1,5 @@
 # Skills.md — Master Playbook (SOPs)
+_See also: AGENTS.md (who runs each skill) · Context.md (clients + platform) · MEMORY.md (preferences) · TOOLS.md (infrastructure + keys)_
 
 Standardized processes. Claude runs these without re-explanation. **All skills auto-trigger based on the intent of your message — just describe what you need in natural language. No need to say "Run Skill X" or mention skill numbers.**
 
@@ -385,21 +386,23 @@ Standardized processes. Claude runs these without re-explanation. **All skills a
 
 ### Generation Steps
 1. Upload audit notes (.docx/.txt) + manday data via `/api/upload`
-2. Select standard(s) from 13 available
+2. Select standard(s) from 14 available
 3. Provide API key (or use offline/local mode)
-4. System extracts shared context (client, date, team, scope) via AI
-5. Generates all 8 documents with per-task AI routing:
-   - Audit_Report → claude primary; Certificate → claude primary
-   - Audit_Plan_Stage_1/2 → openai primary; TNL → openai primary
-   - ISO_Checklist → gemini primary; Participation_List → openai primary
-6. Each document validated by Autodebugger (placeholder check, required fields, self-heal retry)
+4. System extracts shared context (client, date, team, scope) via AI (Tier 1 frontier free models)
+5. Each of the 8 documents generated through unified 5-tier fallback chain:
+   - Tier 0: Claude Sonnet 4 (Anthropic, paid, skipped if key truncated)
+   - Tier 1: OpenRouter frontier (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha — parallel batch=2)
+   - Tier 2: OpenRouter strong (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B — parallel batch=2)
+   - Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
+   - Tier 4: Local AI (Qwen3-4B ~40s/doc or Qwen2.5-3B ~60s/doc)
+   - Ultimate fallback: Offline static templates (instant, 3.2s/8docs)
+6. Each document validated by Autodebugger (placeholder check, required fields, self-heal retry, max 2 retries)
 7. Output: download package (DOCX + optional PDF via LibreOffice)
 8. TÜV-branded templates applied from `backend/templates/`
 
 ### AI Modes
-- **Cloud AI:** Best quality — uses Gemini/OpenAI/Claude per task routing
-- **HF Free:** 7/8 docs via Llama-3-8B (HuggingFace Inference)
-- **Local AI:** llama.cpp qwen-1.5b — ~6-7/8 docs
+- **Free Cloud:** OpenRouter frontier → strong → Groq (8 free models, up to 1M ctx) — fast, good quality
+- **Local AI:** llama.cpp Qwen3-4B (primary, ~40s/doc) / Qwen-3B (~60s/doc) / Qwen-0.5B (~20s/doc)
 - **Offline:** Professional templates — instant, no AI needed
 
 ---
@@ -568,3 +571,71 @@ Standardized processes. Claude runs these without re-explanation. **All skills a
 2. Ask the user for the necessary inputs (current task list, goals, pain points, etc.)
 3. Execute the framework exactly as defined, maintaining structured output (tables, bullet points, strict actionability)
 4. Do not offer generic advice — act strictly within the requested framework
+
+---
+
+## Skill 20 — ISO Training Course Design
+
+**Trigger:** "Training course" / "Awareness course" / "Design course" / "Course outline" / "Training material" / "Awareness training" / "ISO training" / "Course content" / "Slide deck" / "PowerPoint course" / "Training slides" / "Facilitator guide" / "Assessment questions" / "Convert Lead Implementer course to awareness" / "Non-specialist training" / "Employee awareness" / "Management awareness" / "Arabic training course" / "GCC examples" / "Course for employees" / "Awareness level ISO course"
+
+**Auto-trigger:** ANY message about designing ISO awareness training courses, converting Lead Implementer or Internal Auditor material into non-specialist content, creating slide decks, facilitator notes, assessments, or adapting courses for Arabic/GCC audiences.
+
+**Agent:** Agent 5 (Arabic Technical Writer) for Arabic output · Agent 2 (Implementer) for structure and content layer
+
+**Core Methodology:**
+
+1. **Audience Analysis** — define before writing: general employees (what's in it for me), mid-level managers (role clarity), senior executives (strategic relevance). NOT auditors, implementers, or technical specialists.
+
+2. **Strip these** (do NOT include): implementation methodologies (PDCA, IMS2), gap analysis techniques, SWOT/PEST/Porter's Five Forces, stakeholder mapping, interview techniques, maturity models, facilitation notes, implementation sequencing, project management, any reference to "the implementer" or "the project team".
+
+3. **Keep and adapt:** clause definitions (awareness-level), lifecycle phases (plain language), benefits of the standard, strategic vs operational planning, asset/resource concepts, value concept, real-world domain examples, ISO family overview.
+
+4. **Nine-module format:**
+
+| Module | Title | Clauses |
+|--------|-------|---------|
+| 1 | What is [standard]? | Pre-standard context / vocabulary |
+| 2 | Context of the Organization | 4.1–4.4 |
+| 3 | Leadership | 5.1–5.3 |
+| 4 | Planning | 6.1–6.2 |
+| 5 | Support | 7.1–7.5 |
+| 6 | Operation | 8.1–8.3 |
+| 7 | Performance Evaluation | 9.1–9.3 |
+| 8 | Improvement | 10.1–10.3 |
+| 9 | Your Role | Synthesis |
+
+5. **Per-module structure (9 slides):** Module Opener → Clause Map → 4 Content Slides (≤8 word title, ≤4 bullets ≤12 words each, one real example, visual suggestion) → "What This Means For You" (3-row table: staff / manager / leadership) → 2 Reflection Questions → Module Summary.
+
+6. **Tone:** Short sentences, active voice, direct assertions. No "It is important to note that..." — just state it. No "Leverage / Utilize / Synergize". Real examples over abstract principles.
+
+7. **Arabic adaptation:** MSA throughout, ISO clause numbers in English, technical terms with no Arabic equivalent stay in English (SAMP, AMS, KPI). First-person practitioner voice: نقوم بـ / تم تطبيق / يُعدّ هذا. Short noun-phrase slide titles. RTL bullets ≤12 words. GCC context examples (ARAMCO, NEOM, SEC, SABIC, Ma'aden, PIF entities, ROSHN, KSA healthcare, municipal assets).
+
+8. **Assessment:** 10 multiple-choice questions (3 options, one correct, no tricks). Tests awareness only — "what" not "how". Answerable from course content. Pass mark: 7/10.
+
+9. **Facilitator Notes:** One paragraph per module — key points to emphasize, common misconceptions, suggested timing.
+
+**Brand Specs (PPTX):**
+- Slide size: 13.33" × 7.5" (widescreen)
+- Font: Tajawal throughout
+- Palette: #44546A (dark slate) primary · #C00000 (TÜV red) accent · #4472C4 (blue) · #FFC000 (gold)
+- Layouts: Section Header · 1_Logo · 2_Logo · 4_Logo
+- Clear iconography (line-style or flat icons)
+
+**Domain-Specific Example Banks (load per client context):**
+
+| Domain | GCC Examples |
+|--------|--------------|
+| Facility Management | Chiller plants, BMS, HVAC, elevators, fire pumps, UPS, CAFM/CMMS, SLA KPIs, FM contractors, tenant fit-outs |
+| Oil & Gas | ARAMCO facilities, SABIC plants, refineries, pipelines, vibration analysis, turnaround maintenance, permit-to-work |
+| Power & Utilities | SEC, ACWA Power, SWA, NWC, SCADA, transmission/distribution, desalination, gas turbines, solar farms |
+| Healthcare (KSA) | MOH hospitals, KFSH&RC, university medical cities, medical equipment lifecycle, imaging/OR/ventilator criticality |
+| Transport (GCC) | Riyadh Metro, SAR, Jeddah Airport, Saudi Airlines, rolling stock, signalling, baggage handling, fare collection |
+
+**Standard-Specific Adjustments:**
+
+| Standard | Key Adaptations |
+|----------|-----------------|
+| ISO 55001:2024 | Asset = anything of value (physical, human, financial, information, intangible); SAMP connects org objectives to asset direction; lifecycle: plan→acquire→operate→maintain→dispose; 2024 updates: climate change in 4.1, outsourcing in 8.3, KPIs linked to objectives |
+| ISO 45001:2018 | Worker participation (5.4); hazard identification (6.1.2.1); operational planning (8.1); emergency preparedness (8.2) |
+| ISO 14001:2015 | Lifecycle perspective (6.1.2); environmental aspects (6.1.2); compliance obligations (6.1.3); emergency preparedness (8.2) |
+| ISO 27001:2022 | ISMS context (4); risk assessment/treatment (6.1); Annex A controls; incident management (6.8 / A.5.24–5.28) |

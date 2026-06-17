@@ -1,115 +1,153 @@
-# Memory.md — Compounding Knowledge Log
+# COMPLETE CHAT MEMORY
 
-This file updates after each session. It stores what Claude has learned: preferences, corrections, wins, mistakes. Every session starts smarter than the last.
+## Initial Problem & Goal
 
-## ✅ Confirmed Preferences
+### Problem
+ComplianceHub running on Android (proot) with opencode CLI. Railway deployment expiring ($4.62/23 days remaining). Need to replicate environment on Windows laptop with:
+- **No admin rights** — all per-user installs
+- **No WSL** (can't install without admin)
+- **Python 3.14.5**, no Node.js, no Git on Windows
+- **GitHub Desktop** available for git
 
-### Excel
-- Always openpyxl — never suggest VBA or xlsxwriter
-- All calculations as live Excel formulas — never hardcoded Python values
-- Hidden sheets: _Lists or _Data for all dropdown sources
-- Freeze top row + left column on all data sheets by default
-- Print area: A4 with rows_to_repeat on row 1
-- Conditional formatting uses PatternFill — not icon sets unless requested
-- KPI dashboard cards: merged cells with thick borders
-- Color constants defined at top of script for easy reuse
-- Run scripts/recalc.py after every formula build — mandatory zero errors
+### Goal
+Full dual-device system:
+- **Android**: Mobile coding + tunnel host (cloudflared)
+- **Windows**: Heavy lifter — local backend, documents, Cherry Studio
+- **Cross-device**: MEMORY.md + tunnel URL shared via git
 
-### Word / Arabic Documents
-- python-docx for all .docx generation
-- Arabic paragraphs: WD_ALIGN_PARAGRAPH.RIGHT + explicit bidi run property
-- First-person practitioner voice: ﻗﻤﻨﺎ ﺑـ... / ﺗﻢ ﺗﻄﺒﻴﻘ...
-- Section headers: Heading 1 Arabic · Sub-headers: Heading 2
-- Tables: RTL with merged Arabic header rows
-- ISO clause refs and Risk ID codes stay in English always
+---
 
-### ISO / GRC Work
-- Always use professional terminology: NC, CAR, SoA, OFI, PDCA
-- ISO 42001 is the bridge between auditing and AI/coding interests — prioritize when relevant
-- Suggest automation angle for ISO monitoring whenever applicable
-- Audit output = identify only · Implementation output = solve only (never mix)
-- CAPA structure always: Root Cause (5-Whys) → Containment → Corrective → Preventive → Verification
+## What Was Built
 
-### Code
-- Modular Python scripts · # --- CONFIG --- block always at top
-- Suggest how ISO clauses can be tracked via script (e.g., ISO 27001 + data logs)
-- Code ready for local deployment without cloud dependency
+### 1. claude-mem MCP Server
+- 21 tools registered, most need cloud backend
+- `smart_search`/`smart_outline`/`smart_unfold` work via tree-sitter CLI
+- `search` works via SQLite FTS5 fallback
+- `timeline`/`get_observations`/`observation_*`/`memory_*` — broken (chroma or server-beta)
+- 7 observations seeded directly into SQLite
 
-### React / Artifact Platform (TÜV Austria Hellas Compliance Platform)
-- Artifact sandbox rules (hard constraints, never violate):
-  - NO Firebase imports (from "firebase/...") — artifact can't resolve npm packages
-  - NO process.env variables — not available in artifact context
-  - NO require() — must use ES module import
-  - Use window.storage API (get/set/delete) for persistence — key: 'tuv_platform_data'
-  - AI: Anthropic API only — https://api.anthropic.com/v1/messages — no key needed in artifact
-  - Model: claude-sonnet-4-6 — response in content[0].text
-  - CDN allowed: cdnjs.cloudflare.com (mammoth, XLSX)
-- Checklist IDs: deterministic — ${std}-${clause.replace(/\./g,'_')} — NEVER random hash
-- State management: all bulk document generation must accumulate then call setAuditProjects ONCE
-- Excel exports: use real window.XLSX.utils.aoa_to_sheet — NOT the HTML table blob trick
-- Download filenames: always sanitize — filename.replace(/[^a-z0-9]/gi,'_')
-- XSS protection: all user content going into dangerouslySetInnerHTML or HTML exports must pass through sanitizeHtml() first
-- Rate limiting: aiCallLimiter.canProceed() must be checked before every Anthropic call
-- Abort controller: every AI call must create new AbortController() and store in abortControllerRef.current; cleanup in unmount useEffect
-- Error boundary: wrap <App/> in <ErrorBoundary> for auto-recovery
-- CAPA: shown only for clauses rated Minor NC or Major NC — structure: Root Cause → Containment → Corrective → Preventive → Verification
+### 2. Cross-Device Sync System
+- **go.sh**: Android — git pull on start, git commit+push MEMORY.md + tunnel URL on exit
+- **sync.sh**: Android convenience script
+- **sync.ps1**: Windows PowerShell sync script
+- **tunnel.sh**: Watchdog with Cloudflare → Serveo fallback
+- **Osama/.tunnel-url**: Git-tracked tunnel URL file
 
-## ⚠️ Corrections (Logged Mistakes — Never Repeat)
+### 3. File Parser Enhancement
+- Added `markitdown` (base package) for PDF/XLSX/PPTX/HTML/CSV/JSON/XML parsing
 
-| # | Mistake | Correct Approach |
-|---|---------|-----------------|
-| 1 | Used xlsxwriter instead of openpyxl | Always openpyxl for read/write workbooks |
-| 2 | Left Arabic text LTR in .docx | Must set bidi run + RTL paragraph alignment |
-| 3 | Translated Risk ID codes to Arabic | Risk IDs always stay in English |
-| 4 | Used generic Excel color palette | Use exact MOI hex codes: #004D26 / #C8A96E / #1A3A5C |
-| 5 | Simplified residual risk formula | V = S×(1−U/4) must be preserved exactly — never simplify |
-| 6 | Hardcoded calculated values in Python | All calculations must be Excel formulas, not Python outputs |
-| 7 | Agent 1 (Auditor) offered solutions | Auditor strictly identifies gaps only — Implementer solves |
-| 8 | Used import from "firebase/..." in artifact | Firebase SDK can't load in Claude artifact sandbox — use window.storage |
-| 9 | Used Gemini API (generativelanguage.googleapis.com) in artifact | Claude artifact uses Anthropic API — no key needed, api.anthropic.com/v1/messages |
-| 10 | Called setAuditProjects inside .forEach loop | All docs must accumulate in fullPackage{}, then one setAuditProjects call after loop |
-| 11 | Generated Excel as HTML Blob with .xls extension | Use window.XLSX.utils.aoa_to_sheet → window.XLSX.writeFile for real .xlsx |
-| 12 | dangerouslySetInnerHTML on raw user content | Always pass through sanitizeHtml() first — XSS risk |
-| 13 | **bold** passed to JSX paragraph as text | Use dangerouslySetInnerHTML with .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>') |
-| 14 | Treated MOI as "Professional Identity Track 1" | MOI is a client under Lead Implementer track. Identity = TÜV Austria GCC. Two tracks: Lead Auditor (CB scheme head) + Lead Implementer (consulting). Never collapse them |
-| 15 | Only listed MOI + UACC as clients | Full client list: MSD-MOI (22301+31000) · UACC (50001) · SAGCO (45001+14001, active) · Al-Ahsa Municipality (27001, active) · Client 5 TBD |
-| 16 | Assumed SAGCO = post-certification surveillance | SAGCO = active Lead Implementer for ISO 45001 + ISO 14001 only — NOT 50001 or 37001 |
-| 17 | Framed career change as July 2026 | No career change — staying at TÜV Austria GCC. ISO 42001 LI + PMP are additional personal certifications, not a role change |
-| 18 | Used 9-part Ruben Hassid framework only | Merged framework: 12 parts (Ruben Hassid 9-part + serveai.ig ROLE/REASONING/OUTPUT). Always ROLE + TASK + OUTPUT + PUSH minimum |
-| 19 | ISO 42001 AIA treated as single checklist item | ISO/IEC 42005 defines 7-step AIIA process with 10 mandatory impact categories — each step is a separate audit checkpoint, not one generic item |
-| 20 | Listed ISO 42001 LI as "certified 2026" | ISO 42001 LI (PECB) is exam preparation in progress — NOT yet certified. Never claim certification status without explicit confirmation |
+### 4. AI Router Updates
+- `response_format` JSON schema in `extract_structured()` — API-enforced valid JSON
+- `provider.sort: price` removed — quality preferred over cheapest
 
-## 🏆 Wins (Approaches That Delivered)
+### 5. Windows Setup Files
+- `setup-windows.ps1`, `go.ps1`, `WINDOWS_SETUP.md`, `sync.ps1`
 
-- Full 6-sheet UACC EnMS workbook in one session with correct formulas and scoring matrices
-- BCM forms workbook: 21 forms, all linked to _Data sheet, zero formula errors
-- Arabic BCM Word document: correct RTL, formal voice, ISO clause mapping, DGA/NRC compliance
-- Dashboard KPI cards with live conditional color coding by risk level
-- Hidden _Lists sheet pattern eliminated all manual dropdown maintenance
-- IMS audit table format (Clause | Status | Evidence | NC Severity) adopted as standard output
-- TÜV Austria Hellas Compliance Platform — full React app, 1,983 lines, 157 KB, 8 ISO standards, Anthropic AI, window.storage, real XLSX export, ErrorBoundary, CAPA generation — zero parse errors, 19/19 async try/catch
-- GitHub → artifact delta merge: 18/18 improvements applied in single session
-- AutoDebugger — 728-line artifact with 16 static checks + AI deep scan + auto-fix rewrite; Babel-verified zero errors
-- Dual role clarified — Lead Auditor (scheme head: ISMS/ITSMS/BCMS) running simultaneously with Lead Implementer (4 active clients: MOI, UACC, SAGCO, Al-Ahsa)
-- ISO 42001 — 24 mandatory documents mapped — full clause-to-document mapping loaded into platform checklist (24 items) and consulting templates (20+ templates), Skills.md Skill 06 updated with complete table
-- ISO/IEC 42005 — AIIA 7-step process mapped — AI System Impact Assessment methodology: Context → Stakeholders → 10 Impact Categories (Fairness/Privacy/Safety/Security/Explainability/Accountability/Societal/Economic/Legal/Human Autonomy) → Severity×Likelihood → Controls → Residual Impact → Governance Decision. Embedded in platform (7 checklist items + 3 templates), Skill 06, and Context.md
-- Merged 12-part prompt anatomy — Ruben Hassid 9-part + serveai.ig (ROLE · REASONING · OUTPUT). Embedded in Skill 15, Agent 8, Context.md quick reference. Always minimum: ROLE + TASK + OUTPUT + PUSH
-- 15 corrections logged — Firebase/Gemini/React/Excel/Arabic/role structure — Memory prevents all from repeating
+### 6. Git Commits
+- `05086e1`: 46 files (AGENTS.md, HUMANIZE.md, Cherry config, routes, tests, scripts)
+- `58c046e`: Windows setup files
 
-## 📋 Session Log
+---
 
-| Date | Session Summary | Key Output |
-|------|----------------|------------|
-| May 2026 | Built TÜV Austria Hellas ISO Compliance Platform from Code_29_04_2026.docx | Full React app — 15 bugs/enhancements implemented |
-| May 2026 | Debug & API migration: Firebase → window.storage, Gemini → Anthropic | Artifact-ready build, 0 parse errors |
-| May 2026 | GitHub ComplianceOS_fixed comparison & merge | 18 improvements: CAPA, sanitizeHtml, rate limiter, abort controller, real XLSX, error boundary, useTransition |
-| June 2026 | Discovered ComplianceHub full-stack repo on GitHub (0zMaradny/ComplianceHub) | FastAPI + Vite/React, 13 standards, 8 doc types, multi-provider AI router, Autodebugger, TÜV-branded templates, 17 template files |
-| June 2026 | Full workspace file rewrite — Context.md, SOUL.md, TOOLS.md | Platform section replaced with accurate repo data, legacy React artifact archived, client data preserved, ISO 42001 status corrected to exam prep |
+## Current Session — Cherry Studio + OpenCode Desktop Config
 
-## 🔁 How to Update This File
+### Cherry Studio — Provider Status
+| Provider | Key? | Status |
+|----------|------|--------|
+| **cherryIn** | No key | ✅ Works (free models) |
+| **OpenRouter** | Has key | ✅ Works (free models, $0 balance) |
+| **DeepSeek** direct | Needs key | ❌ Not configured |
+| **SiliconFlow** | Needs key | ❌ Not configured |
+| **BigModel** | Needs key | ❌ Not configured |
+| **Anthropic** | Has key | ❌ Connection failed in KSA |
+| **OpenAI** | Invalid key | ❌ Auth failed |
+| **Groq** | None added | ❌ Models no longer supported |
+| **Google Gemini** | — | ❌ Not available in provider list |
 
-After each productive session, add:
-1. New preference confirmed or discovered
-2. Any correction made during the session
-3. New deliverable completed (name + format)
-4. Any formula, pattern, or code structure that worked exceptionally well
+### Cherry Studio — 3 Model Slots
+| Slot | Provider | Model |
+|------|----------|-------|
+| Default Assistant | **cherryIn** | TBD (need free model names from dropdown) |
+| Quick Model | **cherryIn** | TBD |
+| Translate Model | **cherryIn** | TBD |
+
+### Cherry Studio — Settings Done
+- General: English, Enter to send
+- Display: Font 14, auto-scroll ON
+- Memories: ON
+- Document Processing: All formats, 50MB, OCR OFF
+- MCP/API/Channels/Tasks/Phrases/Quick Assistant/Selection Assistant: SKIP
+- Skills/Web Search/Keyboard Shortcuts: SKIP
+
+### Cherry Studio — 9 Agents to Create
+Each with per-agent model + system prompt. Knowledge files: AGENTS.md, MEMORY.md.
+1. **Lead Auditor** — NC precision, assessment role
+2. **Lead Implementer** — Systems builder, client formulas
+3. **AI Developer** — Python automation, CONFIG block
+4. **Excel Engineer** — openpyxl, live formulas
+5. **Arabic Writer** — MSA, ISO docs, RTL
+6. **Personal Concierge** — Lifestyle, KSA context
+7. **Platform Engineer** — FastAPI+React, ComplianceHub
+8. **Prompt Architect** — 12-part anatomy framework
+9. **Delivery Manager** — Six-Gate pipeline
+
+### Cherry Studio — New UI
+- **Agents tab** (separate from Assistants) — supports per-agent model + tools
+- **OpenClaw plugin** installed — features TBD
+
+### OpenCode Desktop (v1.17.1)
+Not configured. Needs:
+1. Settings → Model → Default model
+2. Settings → Providers → Add API keys
+3. Settings → Instructions → Paste system prompt
+4. Settings → Servers → Add claude-mem MCP
+5. Settings → Skills → Enable
+
+### ComplianceHub Backend
+`backend\.env` needs these keys:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+OPENROUTER_API_KEY=sk-or-...
+OPENAI_API_KEY=sk-proj-...
+GOOGLE_API_KEY=AIza...
+```
+
+Start with `.\go.ps1`
+
+### Windows Scripts Status
+- `setup-windows.ps1` — needs Find-Git function
+- `go.ps1` — needs Find-Git + auto-sync on start/exit
+- `sync.ps1` — needs Find-Git function
+
+---
+
+## Blocked Items
+
+| Issue | Workaround |
+|-------|-----------|
+| Anthropic blocked in KSA | Use Claude through OpenRouter (add $1 at https://openrouter.ai/settings/credits) |
+| OpenAI key invalid | Get fresh key at https://platform.openai.com/api-keys |
+| Groq removed from Cherry Studio | Not usable |
+| Google Gemini not available | Not usable |
+| Railway expiring | Replaced by Android tunnel + Windows local backend |
+
+---
+
+## Next Steps
+
+1. Read cherryIn free model names → assign 3 model slots
+2. Create 9 Agents in Cherry Studio
+3. Configure OpenCode Desktop + MCP
+4. Add API keys to `backend\.env`
+5. Test `.\go.ps1`
+6. Pull updated scripts (Find-Git + auto-sync)
+7. Set up Windows Task Scheduler for daily sync
+
+---
+
+## NTIS IMS Audit (ISO 27001 + ISO 22301)
+
+- **Date**: Tomorrow + day after (2 days)
+- **Tools**: ComplianceHub doc gen, Cherry Studio assistants, OpenCode for code
+- **Daily flow**: Morning `.\go.ps1` (pulls Android tunnel), evening Enter to stop (pushes MEMORY.md)

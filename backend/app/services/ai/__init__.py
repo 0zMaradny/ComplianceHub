@@ -37,6 +37,7 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         return cached
 
     providers = {
+        'claude': ('.anthropic_provider', 'AnthropicProvider'),
         'groq': ('.groq_provider', 'GroqProvider'),
         'groq_llama': ('.groq_provider', 'GroqProvider'),
         'openrouter': ('.openrouter_provider', 'OpenRouterProvider'),
@@ -50,13 +51,13 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         'owl_alpha': ('.openrouter_provider', 'OpenRouterProvider'),
         'local': ('.local_provider', 'LocalProvider'),
         'local_qwen': ('.local_provider', 'LocalProvider'),
+        'local_qwen3_4b': ('.local_provider', 'LocalProvider'),
     }
     mod_path, cls_name = providers.get(name, providers['openrouter'])
     import importlib
     mod = importlib.import_module(mod_path, __package__)
     cls = getattr(mod, cls_name)
-    # OpenRouter provider needs the provider_name to select the right model
-    if cls_name == 'OpenRouterProvider':
+    if cls_name in ('OpenRouterProvider', 'AnthropicProvider'):
         inst = cls(provider_name=name)
     else:
         inst = cls()

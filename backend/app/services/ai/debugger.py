@@ -183,7 +183,6 @@ REQUIRED_FIELDS = {
 
 SCHEDULE_FIELDS = {'day': int, 'date': str, 'time': str, 'activity': str, 'auditee': str, 'auditor': str, 'clause': str}
 PARTICIPANT_FIELDS = {'name': str, 'company': str, 'department': str}
-SECTION_FIELDS = {'clause': str, 'status': str, 'evidence': str}
 
 ISO_CLAUSE_PATTERN = r'\d+(?:\.\d+)*'
 
@@ -208,7 +207,8 @@ class Autodebugger:
         errors = []
         if not prompt or len(prompt.strip()) < 10:
             errors.append('Prompt is empty or too short')
-        if kwargs.get('system_prompt') and len(kwargs['system_prompt'].strip()) < 5:
+        sp = kwargs.get('system_prompt')
+        if sp is not None and len(sp.strip()) < 5:
             errors.append('System prompt is too short')
         if errors:
             self._log('input_validation_failed', {'errors': errors})
@@ -263,7 +263,7 @@ class Autodebugger:
 
         if self.task_type == 'ISO_Checklist':
             for i, s in enumerate(result.get('sections', [])):
-                for f in ('clause', 'status'):
+                for f in ('clause', 'status', 'audit_questions', 'evidence_to_check'):
                     if not s.get(f):
                         errors.append(f"sections[{i}] missing '{f}'")
 
@@ -339,6 +339,20 @@ class Autodebugger:
                 elif not isinstance(val, str):
                     present += 1
         scores['completeness'] = int((present / max(len(req), 1)) * 40)
+        if present == 0:
+            scores['depth'] = 0
+            scores['integrity'] = 0
+            scores['relevance'] = 0
+            overall = 0
+            threshold = MIN_SCORE_THRESHOLDS.get(self.task_type, 60)
+            passed = overall >= threshold
+            self._log('score_quality', {
+                'overall': overall,
+                'threshold': threshold,
+                'pass': passed,
+                'scores': scores,
+            })
+            return {'overall': overall, 'fields': scores, 'pass': passed}
 
         # 2) Content depth (0-30): sentence count, field length
         depth = 30

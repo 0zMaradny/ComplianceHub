@@ -2,7 +2,7 @@
 import os, tempfile, shutil
 
 from app.services.pdf_generator import (
-    generate_pdf_file, AuditPDF, GENERATORS,
+    generate_pdf_file, AuditPDF, GENERATORS, safe_str,
     generate_audit_plan_stage_1, generate_audit_plan_stage_2,
     generate_participation_list, generate_audit_report,
     generate_iso_checklist, generate_certificate_text,
@@ -271,9 +271,13 @@ class TestISOChecklist:
             'auditor': 'John Smith',
             'sections': [
                 {'clause': '4.1', 'title': 'Context', 'requirement': 'Org shall determine...',
-                 'status': 'Conformant', 'evidence': 'Docs reviewed', 'notes': '', 'reference': ''},
+                 'status': 'Conformant', 'evidence': 'Docs reviewed', 'notes': '', 'reference': '',
+                 'audit_questions': 'How are external issues identified?',
+                 'evidence_to_check': 'Strategic planning docs'},
                 {'clause': '4.2', 'title': 'Interested Parties', 'requirement': 'Org shall determine...',
-                 'status': 'Partially Conformant', 'evidence': 'In progress', 'notes': '', 'reference': ''},
+                 'status': 'Partially Conformant', 'evidence': 'In progress', 'notes': '', 'reference': '',
+                 'audit_questions': 'How are stakeholder needs monitored?',
+                 'evidence_to_check': 'Stakeholder register'},
             ],
             'overall_assessment': 'Systems are compliant overall.',
         })
@@ -379,3 +383,23 @@ class TestCertificate:
         result = generate_certificate(data, path)
         assert result is not None
         shutil.rmtree(d, ignore_errors=True)
+
+
+class TestSafeStr:
+    def test_none(self):
+        assert safe_str(None) == ''
+
+    def test_empty_string(self):
+        assert safe_str('') == ''
+
+    def test_zero(self):
+        assert safe_str(0) == '0'
+
+    def test_false(self):
+        assert safe_str(False) == 'False'
+
+    def test_regular_string(self):
+        assert safe_str('hello') == 'hello'
+
+    def test_number(self):
+        assert safe_str(42) == '42'

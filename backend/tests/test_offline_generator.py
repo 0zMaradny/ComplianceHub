@@ -9,6 +9,7 @@ from app.services.offline_generator import (
     generate_participation_list,
     generate_all,
     OFFLINE_GENERATORS,
+    _get_clause_qa,
     _extract_client,
     _extract_standard,
     _extract_auditor,
@@ -20,6 +21,7 @@ from app.services.offline_generator import (
     _key_for_standard,
     STANDARD_LABEL_MAP,
 )
+from app.services import clause_data
 
 
 SAMPLE_NOTES = """
@@ -226,6 +228,38 @@ class TestGenerateFunctions:
         assert 'clause' in first
         assert 'status' in first
         assert 'evidence' in first
+        assert 'audit_questions' in first
+        assert 'evidence_to_check' in first
+
+    def test_checklist_enriched_fields_populated(self):
+        for std_key in ('iso_9001', 'iso_27001', 'iso_14001'):
+            ctx = generate_shared_context(SAMPLE_NOTES, SAMPLE_MANDAY)
+            ctx['standard_key'] = std_key
+            ctx['standard'] = STANDARD_LABEL_MAP.get(std_key, 'ISO 9001:2015')
+            checklist = generate_checklist(ctx)
+            enriched = [s for s in checklist['sections'] if s.get('audit_questions') and s.get('evidence_to_check')]
+            assert len(enriched) > 0, f'{std_key}: no enriched sections found'
+
+    def test_flat_sibling_clause_qa_resolved(self):
+        """Verify flat-sibling clause IDs like 5.1.1 (sibling of 5.1 in clause 5)
+        are correctly resolved by _get_clause_qa."""
+        flat = clause_data.flatten_clauses(clause_data.HLS_CORE)
+        for cid, title, depth in flat:
+            parts = cid.split('.')
+            if len(parts) < 3:
+                continue
+            qs, ev = _get_clause_qa(clause_data.HLS_CORE, cid)
+            assert qs or ev, f'{cid} ("{title}"): unresolved by _get_clause_qa'
+
+    def test_flat_sibling_evidence_resolved(self):
+        """Verify flat-sibling clause IDs are found by get_evidence_for_clause."""
+        flat = clause_data.flatten_clauses(clause_data.HLS_CORE)
+        for cid, title, depth in flat:
+            parts = cid.split('.')
+            if len(parts) < 3:
+                continue
+            result = clause_data.get_evidence_for_clause(clause_data.HLS_CORE, cid)
+            assert isinstance(result, list), f'{cid}: expected list, got {type(result)}'
 
     def test_generate_certificate(self):
         ctx = generate_shared_context(SAMPLE_NOTES, SAMPLE_MANDAY)

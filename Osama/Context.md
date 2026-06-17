@@ -1,4 +1,5 @@
 # Context.md — My Complete Brain
+_See also: USER.md (human facts) · SOUL.md (identity) · AGENTS.md (roles) · SKILLS.md (SOPs) · MEMORY.md (preferences) · TOOLS.md (infrastructure + keys)_
 
 Loads at the start of every session. Claude reads this to feel "experienced" — not starting from scratch every time. Last updated: June 2026
 
@@ -124,32 +125,138 @@ Each client is fully isolated. Claude loads only the relevant client context for
 | EnMS Risk Rating | L × S |
 | EnMS Risk Level | Nested IF on rating score |
 
-### Client 3 — SAGCO
+### Client 3 — SAGCO (Saudi Arabian Glass Company)
 
 **Role:** Lead Implementer
-**Standards:** ISO 45001 · ISO 14001
-**Status:** Active implementation
-**Language:** TBD per deliverable
-**Doc Code Prefix:** TBD
+**Standards:** ISO 45001 · ISO 14001 (cert scope), ISO 50001 (certified 2024), ISO 9001 (monitor), ISO 37001 (reference)
+**Status:** Active implementation — Stage 2 certification pending (Q2/Q3 2026)
+**Language:** English technical
+**Doc Code Prefix:** SAGCO-IMS-
+**Dashboard:** https://sagcodrv-ux.github.io/sagco-im/
+**Site:** Jeddah Industrial City Phase 4 — ~800 direct + 100+ contractors, 24/7, 3 shifts, 5 furnaces (F1–F5)
+**Certification Body:** TÜV Austria (our CB)
 
-Details to be populated when next SAGCO deliverable starts.
-Template: Active Deliverables · Domain Vocabulary · Risk Formulas · Visual Identity
+**Certification Status:**
+
+| Standard | Stage 1 | Stage 2 | Status |
+|----------|---------|---------|--------|
+| ISO 45001:2018 | Q1 2026 ✅ | Q2 2026 ⚠️ | **3 blockers remain** |
+| ISO 14001:2015 | Q1 2026 ✅ | Q2 2026 ⚠️ | Concurrent with 45001 |
+| ISO 50001:2018 | 2024 ✅ | Surveillance ongoing | Cert held |
+| ISO 9001:2015 | — | — | Monitoring only |
+| ISO 37001:2016 | — | — | Reference framework, not cert scope |
+
+**⚠️ 3 URGENT Actions Blocking Stage 2 Certification:**
+
+| # | Item | Ref | Owner |
+|---|------|-----|-------|
+| 1 | Emergency drill 2026 OVERDUE — furnace blowback + gas leak scenarios required | MOC-07 | CEO approval required |
+| 2 | Fire extinguisher 2026 inspection MISSING | HS-04 / R-S-04 | IMS Champion |
+| 3 | Group A programme sign-off pending GM | I-17, RM-04 | GM |
+
+**Dashboard Metrics (live):**
+
+| Domain | Count | Key Detail |
+|--------|-------|------------|
+| Risk Register | 54 entries | 2 Critical, 27 High, 17 Medium, 4 Low |
+| Compliance Register | 65 obligations | 68% compliant — 3 urgent gaps |
+| Objectives & KPIs | 22 objectives | 3 on track, 2 urgent (OBJ-12 F2, OBJ-14 F4) |
+| Context Register | 73 records | 29 external (PESTLE), 28 internal, 16 interested parties |
+| MOC Register | ~10–15 entries | MOC-07 pending immediate |
+| Energy (Q1 2026) | Ongoing | Facility SPC 562.9 kWh/t (✓ ≤565), GHG 615 kgCO₂e/t (↑ 25 above target) |
+| Checklist | 61 items | 66% weighted completion |
+| PESTLE/SWOT | 38 + 51 | 14 threats, 14 weaknesses (2 critical), 12 opportunities, 11 strengths |
+
+**Dashboard Pages:**
+
+| Page | URL Path | Purpose |
+|------|----------|---------|
+| Executive Dashboard | `/sagco-im/` | Summary KPIs, risk distribution, objectives status, urgent items |
+| Risk Register | `/sagco-im/risk-register.html` | 54 entries — OHS, Env, Energy, Sustainability, Social, Opportunity |
+| Compliance Register | `/sagco-im/compliance.html` | 65 obligations — legal, regulatory, voluntary |
+| Objectives & KPIs | `/sagco-im/objectives.html` | 22 objectives with KPI tracking |
+| Context Register | `/sagco-im/context.html` | 73 records — PESTLE, internal, interested parties |
+| MOC Register | `/sagco-im/moc.html` | Management of Change — 7 change types |
+| Energy Planning | `/sagco-im/energy.html` | SEU register, EnPI performance, ECMs |
+| Scope & Process Map | `/sagco-im/scope.html` | IMS scope, 16-process PDCA map, exclusions |
+| Annual Context Review Checklist | `/sagco-im/checklist.html` | 61 items across 13 sections |
+| Risk Methodology | `/sagco-im/methodology.html` | WI-RA-01 — 5×5 L×S matrix, HIRA, hierarchy of controls |
+| PESTLE & SWOT | `/sagco-im/pestle-swot.html` | 38 PESTLE → 51 SWOT items |
+
+**Domain Vocabulary — preserve exactly, never translate:**
+
+| Term | Meaning |
+|------|---------|
+| SHC | Specific Heat Consumption (kcal/kg) |
+| EnB | Energy Baseline |
+| EnPI | Energy Performance Indicator |
+| SEU | Significant Energy Use |
+| SPC | Specific Power Consumption (kWh/tonne) |
+| GHG | Greenhouse Gas (kgCO₂e/tonne) |
+| HFO | Heavy Fuel Oil |
+| LPG | Liquefied Petroleum Gas |
+| HIRA | Hazard Identification and Risk Assessment |
+| PTW | Permit to Work |
+| MOC | Management of Change |
+| ECM | Energy Conservation Measure |
+| NPV / IRR / CAPEX | Net Present Value / Internal Rate of Return / Capital Expenditure |
+| SEET | Significant Energy Efficiency Tactic |
+| IMS Champion | System owner — primary contact for all IMS documentation |
+
+**Document Codes Observed:**
+- L4-430-RC-01 — IMS top-level
+- L4-IMS-410-WI-04 — Work instruction
+- SAGCO-IMS-CKL-001 — Annual context review checklist
+- SAGCO-IMS-WI-RA-01 — Risk assessment methodology work instruction
+
+**Risk Methodology (WI-RA-01):**
+- 5×5 matrix — Score = L × S (confirmed)
+- 5 risk types: OHS, Environmental, Energy, Sustainability, Social (plus Opportunity)
+- HIRA with mandatory assessment fields + Hierarchy of Controls
+- Category-specific scoring override rules
+- Mandatory 30-day review on any trigger event
+- Assessor competence requirements defined
+
+**Energy Context:**
+- 5 furnaces (F1–F5), primarily HFO + LPG (84.3% thermal share)
+- Q1 2026: 250.09 GWh total, 17.01M SAR cost (+22.5% vs 2025)
+- ECM 1 — Recuperative → Regenerative conversion (F3, F4, F5): NPV 457M SAR, IRR 17.4%, payback 7.3 yrs, CAPEX 220M SAR
+- F4 SHC Deviation +119 kcal/kg above target — URGENT RCA due Jun 2026
+- F2 Decision required Aug 2026 — URGENT
+
+**IMS Process Architecture (PDCA):**
+- **Plan:** Context & stakeholder analysis → Risk & aspect identification → Objective setting → Legal compliance → Energy planning (SEU)
+- **Do:** Operational controls (PTW) → Emergency response drills → Training → Procurement controls → MOC implementation
+- **Check:** Monitoring & measurement → Stack & EnPI monitoring → Compliance evaluation → Internal audit → KPI dashboard
+- **Act:** NC & CAPA → Management Review (9.3) → Continual improvement → Annual context review → Objective revision
+
+**Active Deliverables:** TBD — populate when next SAGCO deliverable starts.
 
 ### Client 4 — Al-Ahsa Municipality
 
 **Role:** Lead Implementer
 **Standard:** ISO 27001:2022 (ISMS)
 **Language:** Arabic MSA · ISO refs and control IDs in English
-**Doc Code Prefix:** TBD
+**Doc Code Prefix:** AHSA-ISMS-
 
-Details to be populated when next Al-Ahsa deliverable starts.
+**Risk Formulas:**
+
+| Formula | Expression |
+|---------|------------|
+| Risk Score | L × I |
+| Risk Level | Nested IF on risk score |
+
+**Active Deliverables:** TBD — populate when next Al-Ahsa deliverable starts.
 Template: Active Deliverables · Asset Register · SoA · Risk Assessment methodology
 
-### Client 5 — [Next Client — TBD]
+### Client 5 — MOC (Ministry of Culture)
 
-**Role:** TBD
-**Standard:** TBD
-**Doc Code Prefix:** TBD
+**Role:** Lead Implementer
+**Standard:** ISO 37001:2016 (Anti-Bribery Management System)
+**Status:** Pending — governance-focused engagement
+**Language:** Arabic MSA · ISO clause refs in English
+**Doc Code Prefix:** MOC-ABMS-
+**Note:** Governance is specialized — may need extra research before starting deliverables.
 
 Template — populate when confirmed.
 

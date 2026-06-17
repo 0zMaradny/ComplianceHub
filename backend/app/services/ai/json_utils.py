@@ -8,7 +8,7 @@ def extract_json(text: str) -> dict | None:
     Handles:
       - Markdown code fences (```json ... ```)
       - Leading/trailing non-JSON text
-      - Partial JSON extraction via regex as fallback
+      - Multiple brace-delimited blocks (picks the first valid JSON)
     """
     text = text.strip()
     if not text:
@@ -26,13 +26,34 @@ def extract_json(text: str) -> dict | None:
     except json.JSONDecodeError:
         pass
 
-    # Fallback: extract outermost {...} block
-    brace_match = re.search(r'\{.*\}', text, re.DOTALL)
-    if brace_match:
-        candidate = brace_match.group()
-        try:
-            return json.loads(candidate)
-        except json.JSONDecodeError:
-            pass
+    # Fallback: scan for first complete {...} block,
+    # respecting string-escaped braces
+    depth = 0
+    start = -1
+    in_str = False
+    escaped = False
+    for i, ch in enumerate(text):
+        if in_str:
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
+        if ch == '{':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0 and start >= 0:
+                try:
+                    return json.loads(text[start:i+1])
+                except json.JSONDecodeError:
+                    start = -1
 
     return None

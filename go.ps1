@@ -35,6 +35,62 @@ $NC = [char]27 + "[0m"
 
 $ROOT_DIR = $PSScriptRoot
 $URL_FILE = "$ROOT_DIR\Osama\.tunnel-url"
+$MEMORY_FILE = "$ROOT_DIR\Osama\MEMORY.md"
+
+# ── Find Git (auto-detect portable, GitHub Desktop, or PATH) ──
+function Find-Git {
+  $locations = @(
+    "$env:LOCALAPPDATA\GitHubDesktop\app-*\resources\app\git\cmd\git.exe",
+    "$env:USERPROFILE\Downloads\PortableGit\cmd\git.exe",
+    "$env:USERPROFILE\PortableGit\cmd\git.exe",
+    "$env:ProgramFiles\Git\cmd\git.exe",
+    "${env:ProgramFiles(x86)}\Git\cmd\git.exe"
+  )
+  foreach ($pattern in $locations) {
+    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
+    if ($matches) { return $matches[0].FullName }
+  }
+  $cmd = Get-Command git -ErrorAction SilentlyContinue
+  if ($cmd) { return $cmd.Source }
+  return $null
+}
+
+# ── Git sync helpers ──
+function Git-Sync-Pull {
+  param([string]$gitPath)
+  Write-Host "${CYAN}Syncing from git...${NC}"
+  & $gitPath -C $ROOT_DIR stash 2>&1 | Out-Null
+  & $gitPath -C $ROOT_DIR pull --rebase --autostash 2>&1 | Out-Null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "${GREEN}  ✓ Pulled latest${NC}"
+  } else {
+    & $gitPath -C $ROOT_DIR pull 2>&1 | Out-Null
+    Write-Host "${YELLOW}  ⚠ Pull had issues (offline or no remote)${NC}"
+  }
+}
+
+function Git-Sync-Exit {
+  param([string]$gitPath)
+  Write-Host "${YELLOW}Syncing changes to git...${NC}"
+  $hasChanges = $false
+  & $gitPath -C $ROOT_DIR diff --quiet HEAD -- "Osama/MEMORY.md" 2>$null
+  if ($LASTEXITCODE -ne 0) { $hasChanges = $true }
+  & $gitPath -C $ROOT_DIR diff --quiet HEAD -- "Osama/.tunnel-url" 2>$null
+  if ($LASTEXITCODE -ne 0) { $hasChanges = $true }
+
+  if ($hasChanges) {
+    & $gitPath -C $ROOT_DIR add "Osama/MEMORY.md" "Osama/.tunnel-url"
+    & $gitPath -C $ROOT_DIR commit -m "sync: MEMORY.md + tunnel URL [Windows]" 2>$null | Out-Null
+    & $gitPath -C $ROOT_DIR push 2>&1 | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+      Write-Host "${GREEN}  ✓ Synced to git${NC}"
+    } else {
+      Write-Host "${YELLOW}  ⚠ Push failed (credentials may need setup)${NC}"
+    }
+  } else {
+    Write-Host "  - No new changes${NC}"
+  }
+}
 
 # ── Help ──
 if ($help) {
@@ -99,6 +155,14 @@ if ($HAS_WSL) {
 # ── NATIVE MODE (no WSL) ──
 Write-Host "${CYAN}ComplianceHub — native mode${NC}"
 Write-Host ""
+
+# ── Auto-sync on start ──
+$GIT_PATH = Find-Git
+if ($GIT_PATH) {
+  Git-Sync-Pull -gitPath $GIT_PATH
+} else {
+  Write-Host "${YELLOW}  ⚠ Git not found — skipping sync${NC}"
+}
 
 # Check Python
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
@@ -176,6 +240,10 @@ Read-Host
 
 # ── Cleanup ──
 Write-Host "Stopping..."
+# Auto-sync on exit
+if ($GIT_PATH) {
+  Git-Sync-Exit -gitPath $GIT_PATH
+}
 Stop-Process -Id $backendProcess.Id -Force -ErrorAction SilentlyContinue
 if ($tunnelProcess) { Stop-Process -Id $tunnelProcess.Id -Force -ErrorAction SilentlyContinue }
 Write-Host "${GREEN}Done${NC}"
