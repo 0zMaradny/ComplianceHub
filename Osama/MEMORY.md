@@ -127,10 +127,46 @@ Auto-sync: pulls on start, pushes MEMORY.md + `.tunnel-url` on exit.
 
 ---
 
+## Watchdog Automation (Added June 18)
+
+### How it works
+```
+crontab (every 10 min)
+  └─ watchdog.sh
+       ├─ Pings localhost:8000/api/health
+       ├─ Checks /tmp/compliancehub-url.txt exists + non-empty
+       ├─ Both OK → silent exit
+       ├─ Backend down → start uvicorn → start tunnel → sync URL to git
+       └─ Tunnel down → start tunnel.sh → sync URL to git
+```
+
+### Files
+| File | Purpose |
+|------|---------|
+| `watchdog.sh` | Lightweight health check + auto-restart |
+| `crontab` | 3 entries: watchdog every 10min, disk check every 30min, @reboot |
+
+### Coverage
+| Scenario | Before | After |
+|----------|--------|-------|
+| Phone reboot | Manual `bash go.sh` | Auto within 10 min via @reboot + cron |
+| Termux killed | Manual restart | Auto within 10 min |
+| Tunnel drop + go.sh down | Manual fix | Auto within 10 min |
+| Backend crash during tile gap | Silent failure | Auto restarted next cycle |
+
+### Setup (already done)
+- `/usr/sbin/cron` running (PID verified)
+- Crontab installed with 3 entries
+- `watchdog.sh` tested — backend auto-started successfully
+- Tunnel URL synced to `Osama/.tunnel-url` and git-pushed on each restart
+
+---
+
 ## Next Steps
-1. Read cherryIn free model names → assign 3 slots
-2. Create 9 Agents in Cherry Studio
-3. Configure OpenCode Desktop + MCP
-4. Add API keys to `backend\.env`
-5. Test `.\go.ps1`
-6. Set up Windows Task Scheduler
+1. ~~Create watchdog.sh + crontab for auto-restart~~ ✅
+2. Read cherryIn free model names → assign 3 slots
+3. Create 9 Agents in Cherry Studio
+4. Configure OpenCode Desktop + MCP
+5. Add API keys to `backend\.env`
+6. Test `.\go.ps1`
+7. Set up Windows Task Scheduler
