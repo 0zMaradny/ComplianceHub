@@ -103,6 +103,12 @@ fi
 echo -e "  ${GREEN}✓ Git sync complete${NC}"
 echo ""
 
+# ── Disk audit pre-flight ──
+if [ -f "$ROOT_DIR/audit-disk.sh" ]; then
+  "$ROOT_DIR/audit-disk.sh"
+fi
+echo ""
+
 cleanup_all() {
   echo ""
   echo -e "${YELLOW}Syncing changes to git...${NC}"
@@ -117,6 +123,11 @@ cleanup_all() {
       rm -f "$f"
     fi
   done
+  # Stop disk monitor watcher
+  if [ -f "/tmp/compliancehub-disk/watch.pid" ]; then
+    kill "$(cat /tmp/compliancehub-disk/watch.pid)" 2>/dev/null || true
+    rm -f /tmp/compliancehub-disk/watch.pid
+  fi
   fuser -k 8000/tcp 8080/tcp 2>/dev/null || true
   echo -e "${GREEN}All stopped.${NC}"
 }
@@ -241,6 +252,14 @@ fi
 # Sync tunnel URL to git (so other devices can see it)
 if [ -n "$URL" ] && echo "$URL" | grep -qv "last known"; then
   git_sync_tunnel_url "$URL"
+fi
+
+# ── Background disk monitor ──
+if [ -f "$ROOT_DIR/audit-disk.sh" ]; then
+  if ! pgrep -f "audit-disk.sh watch" >/dev/null 2>&1; then
+    nohup "$ROOT_DIR/audit-disk.sh watch" >/dev/null 2>&1 &
+    echo -e "  ${CYAN}✓ Disk monitor started (PID $!)${NC}"
+  fi
 fi
 
 # ── Display results ──
