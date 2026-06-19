@@ -23,11 +23,6 @@ BACKOFF=5
 MAX_BACKOFF=60
 CURRENT_TUNNEL="$MODE"
 
-# Health monitoring
-HEALTH_FAILURES=0
-HEALTH_FAILURE_THRESHOLD=3
-LAST_HEALTH_CHECK=0
-
 log() { echo "[$(date +%H:%M:%S)] $*" | tee -a "$LOG_FILE"; }
 
 rotate_log() {
@@ -61,30 +56,6 @@ post_url() {
   fi
 }
 
-health_check_url() {
-  local url="$1"
-  if [ -z "$url" ]; then return 1; fi
-  local now
-  now=$(date +%s)
-  # Only check every 60s
-  if [ $((now - LAST_HEALTH_CHECK)) -lt 60 ]; then return 0; fi
-  LAST_HEALTH_CHECK=$now
-  if curl -sfI "$url" --connect-timeout 10 --max-time 15 > /dev/null 2>&1; then
-    HEALTH_FAILURES=0
-    return 0
-  else
-    HEALTH_FAILURES=$((HEALTH_FAILURES + 1))
-    echo "[$(date +%H:%M:%S)] Health check FAIL ($HEALTH_FAILURES/$HEALTH_FAILURE_THRESHOLD): $url" >> "$HEALTH_LOG"
-    log "Health check FAIL ($HEALTH_FAILURES/$HEALTH_FAILURE_THRESHOLD)"
-    if [ "$HEALTH_FAILURES" -ge "$HEALTH_FAILURE_THRESHOLD" ]; then
-      log "Health failure threshold reached. Forcing reconnect."
-      HEALTH_FAILURES=0
-      return 2
-    fi
-    return 1
-  fi
-}
-
 backoff_wait() {
   sleep "$BACKOFF"
   BACKOFF=$((BACKOFF * 2))
@@ -113,23 +84,12 @@ cloudflare_connect() {
   $CLOUD tunnel --url http://localhost:8000 --protocol http2 2>&1 | while read -r line; do
     echo "$line" >> "$LOG_FILE"
     local parsed
-    parsed=$(echo "$line" | grep -oP 'https://[a-z0-9-]+\.trycloudflare\.com')
+    parsed=$(echo "$line" | grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com')
     if [ -n "$parsed" ] && [ -z "$url" ]; then
       url="$parsed"
       save_url "$url"
       reset_backoff
       CONSECUTIVE_FAILURES=0
-      # Monitor health while connected
-      while sleep 30; do
-        health_check_url "$url"
-        local rc=$?
-        if [ "$rc" -eq 2 ]; then
-          log "Health check forced reconnect"
-          # Kill cloudflared to trigger reconnect
-          pkill -f "cloudflared tunnel" 2>/dev/null || true
-          return 1
-        fi
-      done
     fi
   done
 
@@ -157,22 +117,13 @@ serveo_connect() {
     if [ -n "$SUBDOMAIN" ]; then
       parsed="https://${SUBDOMAIN}.serveo.net"
     else
-      parsed=$(echo "$line" | grep -oP 'https://[^\s]+')
+      parsed=$(echo "$line" | grep -oE 'https://[^[:space:]]+')
     fi
     if [ -n "$parsed" ] && [ -z "$url" ]; then
       url="$parsed"
       save_url "$url"
       reset_backoff
       CONSECUTIVE_FAILURES=0
-      while sleep 30; do
-        health_check_url "$url"
-        local rc=$?
-        if [ "$rc" -eq 2 ]; then
-          log "Health check forced reconnect"
-          pkill -f "serveo.net" 2>/dev/null || true
-          return 1
-        fi
-      done
     fi
   done
 

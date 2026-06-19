@@ -18,7 +18,7 @@ function Find-Git {
     "${env:ProgramFiles(x86)}\Git\cmd\git.exe"
   )
   foreach ($pattern in $locations) {
-    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
+    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Property CreationTime -Descending
     if ($matches) { return $matches[0].FullName }
   }
   $cmd = Get-Command git -ErrorAction SilentlyContinue
@@ -37,7 +37,6 @@ Write-Host ""
 
 # Pull latest
 Write-Host "Pulling from git..."
-& $GIT_PATH -C $REPO_DIR stash 2>&1 | Out-Null
 & $GIT_PATH -C $REPO_DIR pull --rebase --autostash 2>&1 | Out-Null
 if ($LASTEXITCODE -eq 0) {
   Write-Host "  ✓ Pulled latest" -ForegroundColor Green

@@ -47,7 +47,7 @@ function Find-Git {
     "${env:ProgramFiles(x86)}\Git\cmd\git.exe"
   )
   foreach ($pattern in $locations) {
-    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue
+    $matches = Get-ChildItem -Path $pattern -ErrorAction SilentlyContinue | Sort-Object -Property CreationTime -Descending
     if ($matches) { return $matches[0].FullName }
   }
   $cmd = Get-Command git -ErrorAction SilentlyContinue
@@ -59,7 +59,6 @@ function Find-Git {
 function Git-Sync-Pull {
   param([string]$gitPath)
   Write-Host "${CYAN}Syncing from git...${NC}"
-  & $gitPath -C $ROOT_DIR stash 2>&1 | Out-Null
   & $gitPath -C $ROOT_DIR pull --rebase --autostash 2>&1 | Out-Null
   if ($LASTEXITCODE -eq 0) {
     Write-Host "${GREEN}  ✓ Pulled latest${NC}"

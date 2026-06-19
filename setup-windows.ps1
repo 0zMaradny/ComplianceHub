@@ -51,7 +51,7 @@ if ($missing.Count -gt 0) {
   Write-Host "Install these first, then re-run this script."
   Write-Host "  Git portable:     https://github.com/git-for-windows/git/releases"
   Write-Host "  Node.js portable: https://nodejs.org/ (download .zip, not .msi)"
-  Write-Host "  Python:           Already installed ✓" | Out-Null
+  Write-Host "  Python: Already installed ✓"
   exit 1
 }
 
@@ -101,15 +101,22 @@ if ($LASTEXITCODE -eq 0) {
 if (-not (Test-Path "$REPO_DIR\backend\.env")) {
   Copy-Item "$REPO_DIR\backend\.env.example" "$REPO_DIR\backend\.env"
   Write-Host "${YELLOW}  ⚠ Created backend\.env — add your API keys:${NC}"
-  Write-Host "     ANTHROPIC_API_KEY=sk-ant-..."
+  Write-Host "     ANTIGRAVITY_CLIENT_ID=      # OAuth client ID"
+  Write-Host "     ANTIGRAVITY_CLIENT_SECRET=  # OAuth client secret"
+  Write-Host "     ANTIGRAVITY_REFRESH=        # OAuth refresh token"
   Write-Host "     OPENROUTER_API_KEY=sk-or-..."
   Write-Host "     GROQ_API_KEY=gsk_..."
 }
 
 # ── 6. claude-mem ──
-Write-Host "${CYAN}  Installing claude-mem...${NC}"
-npx -y claude-mem install --ide opencode 2>&1 | Out-Null
-Write-Host "${GREEN}  ✓ claude-mem installed${NC}"
+$claudeMemCheck = Get-Command claude-mem -ErrorAction SilentlyContinue
+if (-not $claudeMemCheck) {
+  Write-Host "${CYAN}  Installing claude-mem...${NC}"
+  npx -y claude-mem install --ide opencode 2>&1 | Out-Null
+  Write-Host "${GREEN}  ✓ claude-mem installed${NC}"
+} else {
+  Write-Host "${GREEN}  ✓ claude-mem already installed${NC}"
+}
 
 # ── 7. Tree-sitter CLI for smart tools ──
 Write-Host "${CYAN}  Installing tree-sitter CLI...${NC}"

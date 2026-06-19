@@ -123,7 +123,7 @@ class AntigravityProvider(AIProvider):
             max_tokens=kwargs.get('max_tokens', 8192),
         )
 
-    def extract_structured(self, prompt: str, **kwargs) -> dict[str, Any]:
+    def extract_structured(self, prompt: str, response_mime_type: str | None = None, **kwargs) -> dict[str, Any]:
         return self._call(
             prompt,
             system_prompt='You are a precise data extractor. Return ONLY valid JSON matching the requested schema.',

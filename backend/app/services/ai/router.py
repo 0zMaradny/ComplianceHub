@@ -278,8 +278,7 @@ def _try_provider(
             **kwargs,
         )
         elapsed = time.perf_counter() - _ts
-
-        elapsed_ms = int((time.perf_counter() - _ts) * 1000)
+        elapsed_ms = int(elapsed * 1000)
 
         if 'error' in result and result['error'] is not None:
             logger.warning('Provider %s failed %s in %.2fs: %s',

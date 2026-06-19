@@ -8,10 +8,14 @@ from app.services.ai_chat import build_chat_context, chat_with_ai, chat_stream
 from app.routes import _get_progress
 from app.services import db
 from app.services.ai import create_provider
+from app.services.ai.rate_limiter import ProviderRateLimiter
+from app.services.ai.router import _provider_health, _PROVIDER_DEGRADE_THRESHOLD, record_model_result
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["AI Chat"])
+
+_rate_limiter = ProviderRateLimiter()
 
 MODEL_MAP = {
     "claude-sonnet-4-6": "antigravity_claude_sonnet_46",
@@ -23,11 +27,26 @@ FALLBACK_CHAIN = ["antigravity_claude_sonnet_46", "antigravity_claude_opus_46", 
 
 def _call_provider(provider_name: str, prompt: str, system_prompt: str | None = None,
                    temperature: float = 0.3, max_tokens: int = 4096) -> dict:
+    if not _rate_limiter.check(provider_name):
+        return {"error": f"Rate limit exceeded for {provider_name}"}
+    if _provider_health.get(provider_name, 0) >= _PROVIDER_DEGRADE_THRESHOLD:
+        return {"error": f"Provider {provider_name} degraded"}
+    _ts = time.perf_counter()
     try:
         provider = create_provider(provider_name)
-        fn = provider.generate
-        return fn(prompt, system_prompt=system_prompt, temperature=temperature, max_tokens=max_tokens)
+        result = provider.generate(prompt, system_prompt=system_prompt, temperature=temperature, max_tokens=max_tokens)
+        elapsed_ms = int((time.perf_counter() - _ts) * 1000)
+        if "error" in result and result["error"]:
+            _provider_health[provider_name] = _provider_health.get(provider_name, 0) + 1
+            record_model_result(provider_name, "chat_query", False, elapsed_ms)
+        else:
+            _provider_health[provider_name] = 0
+            record_model_result(provider_name, "chat_query", True, elapsed_ms)
+        return result
     except Exception as e:
+        elapsed_ms = int((time.perf_counter() - _ts) * 1000)
+        _provider_health[provider_name] = _provider_health.get(provider_name, 0) + 1
+        record_model_result(provider_name, "chat_query", False, elapsed_ms)
         return {"error": str(e)}
 
 
@@ -60,7 +79,7 @@ async def openai_chat_completions(request: Request):
     if stream:
         async def event_stream():
             text = ""
-            for pname in [MODEL_MAP.get(model)] + FALLBACK_CHAIN:
+            for pname in [MODEL_MAP.get(model)] + FALLBACK_CHAIN if model in MODEL_MAP else FALLBACK_CHAIN:
                 if not pname:
                     continue
                 result = _call_provider(pname, prompt, system_prompt, temperature, max_tokens)

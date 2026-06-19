@@ -286,8 +286,8 @@ echo ""
 if [ "$START_AI" = true ]; then
   echo -e "  ${YELLOW}AI status:${NC}"
   curl -sf http://127.0.0.1:8080/health > /dev/null 2>&1 \
-    && echo -e "  ${GREEN}✓ Qwen2.5-3B running on port 8080${NC}" \
-    || echo -e "  ${RED}✗ Qwen2.5-3B not responding${NC}"
+    && echo -e "  ${GREEN}✓ ${MODEL_NAME:-AI model} running on port 8080${NC}" \
+    || echo -e "  ${RED}✗ ${MODEL_NAME:-AI model} not responding${NC}"
   echo ""
 fi
 

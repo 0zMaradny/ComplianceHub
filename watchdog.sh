@@ -10,7 +10,6 @@ FRONTEND_DIR="$ROOT_DIR/frontend"
 PID_DIR="/tmp/compliancehub-pids"
 LOG_FILE="/tmp/watchdog.log"
 URL_FILE="/tmp/compliancehub-url.txt"
-GIT_URL_FILE="$ROOT_DIR/Osama/.tunnel-url"
 
 mkdir -p "$PID_DIR"
 
@@ -65,19 +64,6 @@ start_tunnel() {
   return 1
 }
 
-# ── Sync tunnel URL to git ──
-sync_tunnel_url() {
-  if [ -f "$URL_FILE" ] && [ -s "$URL_FILE" ]; then
-    local url
-    url=$(cat "$URL_FILE")
-    echo "$url" > "$GIT_URL_FILE"
-    cd "$ROOT_DIR"
-    git add "$GIT_URL_FILE" 2>/dev/null || true
-    git commit -m "watchdog: tunnel URL sync" 2>/dev/null || true
-    git push origin main 2>/dev/null || true
-  fi
-}
-
 # ── Main ──
 BACKEND_UP=false
 TUNNEL_UP=false
@@ -100,7 +86,6 @@ if ! $BACKEND_UP; then
   start_backend || true
   sleep 3
   start_tunnel || true
-  sync_tunnel_url
   exit 0
 fi
 
@@ -108,5 +93,4 @@ fi
 if ! $TUNNEL_UP; then
   log "Tunnel is DOWN — restarting"
   start_tunnel || true
-  sync_tunnel_url
 fi
