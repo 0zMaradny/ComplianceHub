@@ -1,6 +1,6 @@
 # Windows Setup — Cherry Studio + OpenCode Desktop
 
-**Tunnel URL:** `https://consortium-exports-sacramento-parent.trycloudflare.com`
+**Tunnel URL:** `https://extraordinary-october-databases-remote.trycloudflare.com`
 (Check current URL on Android: `cat /tmp/compliancehub-url.txt`)
 
 ---
@@ -11,7 +11,7 @@
 1. **Settings → Model Provider → Add Provider**
 2. Type: **OpenAI**
 3. Name: `Antigravity`
-4. API URL: `https://consortium-exports-sacramento-parent.trycloudflare.com/v1/chat/completions`
+4. API URL: `https://extraordinary-october-databases-remote.trycloudflare.com/v1/chat/completions`
 5. Model: `claude-sonnet-4-6`
 6. API Key: any dummy value (e.g. `sk-antigravity`)
 7. Save
@@ -23,7 +23,7 @@
 | Quick Model | `claude-sonnet-4-6` |
 | Translate Model | `claude-sonnet-4-6` |
 
-### 9 Agents (from `Osama/CHERRY_STUDIO_ASSISTANTS.md`)
+### 9 Agents (from `Osama/AGENT_PROMPTS.md` — copy-paste ready)
 Assign all to Antigravity provider. Knowledge files: `AGENTS.md`, `MEMORY.md`, `HUMANIZE.md`.
 
 | # | Agent | Slot Assignment |
@@ -54,7 +54,7 @@ Assign all to Antigravity provider. Knowledge files: `AGENTS.md`, `MEMORY.md`, `
 1. **Settings → Providers → Add**
 2. Type: **OpenAI-compatible**
 3. Name: `Antigravity`
-4. Base URL: `https://consortium-exports-sacramento-parent.trycloudflare.com/v1/chat/completions`
+4. Base URL: `https://extraordinary-october-databases-remote.trycloudflare.com/v1/chat/completions`
 5. Model: `claude-sonnet-4-6`
 6. API Key: any dummy value
 7. Save

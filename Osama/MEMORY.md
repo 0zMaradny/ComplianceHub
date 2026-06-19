@@ -194,12 +194,21 @@ crontab (every 10 min)
 
 ---
 
-## `/v1/chat/completions` — Universal OpenAI Endpoint (Added June 18)
+## `/v1/chat/completions` — Universal OpenAI Endpoint
 
 ### Current Tunnel URL
 ```
-https://consortium-exports-sacramento-parent.trycloudflare.com
+https://extraordinary-october-databases-remote.trycloudflare.com
 ```
+
+### Models available through tunnel
+| Model ID | Type | Status |
+|----------|------|--------|
+| `claude-sonnet-4-6` | Sonnet 4.6 (default) | ✅ Tested |
+| `claude-opus-4-6-thinking` | Opus 4.6 Thinking | ✅ Tested |
+| `antigravity_claude_sonnet_46` | Antigravity direct | ✅ Available |
+| `antigravity_claude_opus_46` | Antigravity direct | ✅ Available |
+| Any other model | Falls through OpenRouter → Groq → Local | ✅ Auto
 
 ### Endpoint
 ```
