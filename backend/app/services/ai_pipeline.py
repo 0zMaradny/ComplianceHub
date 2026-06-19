@@ -1,15 +1,15 @@
 import json
 import logging
-import os
 
 from .ai.router import generate as router_generate, extract_structured as router_extract
 from . import clause_data
 from ..config import ISO_STANDARDS, STANDARD_FAMILIES
+from app.settings import AI_QUALITY_THRESHOLD, AI_QUALITY_MAX_RETRIES
 
 logger = logging.getLogger(__name__)
 
-QUALITY_THRESHOLD = float(os.environ.get('AI_QUALITY_THRESHOLD', '6.0'))
-QUALITY_MAX_RETRIES = int(os.environ.get('AI_QUALITY_MAX_RETRIES', '1'))
+QUALITY_THRESHOLD = AI_QUALITY_THRESHOLD
+QUALITY_MAX_RETRIES = AI_QUALITY_MAX_RETRIES
 
 SYSTEM_PROMPT = """=== ROLE ===
 Act as Senior Lead Auditor at UKAS-accredited Certification Body (TÜV AUSTRIA). You are Track A — The Judge. Your priority is non-conformity precision over general advice. You identify findings ONLY — never offer solutions or implementation advice.

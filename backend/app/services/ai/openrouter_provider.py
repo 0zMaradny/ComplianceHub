@@ -5,13 +5,9 @@ Single provider class handles all OpenRouter models by looking up
 the model ID from the registry based on provider_name passed at init.
 """
 
-import os
+import time
 import json
 import logging
-import time
-import random
-import urllib.request
-import urllib.error
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -24,7 +20,8 @@ from .json_utils import extract_json
 class OpenRouterProvider(AIProvider):
     def __init__(self, provider_name: str = None):
         self.provider_name = provider_name or 'openrouter'
-        self.api_key = os.environ.get('OPENROUTER_API_KEY', '')
+        from app.settings import OPENROUTER_API_KEY
+        self.api_key = OPENROUTER_API_KEY
         # Look up model ID from registry
         model = ALL_MODELS.get(self.provider_name)
         if model:

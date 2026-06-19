@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 logger = logging.getLogger(__name__)
 
 from app.config import UPLOAD_FOLDER, OUTPUT_FOLDER
+from app.settings import CORS_ORIGINS as _CORS_CONFIG, FRONTEND_STATIC_DIR
 
 from app.routes import (
     _check_rate_limit, cleanup_old_jobs
@@ -56,7 +57,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S',
 )
 
-CORS_ORIGINS = os.environ.get("CORS_ORIGINS", "*")
+CORS_ORIGINS = _CORS_CONFIG
 if CORS_ORIGINS == "*":
     cors_origins = ["*"]
 else:
@@ -118,7 +119,7 @@ async def startup():
     cleanup_old_jobs()
 
 
-frontend_dir = os.environ.get("FRONTEND_STATIC_DIR", "")
+frontend_dir = FRONTEND_STATIC_DIR
 if frontend_dir and os.path.isdir(frontend_dir):
     try:
         app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import time
 import urllib.request
 import urllib.error
@@ -8,12 +7,13 @@ from typing import Any
 
 from . import AIProvider
 from .json_utils import extract_json
+from app.settings import LOCAL_AI_BASE, LOCAL_AI_TIMEOUT, LOCAL_AI_MAX_RETRIES
 
 logger = logging.getLogger(__name__)
 
-LOCAL_BASE = os.environ.get('LOCAL_AI_BASE', 'http://localhost:8080')
-LOCAL_TIMEOUT = int(os.environ.get('LOCAL_AI_TIMEOUT', '120'))
-MAX_RETRIES = int(os.environ.get('LOCAL_AI_MAX_RETRIES', '2'))
+LOCAL_BASE = LOCAL_AI_BASE
+LOCAL_TIMEOUT = LOCAL_AI_TIMEOUT
+MAX_RETRIES = LOCAL_AI_MAX_RETRIES
 
 
 class LocalProvider(AIProvider):

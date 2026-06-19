@@ -4,6 +4,7 @@ import subprocess
 from fastapi import APIRouter, Request
 
 from app.config import ISO_STANDARDS, STANDARD_CATEGORIES, OUTPUT_DOCUMENTS, DOC_LABELS, AUDIT_PACKAGE_DOCS, STANDALONE_DOCS
+from app.settings import TUNNEL_MODE as _TUNNEL_MODE_CONFIG
 
 TUNNEL_URL_FILE = "/tmp/compliancehub-url.txt"
 
@@ -22,7 +23,7 @@ def _read_tunnel_mode() -> str:
     pid_dir = "/tmp/compliancehub-pids"
     tunnel_pid_file = os.path.join(pid_dir, "tunnel.pid")
     if os.path.exists(tunnel_pid_file):
-        return os.environ.get("TUNNEL_MODE", "auto")
+        return _TUNNEL_MODE_CONFIG
     return "disconnected"
 
 

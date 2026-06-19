@@ -1,6 +1,7 @@
-import os
 from abc import ABC, abstractmethod
 from typing import Any
+
+from app.settings import AI_PROVIDER as _AI_PROVIDER_ENV
 
 
 class AIProvider(ABC):
@@ -31,7 +32,7 @@ _PROVIDER_CACHE: dict[str, AIProvider] = {}
 
 def create_provider(provider_name: str | None = None) -> AIProvider:
     """Factory: create AI provider by name (reads AI_PROVIDER env if None)."""
-    name = (provider_name or os.environ.get('AI_PROVIDER', 'openrouter')).lower().strip()
+    name = (provider_name or _AI_PROVIDER_ENV).lower().strip()
     cached = _PROVIDER_CACHE.get(name)
     if cached is not None:
         return cached

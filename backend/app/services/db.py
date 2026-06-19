@@ -1,15 +1,17 @@
 """Persistence layer — SQLite (local) or PostgreSQL (Railway) via auto-detect.
 Thread-safe. If DATABASE_URL env var is set, uses PostgreSQL; else SQLite."""
 
-import json
 import os
+import json
 import time
 import logging
 from typing import Any
 
+from app.settings import DATABASE_URL as _RAW_DATABASE_URL
+
 logger = logging.getLogger(__name__)
 
-_DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+_DATABASE_URL = _RAW_DATABASE_URL.strip()
 _IS_POSTGRES = _DATABASE_URL.startswith('postgresql://') or _DATABASE_URL.startswith('postgres://')
 _DB_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'compliancehub.db')
 

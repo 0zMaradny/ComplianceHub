@@ -1,4 +1,3 @@
-import os
 import time
 import json
 import logging
@@ -10,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 from . import AIProvider
 from .json_utils import extract_json
+from app.settings import ANTIGRAVITY_CLIENT_ID, ANTIGRAVITY_CLIENT_SECRET, ANTIGRAVITY_REFRESH
 
 
 class AntigravityProvider(AIProvider):
@@ -20,9 +20,9 @@ class AntigravityProvider(AIProvider):
             'antigravity_claude_opus_46': 'claude-opus-4-6-thinking',
         }
         self.model = self.model_map.get(self.provider_name, 'claude-sonnet-4-6')
-        self.client_id = os.environ.get('ANTIGRAVITY_CLIENT_ID', '')
-        self.client_secret = os.environ.get('ANTIGRAVITY_CLIENT_SECRET', '')
-        self.refresh_token = os.environ.get('ANTIGRAVITY_REFRESH', '')
+        self.client_id = ANTIGRAVITY_CLIENT_ID
+        self.client_secret = ANTIGRAVITY_CLIENT_SECRET
+        self.refresh_token = ANTIGRAVITY_REFRESH
         self.base_url = 'https://cloudcode-pa.googleapis.com/v1internal:generateContent'
         self.project = 'rising-fact-p41fc'
         self._access_token = None
@@ -131,53 +131,4 @@ class AntigravityProvider(AIProvider):
             max_tokens=4096,
         )
 
-    def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
-        access = self._ensure_token()
-        if not access:
-            yield 'ANTIGRAVITY_REFRESH not set or expired'
-            return
-        body = {
-            'project': self.project,
-            'model': self.model,
-            'request': {
-                'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
-                'generationConfig': {
-                    'maxOutputTokens': kwargs.get('max_tokens', 8192),
-                    'temperature': kwargs.get('temperature', 0.3),
-                },
-            },
-            'userAgent': 'antigravity',
-            'requestId': f't-{int(time.time())}',
-        }
-        if system_prompt:
-            body['request']['systemInstruction'] = {'parts': [{'text': system_prompt}]}
-        data = json.dumps(body).encode()
-        try:
-            req = urllib.request.Request(
-                self.base_url,
-                data=data,
-                headers={
-                    'Authorization': f'Bearer {access}',
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'antigravity/1.15.8 linux/arm64',
-                    'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
-                    'Client-Metadata': json.dumps({
-                        'ideType': 'ANTIGRAVITY', 'platform': 'LINUX', 'pluginType': 'GEMINI',
-                    }),
-                },
-                method='POST',
-            )
-            with urllib.request.urlopen(req, timeout=180) as resp:
-                result = json.loads(resp.read().decode())
-            candidates = result.get('response', {}).get('candidates', [])
-            if not candidates:
-                yield '[Error: No candidates]'
-                return
-            parts = candidates[0].get('content', {}).get('parts', [])
-            text = ''.join(p.get('text', '') for p in parts)
-            if text:
-                yield text
-            else:
-                yield '[Error: Empty response]'
-        except Exception as e:
-            yield f'[Error: {str(e)}]'
+    # generate_stream omitted — parent class AIProvider default handles it

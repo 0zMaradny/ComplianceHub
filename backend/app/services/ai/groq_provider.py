@@ -1,15 +1,15 @@
-import os
 import time
 from typing import Any
 from openai import OpenAI
 
 from . import AIProvider
 from .json_utils import extract_json
+from app.settings import GROQ_API_KEY
 
 
 class GroqProvider(AIProvider):
     def __init__(self):
-        self.api_key = os.environ.get('GROQ_API_KEY', '')
+        self.api_key = GROQ_API_KEY
         self.model = 'llama-3.3-70b-versatile'
         self.base_url = 'https://api.groq.com/openai/v1'
 

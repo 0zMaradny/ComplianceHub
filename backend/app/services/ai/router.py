@@ -28,6 +28,7 @@ from . import create_provider
 from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
 from .model_registry import ANTIGRAVITY_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
+from app import settings as app_settings
 
 logger = logging.getLogger(__name__)
 
@@ -129,10 +130,10 @@ _load_perf()
 _rate_limiter = ProviderRateLimiter()
 
 _provider_health: dict[str, int] = {}
-_PROVIDER_DEGRADE_THRESHOLD = int(os.environ.get('AI_DEGRADE_THRESHOLD', '3'))
+_PROVIDER_DEGRADE_THRESHOLD = app_settings.AI_DEGRADE_THRESHOLD
 
 _response_cache: dict[str, tuple[float, dict]] = {}
-_CACHE_TTL = int(os.environ.get('AI_CACHE_TTL', '3600'))
+_CACHE_TTL = app_settings.AI_CACHE_TTL
 
 OPENROUTER_MODELS = {
     m.openrouter_name: m.model_id
@@ -140,10 +141,10 @@ OPENROUTER_MODELS = {
     if m.provider == "openrouter"
 }
 
-BATCH_SIZE = int(os.environ.get('AI_BATCH_SIZE', '2'))
+BATCH_SIZE = app_settings.AI_BATCH_SIZE
 
-PEAK_HOURS_START = int(os.environ.get('AI_PEAK_START', '12'))
-PEAK_HOURS_END = int(os.environ.get('AI_PEAK_END', '18'))
+PEAK_HOURS_START = app_settings.AI_PEAK_START
+PEAK_HOURS_END = app_settings.AI_PEAK_END
 
 
 def _is_openrouter_peak_hours() -> bool:
@@ -219,20 +220,15 @@ def _get_model_id(provider_name: str) -> str:
 
 
 def _provider_has_key(provider_name: str) -> bool:
-    env_map = {
-        'groq': 'GROQ_API_KEY',
-        'openrouter': 'OPENROUTER_API_KEY',
-    }
     model = ALL_MODELS.get(provider_name)
     if model and model.provider == 'openrouter':
-        return bool(os.environ.get('OPENROUTER_API_KEY', '').strip())
+        return bool(app_settings.OPENROUTER_API_KEY.strip())
     if model and model.provider == 'local':
-        return True  # local server doesn't need an API key
+        return True
     if model and model.provider == 'antigravity':
-        return bool(os.environ.get('ANTIGRAVITY_REFRESH', '').strip())
-    env = env_map.get(provider_name)
-    if env:
-        return bool(os.environ.get(env, '').strip())
+        return bool(app_settings.ANTIGRAVITY_REFRESH.strip())
+    if provider_name == 'groq':
+        return bool(app_settings.GROQ_API_KEY.strip())
     return False
 
 
@@ -368,6 +364,103 @@ def _try_providers_batched(
     return None, last_error
 
 
+def _route(
+    task_type: str,
+    prompt: str,
+    mode: str = 'generate',
+    system_prompt: str | None = None,
+    api_key: str = '',
+    override_provider: str | None = None,
+    client_key: str = '',
+    **kwargs,
+) -> dict[str, Any]:
+    """Route a task through the quality-aware provider chain.
+
+    strategy:
+      1. Cache check
+      2. Antigravity (Tier 0)
+      3. Peak hours → Groq skip (Tier 3) for low-priority tasks
+      4. Frontier OpenRouter (Tier 1) — parallel batch=2
+      5. Strong OpenRouter (Tier 2) — parallel batch=2
+      6. Groq (Tier 3)
+      7. Local AI (Tier 4)
+      8. Return error if all exhausted
+    """
+    ck = _cache_key(task_type, prompt)
+    cached = _check_cache(ck)
+    if cached is not None:
+        return cached
+
+    sp = system_prompt if mode == 'generate' else None
+
+    if override_provider:
+        chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
+        for provider_name in chain:
+            if not _provider_has_key(provider_name):
+                continue
+            result, err = _try_provider(
+                provider_name, task_type, prompt,
+                sp, api_key, mode, **kwargs,
+            )
+            if result is not None:
+                _set_cache(ck, result)
+                return result
+        return {'error': f'Override provider exhausted. Last: {err}'}
+
+    result, _ = _try_providers_batched(
+        ANTIGRAVITY_NAMES, task_type, prompt,
+        sp, api_key, mode, **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    if _skip_openrouter(task_type):
+        logger.info('PEAK: task_type=%s %s -> direct to Groq (Tier 3)', task_type, mode)
+        result, last_error = _try_providers_batched(
+            GROQ_NAMES, task_type, prompt,
+            sp, api_key, mode, **kwargs,
+        )
+        if result is not None:
+            _set_cache(ck, result)
+            return result
+        return {'error': f'Groq exhausted. Last: {last_error}'}
+
+    result, _ = _try_providers_batched(
+        FRONTIER_NAMES, task_type, prompt,
+        sp, api_key, mode, **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        STRONG_NAMES, task_type, prompt,
+        sp, api_key, mode, **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        GROQ_NAMES, task_type, prompt,
+        sp, api_key, mode, **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    result, last_error = _try_providers_batched(
+        LOCAL_NAMES, task_type, prompt,
+        sp, api_key, mode, **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
+    return {'error': f'All providers exhausted. Last: {last_error}'}
+
+
 def generate(
     task_type: str,
     prompt: str,
@@ -377,87 +470,8 @@ def generate(
     client_key: str = '',
     **kwargs,
 ) -> dict[str, Any]:
-    """Generate a document through the quality-aware provider chain.
-
-    Strategy:
-      1. Cache check
-      2. Tier 1: ALL frontier free models in parallel batches
-      3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
-      4. Tier 3: Groq (if Tiers 1+2 fail)
-      5. Tier 4: Local AI (qwen-3b or qwen-0.5b) (if Tiers 1-3 fail)
-      6. Return error if all exhausted
-    """
-    ck = _cache_key(task_type, prompt)
-    cached = _check_cache(ck)
-    if cached is not None:
-        return cached
-
-    if override_provider:
-        chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
-        for provider_name in chain:
-            if not _provider_has_key(provider_name):
-                continue
-            result, err = _try_provider(
-                provider_name, task_type, prompt,
-                system_prompt, api_key, 'generate', **kwargs,
-            )
-            if result is not None:
-                _set_cache(ck, result)
-                return result
-        return {'error': f'Override provider exhausted. Last: {err}'}
-
-    result, _ = _try_providers_batched(
-        ANTIGRAVITY_NAMES, task_type, prompt,
-        system_prompt, api_key, 'generate', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    if _skip_openrouter(task_type):
-        logger.info('PEAK: task_type=%s -> direct to Groq (Tier 3)', task_type)
-        result, last_error = _try_providers_batched(
-            GROQ_NAMES, task_type, prompt,
-            system_prompt, api_key, 'generate', **kwargs,
-        )
-        if result is not None:
-            _set_cache(ck, result)
-            return result
-        return {'error': f'Groq exhausted. Last: {last_error}'}
-
-    result, _ = _try_providers_batched(
-        FRONTIER_NAMES, task_type, prompt,
-        system_prompt, api_key, 'generate', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        STRONG_NAMES, task_type, prompt,
-        system_prompt, api_key, 'generate', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        GROQ_NAMES, task_type, prompt,
-        system_prompt, api_key, 'generate', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        LOCAL_NAMES, task_type, prompt,
-        system_prompt, api_key, 'generate', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    return {'error': f'All providers exhausted. Last: {last_error}'}
+    """Generate a document through the quality-aware provider chain."""
+    return _route(task_type, prompt, 'generate', system_prompt, api_key, override_provider, client_key, **kwargs)
 
 
 def generate_stream(
@@ -522,83 +536,5 @@ def extract_structured(
     client_key: str = '',
     **kwargs,
 ) -> dict[str, Any]:
-    """Route a structured extraction task through the quality-aware chain.
-
-    Strategy:
-      1. Cache check
-      2. Tier 1: ALL frontier free models in parallel batches
-      3. Tier 2: ALL strong free models in parallel batches (if Tier 1 fails)
-      4. Tier 3: Groq (if Tiers 1+2 fail)
-      5. Tier 4: Local AI (qwen-3b or qwen-0.5b) (if Tiers 1-3 fail)
-    """
-    ck = _cache_key(task_type, prompt)
-    cached = _check_cache(ck)
-    if cached is not None:
-        return cached
-
-    if override_provider:
-        chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
-        for provider_name in chain:
-            if not _provider_has_key(provider_name):
-                continue
-            result, err = _try_provider(
-                provider_name, task_type, prompt,
-                None, api_key, 'extract', **kwargs,
-            )
-            if result is not None:
-                _set_cache(ck, result)
-                return result
-        return {'error': f'Override provider exhausted. Last: {err}'}
-
-    result, _ = _try_providers_batched(
-        ANTIGRAVITY_NAMES, task_type, prompt,
-        None, api_key, 'extract', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    if _skip_openrouter(task_type):
-        logger.info('PEAK: task_type=%s extract -> direct to Groq (Tier 3)', task_type)
-        result, last_error = _try_providers_batched(
-            GROQ_NAMES, task_type, prompt,
-            None, api_key, 'extract', **kwargs,
-        )
-        if result is not None:
-            _set_cache(ck, result)
-            return result
-        return {'error': f'Groq exhausted. Last: {last_error}'}
-
-    result, _ = _try_providers_batched(
-        FRONTIER_NAMES, task_type, prompt,
-        None, api_key, 'extract', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        STRONG_NAMES, task_type, prompt,
-        None, api_key, 'extract', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        GROQ_NAMES, task_type, prompt,
-        None, api_key, 'extract', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    result, last_error = _try_providers_batched(
-        LOCAL_NAMES, task_type, prompt,
-        None, api_key, 'extract', **kwargs,
-    )
-    if result is not None:
-        _set_cache(ck, result)
-        return result
-
-    return {'error': f'All providers exhausted. Last: {last_error}'}
+    """Route a structured extraction task through the quality-aware chain."""
+    return _route(task_type, prompt, 'extract', None, api_key, override_provider, client_key, **kwargs)

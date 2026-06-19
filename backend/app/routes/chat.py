@@ -9,7 +9,7 @@ from app.routes import _get_progress
 from app.services import db
 from app.services.ai import create_provider
 from app.services.ai.rate_limiter import ProviderRateLimiter
-from app.services.ai.router import _provider_health, _PROVIDER_DEGRADE_THRESHOLD, record_model_result
+from app.services.ai.router import _provider_health, _PROVIDER_DEGRADE_THRESHOLD, record_model_result, resolve_chain
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ MODEL_MAP = {
     "claude-opus-4-6-thinking": "antigravity_claude_opus_46",
 }
 
-FALLBACK_CHAIN = ["antigravity_claude_sonnet_46", "antigravity_claude_opus_46", "nemotron_ultra", "qwen3_coder", "groq_llama", "local_qwen3_4b"]
+FALLBACK_CHAIN = resolve_chain('chat_query')
 
 
 def _call_provider(provider_name: str, prompt: str, system_prompt: str | None = None,
