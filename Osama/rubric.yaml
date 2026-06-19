@@ -1,0 +1,100 @@
+# Quality Rubric for ComplianceHub Outputs
+# Used by reviewer.md agent to score generated documents and code.
+
+# Global threshold — any score below this triggers regeneration
+threshold: 90
+
+# Default rubric applied to all non-standard-specific outputs
+default:
+  dimensions:
+    accuracy:
+      weight: 40
+      description: "Clause references match the standard. Facts are correct."
+      checks:
+        - "All ISO clause references exist in the correct standard"
+        - "Technical facts match ISO requirements"
+        - "No hallucinated clauses or requirements"
+    clarity:
+      weight: 20
+      description: "Language is direct, specific, human-sounding."
+      checks:
+        - "No AI padding, hedging, or boilerplate"
+        - "Sentences are direct and specific"
+        - "Matches HUMANIZE.md voice rules"
+    format:
+      weight: 20
+      description: "Follows TÜV template structure. Correct file type."
+      checks:
+        - "DOCX generates without errors"
+        - "TÜV header/footer present when template exists"
+        - "Table structure matches expected layout"
+    completeness:
+      weight: 20
+      description: "All required sections present. No placeholders."
+      checks:
+        - "All 32 document sections present where applicable"
+        - "No 'TODO', 'TBD', or placeholder text"
+        - "No empty sections or missing data"
+
+# Per-standard overrides — merge with defaults
+per_standard:
+  iso_9001:
+    overrides:
+      accuracy:
+        checks:
+          - "Clause 1-10 HLS structure followed"
+          - "Clause 8 (Operation) has standard-specific sub-clauses"
+          - "No ISO 14001/45001 specific language leaked in"
+  iso_27001:
+    overrides:
+      accuracy:
+        checks:
+          - "Annex A controls mapped to correct themes (A.5-A.8)"
+          - "93 controls referenced correctly"
+          - "Statement of Applicability covers all relevant controls"
+  iso_42001:
+    overrides:
+      accuracy:
+        checks:
+          - "Annex A 9 objectives covered"
+          - "AI-specific terminology used correctly"
+          - "Risk assessment includes AI-specific considerations"
+  iso_22301:
+    overrides:
+      accuracy:
+        checks:
+          - "Business Continuity terminology correct"
+          - "BIA outputs integrated into document set"
+          - "RTO/RPO values consistent across all documents"
+
+# Code quality rubric — used when reviewing generated code
+code:
+  dimensions:
+    correctness:
+      weight: 40
+      description: "Code runs without errors, produces correct output."
+      checks:
+        - "All imports resolve"
+        - "No syntax errors (pyflakes passes)"
+        - "Edge cases handled"
+    style:
+      weight: 25
+      description: "Matches existing codebase conventions."
+      checks:
+        - "Follows existing module structure"
+        - "CONFIG block at top of new modules"
+        - "Consistent naming with rest of codebase"
+    error_handling:
+      weight: 20
+      description: "Errors are caught and reported gracefully."
+      checks:
+        - "try/except around API calls and file I/O"
+        - "Meaningful error messages"
+        - "Graceful fallbacks where appropriate"
+    documentation:
+      weight: 15
+      description: "Code is understandable."
+      checks:
+        - "Docstrings on public functions"
+        - "Complex logic has inline comments"
+        - "Functions named clearly"

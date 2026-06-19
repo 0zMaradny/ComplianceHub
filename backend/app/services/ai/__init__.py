@@ -37,7 +37,8 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
         return cached
 
     providers = {
-        'claude': ('.anthropic_provider', 'AnthropicProvider'),
+        'antigravity_claude_sonnet_46': ('.antigravity_provider', 'AntigravityProvider'),
+        'antigravity_claude_opus_46': ('.antigravity_provider', 'AntigravityProvider'),
         'groq': ('.groq_provider', 'GroqProvider'),
         'groq_llama': ('.groq_provider', 'GroqProvider'),
         'openrouter': ('.openrouter_provider', 'OpenRouterProvider'),
@@ -57,7 +58,7 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
     import importlib
     mod = importlib.import_module(mod_path, __package__)
     cls = getattr(mod, cls_name)
-    if cls_name in ('OpenRouterProvider', 'AnthropicProvider'):
+    if cls_name in ('OpenRouterProvider', 'AntigravityProvider'):
         inst = cls(provider_name=name)
     else:
         inst = cls()

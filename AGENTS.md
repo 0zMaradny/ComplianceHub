@@ -1,5 +1,8 @@
 # ComplianceHub — Agent Instructions
 
+## Memory Loading
+Load `Osama/MEMORY.md` at session start. It contains correction history and session state. After every fix or correction, append to `Osama/MEMORY.md` under the relevant section. Never let the same mistake happen twice.
+
 ## Humanized Output
 
 All responses must sound human-written. Read `HUMANIZE.md` for the full rules and blocklist. Before final output, scan for AI-sounding patterns (hedging, generic transitions, over-politeness, boilerplate) and rewrite any matches. Prefer direct statements, contractions, varied sentence lengths, and active voice. Stop when done — no summary or sign-off unless it adds value.
@@ -9,7 +12,7 @@ All responses must sound human-written. Read `HUMANIZE.md` for the full rules an
 ```
 generate() / extract_structured()
   ├─ Cache check (md5, 1h TTL)
-  ├─ Tier 0: Claude Sonnet 4 (Anthropic, paid, best quality)
+  ├─ Tier 0: Antigravity Claude (Sonnet 4.6 + Opus 4.6 Thinking, FREE, unlimited)
   │   └─ fail → Tier 1: Frontier OpenRouter (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha 1M) — parallel batch=2
   │       └─ fail → Tier 2: Strong OpenRouter (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B) — parallel batch=2
   │           └─ fail → Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
@@ -19,7 +22,7 @@ generate() / extract_structured()
 
 | Tier | Provider | Models | Cost | Context | Speed |
 |------|----------|--------|------|---------|-------|
-| **0** | Anthropic | Claude Sonnet 4 | **Paid** | 200k | Good |
+| **0** | Antigravity | Claude Sonnet 4.6 + Opus 4.6 Thinking | **Free** | 200k | Good |
 | **1** | OpenRouter | Nemotron 3 Ultra 550B, Qwen3 Coder 480B, Kimi K2.6, **Owl Alpha** | **Free** | Up to 1M | Good |
 | **2** | OpenRouter | Nemotron 3 Super 120B, Llama 3.3 70B, Qwen3 Next 80B, Hermes 405B | **Free** | Up to 1M | Good |
 | **3** | Groq | Llama 3.3 70B Versatile | **Free** (~800 t/s) | 131k | **Fastest** |
@@ -27,8 +30,8 @@ generate() / extract_structured()
 | **Offline** | Template engine | Static generation | $0 | Instant (3.2s/8docs) | Professional |
 
 ### API Key Setup
-- `.env` keys: `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`
-- Anthropic: https://console.anthropic.com/ (paid, Tier 0 primary)
+- `.env` keys: `ANTIGRAVITY_CLIENT_ID`, `ANTIGRAVITY_CLIENT_SECRET`, `ANTIGRAVITY_REFRESH`, `OPENROUTER_API_KEY`, `GROQ_API_KEY`
+- Antigravity: free Claude via Google's internal API (no key needed, uses OAuth refresh token)
 - OpenRouter: https://openrouter.ai/keys (free tier available)
 - Groq: https://console.groq.com/keys (free, no CC)
 

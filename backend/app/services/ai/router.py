@@ -27,7 +27,7 @@ from typing import Any
 from . import create_provider
 from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
-from .model_registry import ANTHROPIC_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
+from .model_registry import ANTIGRAVITY_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ def resolve_chain(
 ) -> list[str]:
     if override_provider:
         return [override_provider]
-    return ANTHROPIC_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+    return ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def set_api_key(provider_name: str, api_key: str):
@@ -178,8 +178,6 @@ def set_api_key(provider_name: str, api_key: str):
         os.environ['OPENROUTER_API_KEY'] = api_key
     elif provider_name == 'groq':
         os.environ['GROQ_API_KEY'] = api_key
-    elif model and model.provider == 'anthropic':
-        os.environ['ANTHROPIC_API_KEY'] = api_key
 
 
 def _cache_key(task_type: str, prompt: str) -> str:
@@ -230,9 +228,8 @@ def _provider_has_key(provider_name: str) -> bool:
         return bool(os.environ.get('OPENROUTER_API_KEY', '').strip())
     if model and model.provider == 'local':
         return True  # local server doesn't need an API key
-    if model and model.provider == 'anthropic':
-        key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-        return bool(key and len(key) >= 100)
+    if model and model.provider == 'antigravity':
+        return bool(os.environ.get('ANTIGRAVITY_REFRESH', '').strip())
     env = env_map.get(provider_name)
     if env:
         return bool(os.environ.get(env, '').strip())
@@ -410,6 +407,14 @@ def generate(
                 return result
         return {'error': f'Override provider exhausted. Last: {err}'}
 
+    result, _ = _try_providers_batched(
+        ANTIGRAVITY_NAMES, task_type, prompt,
+        system_prompt, api_key, 'generate', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
+
     if _skip_openrouter(task_type):
         logger.info('PEAK: task_type=%s -> direct to Groq (Tier 3)', task_type)
         result, last_error = _try_providers_batched(
@@ -477,7 +482,7 @@ def generate_stream(
         logger.info('PEAK: task_type=%s streaming -> direct to Groq (Tier 3)', task_type)
         chain = GROQ_NAMES[:]
     else:
-        chain = FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+        chain = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
     for provider_name in chain:
         if not _provider_has_key(provider_name):
@@ -545,6 +550,14 @@ def extract_structured(
                 _set_cache(ck, result)
                 return result
         return {'error': f'Override provider exhausted. Last: {err}'}
+
+    result, _ = _try_providers_batched(
+        ANTIGRAVITY_NAMES, task_type, prompt,
+        None, api_key, 'extract', **kwargs,
+    )
+    if result is not None:
+        _set_cache(ck, result)
+        return result
 
     if _skip_openrouter(task_type):
         logger.info('PEAK: task_type=%s extract -> direct to Groq (Tier 3)', task_type)

@@ -154,13 +154,13 @@ LOCAL_FREE = [
     ),
 ]
 
-# Premium: Claude via Anthropic API (paid, best quality)
-PREMIUM = [
+# Antigravity: free Claude via Google's internal API (confirmed working June 18 2026)
+ANTIGRAVITY_FREE = [
     ModelCaps(
-        model_id="claude-sonnet-4-20250514",
-        openrouter_name="claude",
-        provider="anthropic",
-        tier="premium",
+        model_id="claude-sonnet-4-6",
+        openrouter_name="antigravity_claude_sonnet_46",
+        provider="antigravity",
+        tier="antigravity",
         context_length=200_000,
         strengths=(
             "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
@@ -178,7 +178,21 @@ PREMIUM = [
             "Service_Continuity_Plan", "Availability_Management_Report",
             "extract_shared_context", "chat_query",
         ),
-        notes="Claude Sonnet 4 — best quality for all audit docs. Paid API. Used as Tier 0.",
+        notes="Claude Sonnet 4.6 — free via Antigravity API. Used as Tier 0.",
+    ),
+    ModelCaps(
+        model_id="claude-opus-4-6-thinking",
+        openrouter_name="antigravity_claude_opus_46",
+        provider="antigravity",
+        tier="antigravity",
+        context_length=200_000,
+        strengths=(
+            "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
+            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Gap_Analysis_Report",
+            "Statement_of_Applicability", "Risk_Treatment_Plan",
+            "extract_shared_context",
+        ),
+        notes="Claude Opus 4.6 — free via Antigravity API. Extended thinking, use for complex reasoning.",
     ),
 ]
 
@@ -210,14 +224,14 @@ LOCAL_NAMES = [m.openrouter_name for m in LOCAL_FREE]
 # ═══════════════════════════════════════════════════════════════════════════
 
 ALL_MODELS: dict[str, ModelCaps] = {}
-for _m in PREMIUM + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
+for _m in ANTIGRAVITY_FREE + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
     ALL_MODELS[_m.openrouter_name] = _m
 
-ANTHROPIC_NAMES = [m.openrouter_name for m in PREMIUM]
+ANTIGRAVITY_NAMES = [m.openrouter_name for m in ANTIGRAVITY_FREE]
 FRONTIER_NAMES = [m.openrouter_name for m in FRONTIER_FREE]
 STRONG_NAMES = [m.openrouter_name for m in STRONG_FREE]
 GROQ_NAMES = [m.openrouter_name for m in GROQ_FREE]
-ALL_API_NAMES = ANTHROPIC_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+ALL_API_NAMES = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def get_tier_models(tier: str) -> list[ModelCaps]:

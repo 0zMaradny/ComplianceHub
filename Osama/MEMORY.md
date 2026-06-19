@@ -108,13 +108,45 @@ Auto-sync: pulls on start, pushes MEMORY.md + `.tunnel-url` on exit.
 
 ---
 
+## Antigravity API — Free Claude via Google (CONFIRMED June 18)
+
+**Status: ✅ WORKING**
+- Plugin client ID + PKCE OAuth → access + refresh tokens obtained
+- **Claude Sonnet 4.6**: ✅ PASS (free, unlimited via Antigravity)
+- **Claude Opus 4.6 Thinking**: ✅ PASS (free, unlimited via Antigravity)
+- **Gemini 3 Pro**: ❌ FAIL (500/401 — different endpoint needed)
+- Token refresh: ✅ Verified (works, 3599s expiry)
+
+### Setup (values in `backend/.env`, never commit to git)
+```
+ANTIGRAVITY_CLIENT_ID=<plugin-client-id>
+ANTIGRAVITY_CLIENT_SECRET=<plugin-client-secret>
+ANTIGRAVITY_REFRESH=<refresh-token>
+```
+Saved to `backend/.env`.
+
+### Auth Flow (Cross-Device)
+1. Generate OAuth URL on Android with PKCE
+2. Open URL in Windows browser
+3. Google redirects to `localhost:51121/oauth-callback?code=...` (fails on Windows)
+4. Copy redirect URL from address bar → paste into Android terminal
+5. Script extracts code + state → exchanges for tokens
+6. Refresh token reused indefinitely without re-auth
+
+### User's Desktop OAuth Client (for custom use)
+- Client ID: `<user-desktop-client-id>`
+- Test user: `OsMaradny@gmail.com` added
+- Note: Scopes insufficient for Antigravity API (use plugin client instead)
+
+---
+
 ## Blocked Items
 | Issue | Workaround |
 |-------|-----------|
-| Anthropic blocked | Use through OpenRouter (add $1 at https://openrouter.ai/settings/credits) |
+| Anthropic blocked | Use Antigravity free Claude Sonnet 4.6 + Opus 4.6 Thinking |
 | OpenAI key invalid | Fresh key at https://platform.openai.com/api-keys |
 | Groq removed | Not usable |
-| Gemini not available | Not usable |
+| Gemini not available (direct) | Different endpoint needed for Antigravity Gemini |
 | Railway expiring | Android tunnel + Windows local backend |
 
 ---
@@ -162,11 +194,57 @@ crontab (every 10 min)
 
 ---
 
+## `/v1/chat/completions` — Universal OpenAI Endpoint (Added June 18)
+
+### Current Tunnel URL
+```
+https://consortium-exports-sacramento-parent.trycloudflare.com
+```
+
+### Endpoint
+```
+POST {tunnel-url}/v1/chat/completions
+```
+
+### Models
+| Model ID | Provider | Type |
+|----------|----------|------|
+| `claude-sonnet-4-6` | Antigravity | Tier 0 |
+| `claude-opus-4-6-thinking` | Antigravity | Tier 0 (extended thinking) |
+| Any other | Auto-fallback | OpenRouter → Groq → Local |
+
+### Cherry Studio Setup (Windows)
+1. Settings → Providers → Add **OpenAI**
+2. Name: `Antigravity`
+3. API URL: `{tunnel-url}/v1/chat/completions`
+4. Model: `claude-sonnet-4-6`
+5. API Key: anything (not checked)
+6. Assign to 3 model slots:
+   - Default: `claude-sonnet-4-6`
+   - Quick: `claude-sonnet-4-6`
+   - Translate: `claude-sonnet-4-6`
+
+### OpenCode Desktop Setup (Windows)
+1. Settings → Providers → Add **OpenAI-compatible**
+2. Name: `Antigravity`
+3. Base URL: `{tunnel-url}/v1/chat/completions`
+4. Model: `claude-sonnet-4-6`
+5. API Key: anything (not checked)
+6. Also add OpenRouter as backup for when tunnel is down
+
+### Notes
+- Backend must be running on Android for this to work
+- The backend auto-refreshes the Antigravity OAuth token
+- If Antigravity fails, backend falls through to OpenRouter → Groq → Local
+
+---
+
 ## Next Steps
 1. ~~Create watchdog.sh + crontab for auto-restart~~ ✅
-2. Read cherryIn free model names → assign 3 slots
-3. Create 9 Agents in Cherry Studio
-4. Configure OpenCode Desktop + MCP
-5. Add API keys to `backend\.env`
-6. Test `.\go.ps1`
-7. Set up Windows Task Scheduler
+2. ~~Test Antigravity API — Claude Sonnet 4.6 + Opus 4.6 Thinking~~ ✅
+3. ~~Create antigravity_provider.py + `/v1/chat/completions` endpoint~~ ✅
+4. Read cherryIn free model names → assign 3 slots
+5. Create 9 Agents in Cherry Studio
+6. Configure OpenCode Desktop (Windows)
+7. Test `.\go.ps1`
+8. Set up Windows Task Scheduler

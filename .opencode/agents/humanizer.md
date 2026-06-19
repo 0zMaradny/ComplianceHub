@@ -15,3 +15,9 @@ Read HUMANIZE.md for the full rules. Key checks:
 3. Check for 3+ consecutive bullet points — convert to prose if appropriate.
 4. Remove any summary or sign-off that adds nothing.
 5. Return only the cleaned text.
+6. If you rewrote any AI-sounding patterns, append to `Osama/MEMORY.md`:
+   ```markdown
+   ## Voice Fix: <date>
+   - **Pattern caught:** <the exact AI phrase>
+   - **Rewritten as:** <the human version>
+   ```

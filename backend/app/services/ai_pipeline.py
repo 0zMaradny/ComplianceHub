@@ -1,8 +1,15 @@
 import json
+import logging
+import os
 
 from .ai.router import generate as router_generate, extract_structured as router_extract
 from . import clause_data
 from ..config import ISO_STANDARDS, STANDARD_FAMILIES
+
+logger = logging.getLogger(__name__)
+
+QUALITY_THRESHOLD = float(os.environ.get('AI_QUALITY_THRESHOLD', '6.0'))
+QUALITY_MAX_RETRIES = int(os.environ.get('AI_QUALITY_MAX_RETRIES', '1'))
 
 SYSTEM_PROMPT = """=== ROLE ===
 Act as Senior Lead Auditor at UKAS-accredited Certification Body (TÜV AUSTRIA). You are Track A — The Judge. Your priority is non-conformity precision over general advice. You identify findings ONLY — never offer solutions or implementation advice.
@@ -874,6 +881,40 @@ Before submitting, verify:
     return prompts.get(doc_type, prompts['Audit_Report'])
 
 
+def _inject_quality_feedback(prompt: str, quality_issues: list[str]) -> str:
+    """Inject quality feedback into the prompt for regeneration."""
+    feedback = "\n\n=== QUALITY FEEDBACK FROM PREVIOUS ATTEMPT ===\nThe previous output had these issues. Fix them:\n"
+    for issue in quality_issues:
+        feedback += f"- {issue}\n"
+    feedback += "\nRegenerate with all issues resolved. No new issues should be introduced."
+    return prompt + feedback
+
+
 def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None, manday_info=None):
     prompt = _build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key, manday_info=manday_info)
-    return router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key, client_key=client_key)
+
+    for attempt in range(QUALITY_MAX_RETRIES + 1):
+        result = router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key, client_key=client_key)
+
+        if 'error' in result:
+            return result
+
+        quality_score = result.get('_quality_score', 10.0)
+        if quality_score >= QUALITY_THRESHOLD:
+            return result
+
+        logger.warning(
+            'Quality score %.1f below threshold %.1f for %s (attempt %d/%d)',
+            quality_score, QUALITY_THRESHOLD, doc_type,
+            attempt + 1, QUALITY_MAX_RETRIES + 1
+        )
+
+        if attempt < QUALITY_MAX_RETRIES:
+            prompt = _inject_quality_feedback(prompt, [
+                f"Quality score was {quality_score}/10 (threshold: {QUALITY_THRESHOLD}/10)",
+                "Improve clause accuracy, evidence detail, and format compliance",
+            ])
+
+    result['_quality_retries'] = QUALITY_MAX_RETRIES + 1
+    result['_quality_passed'] = False
+    return result

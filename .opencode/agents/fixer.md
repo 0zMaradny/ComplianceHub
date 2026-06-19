@@ -46,4 +46,14 @@ Common issues and their fixes:
 - `curl -s http://localhost:8000/api/diagnostics` returns `"pass": true`
 - If a specific endpoint was failing, curl it to confirm it works
 
+### 6. Save the correction to memory
+- Append to `Osama/MEMORY.md` with this format:
+  ```markdown
+  ## Correction: <date>
+  - **Pattern:** <error pattern>
+  - **Fix:** <what you did>
+  - **File:** `<path/to/file>`
+  ```
+- If a similar pattern was already fixed, skip (no duplicates).
+
 Report back what the error was, what you fixed, and how you verified.
