@@ -55,7 +55,7 @@ start_tunnel() {
       url=$(cat "$URL_FILE")
       log "Tunnel ready: $url"
       # Sync to git-tracked file
-      echo "$url" > "$GIT_URL_FILE"
+      echo "$url" > "$ROOT_DIR/Osama/.tunnel-url"
       return 0
     fi
     sleep 3
