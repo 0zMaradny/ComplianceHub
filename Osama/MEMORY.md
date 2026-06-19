@@ -239,12 +239,15 @@ POST {tunnel-url}/v1/chat/completions
 
 ---
 
+## Reference Docs
+- `Osama/WINDOWS_SETUP.md` — Cherry Studio + OpenCode Desktop + go.ps1 config steps
+
 ## Next Steps
 1. ~~Create watchdog.sh + crontab for auto-restart~~ ✅
 2. ~~Test Antigravity API — Claude Sonnet 4.6 + Opus 4.6 Thinking~~ ✅
 3. ~~Create antigravity_provider.py + `/v1/chat/completions` endpoint~~ ✅
-4. Read cherryIn free model names → assign 3 slots
-5. Create 9 Agents in Cherry Studio
-6. Configure OpenCode Desktop (Windows)
-7. Test `.\go.ps1`
-8. Set up Windows Task Scheduler
+4. ~~Create `backend/start.sh` (setsid, survives shell kills)~~ ✅
+5. ~~Wire Antigravity accounts into OpenCode CLI plugin~~ ✅
+6. **Configure Cherry Studio on Windows** — follow `Osama/WINDOWS_SETUP.md`
+7. **Configure OpenCode Desktop on Windows** — follow `Osama/WINDOWS_SETUP.md`
+8. **Start NTIS IMS audit production** — Agent 1 gap analyses, Agent 2 BCM docs, Agent 5 Arabic outputs
