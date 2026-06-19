@@ -85,7 +85,7 @@
   "audit.audit_notes": "Audit Notes (.docx or .txt) *",
   "audit.click_to_change": "Click to change",
   "audit.drop_notes": "Drop audit notes here or click to browse",
-  "audit.supports_docx_txt": "Supports .docx and .txt",
+  "audit.supports_formats": "Supports .docx, .txt, .pdf, and images",
   "audit.manday_calc": "Manday Calculation (.docx) *",
   "audit.drop_manday": "Drop manday file here or click to browse",
   "audit.supports_docx": "Supports .docx",

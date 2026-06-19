@@ -85,7 +85,7 @@
   "audit.audit_notes": "ملاحظات التدقيق (.docx أو .txt) *",
   "audit.click_to_change": "انقر للتغيير",
   "audit.drop_notes": "أسقط ملاحظات التدقيق هنا أو انقر للتصفح",
-  "audit.supports_docx_txt": "يدعم .docx و .txt",
+  "audit.supports_formats": "يدعم .docx و .txt و .pdf والصور",
   "audit.manday_calc": "احتساب أيام العمل (.docx) *",
   "audit.drop_manday": "أسقط ملف أيام العمل هنا أو انقر للتصفح",
   "audit.supports_docx": "يدعم .docx",

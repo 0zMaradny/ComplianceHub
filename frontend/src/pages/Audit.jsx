@@ -259,11 +259,11 @@ export default function Audit({ API, standards, hasApiKeys }) {
                   <div>
                     <span style={{ fontSize: 24 }}>📂</span>
                     <div className="text-sm font-medium mt-1" style={{ color: 'var(--text-secondary)' }}>{t('audit.drop_notes')}</div>
-                    <div className="text-xs mt-0.5 text-[var(--text-secondary)]">{t('audit.supports_docx_txt')}</div>
+                    <div className="text-xs mt-0.5 text-[var(--text-secondary)]">{t('audit.supports_formats')}</div>
                   </div>
                 )}
               </div>
-              <input id="notes-input" type="file" accept=".docx,.txt" onChange={e => handleFileSelect('audit_notes', e.target.files[0])} style={{ display: 'none' }} />
+              <input id="notes-input" type="file" accept=".docx,.txt,.pdf,.png,.jpg,.jpeg,.tiff,.bmp" onChange={e => handleFileSelect('audit_notes', e.target.files[0])} style={{ display: 'none' }} />
             </div>
 
             <div className="mb-5">

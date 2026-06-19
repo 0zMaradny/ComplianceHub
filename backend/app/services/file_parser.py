@@ -59,6 +59,18 @@ def extract_audit_notes(filepath):
         return parse_txt(filepath)
     if ext == '.docx':
         return parse_docx(filepath)
+    if ext == '.pdf':
+        try:
+            from app.services.ocr import extract_pdf
+            return extract_pdf(filepath)
+        except ImportError:
+            return parse_with_markitdown(filepath)
+    if ext in ('.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif'):
+        try:
+            from app.services.ocr import extract_image
+            return extract_image(filepath)
+        except ImportError:
+            return {'error': 'OCR not available for image files', 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
     return parse_with_markitdown(filepath)
 
 

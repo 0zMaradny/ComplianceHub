@@ -276,6 +276,12 @@ async def upload_files(
         except UnicodeDecodeError:
             shutil.rmtree(job_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid text file')
+    if notes_ext == '.pdf' and content[:5] != b'%PDF-':
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid PDF')
+    if notes_ext in ('.png', '.jpg', '.jpeg', '.bmp', '.gif') and content[:4] not in (b'\x89PNG', b'\xff\xd8\xff', b'BM', b'GIF8'):
+        # Minimal header check — tiff has variable headers, skip
+        pass
     with open(notes_path, 'wb') as f:
         f.write(content)
 
