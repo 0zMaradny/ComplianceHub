@@ -241,6 +241,49 @@ POST {tunnel-url}/v1/chat/completions
 
 ## Reference Docs
 - `Osama/WINDOWS_SETUP.md` — Cherry Studio + OpenCode Desktop + go.ps1 config steps
+- `Osama/AGENT_PROMPTS.md` — copy-paste system prompts for all 9 agents
+
+## Audit Fixes (completed June 18)
+All 16 identified issues fixed in commit `41b93ef`:
+- **Critical:** Removed tunnel health_check_url (NAT hairpinning caused infinite restart loop)
+- **Critical:** Removed git push from watchdog (crontab has no credentials)
+- **High:** Wired rate limiting + health tracking to /v1/chat/completions
+- **High:** Updated .env.example (Anthropic → Antigravity)
+- **High:** Fixed setup-windows.ps1 (Out-Null bug, Anthropic refs)
+- **High:** Deleted dead anthropic_provider.py
+- **Medium:** Streaming path consistency, git stash cleanup, grep -oE portability
+- **Low:** Performance recording reuse, Find-Git version sort, MODEL_NAME var
+
+## Refactors (completed June 18)
+All 4 refactors committed in `87086ab`:
+1. **Router dedup** — extracted `_route()` shared function, `generate()` and `extract_structured()` are now thin wrappers (−120 lines)
+2. **Chat uses resolve_chain** — `FALLBACK_CHAIN` now auto-syncs with router (14 providers)
+3. **Config consolidation** — new `app/settings.py` centralizes all 21 env var reads from 11 files
+4. **Streaming cleanup** — removed `generate_stream()` from AntigravityProvider (uses parent default)
+
+## Android Agent Testing (curl commands)
+Test any agent directly against localhost backend (no tunnel needed):
+```bash
+# Agent 1 — Gap Analysis
+curl -s -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior Lead Auditor. ISO clause-level precise. Identify findings only — no solutions."},{"role":"user","content":"Run gap analysis on ISO 27001 Annex A.5 (Information Security Policies). List all controls and their compliance status."}],"temperature":0.2,"max_tokens":4096}' | python3 -m json.tool
+
+# Agent 2 — Implementation Doc
+curl -s -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior Lead Implementer. Complete audit-defensible docs. Client formulas non-negotiable."},{"role":"user","content":"Create ISO 27001 Information Security Policy document outline for MSD-MOI with clause references."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
+
+# Agent 5 — Arabic Output
+curl -s -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior ISO Implementer and Arabic technical writer. MSA first-person practitioner voice. ISO refs in English."},{"role":"user","content":"Write an Arabic ISO 22301 Business Continuity Policy introduction for MSD-MOI."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
+
+# Test Opus thinking for complex reasoning
+curl -s -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"claude-opus-4-6-thinking","messages":[{"role":"user","content":"Evaluate this risk scenario: A manufacturing plant has single generator for backup power. 8-hour fuel supply. No maintenance contract. Lead time for parts 72 hours. Score inherent and residual risk using ISO 31000 methodology."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
+```
 
 ## Next Steps
 1. ~~Create watchdog.sh + crontab for auto-restart~~ ✅
@@ -248,6 +291,7 @@ POST {tunnel-url}/v1/chat/completions
 3. ~~Create antigravity_provider.py + `/v1/chat/completions` endpoint~~ ✅
 4. ~~Create `backend/start.sh` (setsid, survives shell kills)~~ ✅
 5. ~~Wire Antigravity accounts into OpenCode CLI plugin~~ ✅
-6. **Configure Cherry Studio on Windows** — follow `Osama/WINDOWS_SETUP.md`
-7. **Configure OpenCode Desktop on Windows** — follow `Osama/WINDOWS_SETUP.md`
-8. **Start NTIS IMS audit production** — Agent 1 gap analyses, Agent 2 BCM docs, Agent 5 Arabic outputs
+6. ~~16 audit fixes + 4 refactors~~ ✅
+7. **Configure Cherry Studio on Windows** — follow `Osama/WINDOWS_SETUP.md` + `AGENT_PROMPTS.md`
+8. **Configure OpenCode Desktop on Windows** — follow `Osama/WINDOWS_SETUP.md`
+9. **Start NTIS IMS audit production** — Agent 1 gap analyses, Agent 2 BCM docs, Agent 5 Arabic outputs
