@@ -42,7 +42,7 @@ def _preprocess_image(img: Image.Image) -> Image.Image:
     img = ImageEnhance.Contrast(img).enhance(1.5)
     img = img.filter(ImageFilter.SHARPEN)
 
-    img = img.point(lambda x: 0 if x < 128 else 255, "1")
+    img = img.point(lambda x: 0 if x < 128 else 255)
 
     return img
 
@@ -90,7 +90,7 @@ def _ocr_image(img: Image.Image, lang: str = TESSERACT_LANG) -> dict:
         }
     except Exception as e:
         logger.warning("OCR failed: %s", e)
-        return {"text": "", "confidence": 0, "error": str(e)}
+        return {"text": "", "ocr_confidence": 0, "error": str(e), "paragraphs": [], "tables": [], "ocr_method": "tesseract", "preprocessing": []}
 
 
 # ── Public API ─────────────────────────────────────────────────────────────

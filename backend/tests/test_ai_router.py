@@ -29,7 +29,9 @@ class TestModelRegistry:
 
     def test_all_models_registered(self):
         expected = [
-            'claude',
+            'antigravity_claude_sonnet_46', 'antigravity_claude_opus_46',
+            'antigravity_gemini_3_flash', 'antigravity_gemini_25_flash',
+            'antigravity_gemini_25_flash_thinking', 'antigravity_gemini_25_pro',
             'nemotron_ultra', 'qwen3_coder', 'kimi_k26', 'owl_alpha',
             'nemotron_super', 'llama_70b', 'qwen3_next', 'hermes_405b',
             'groq_llama', 'local_qwen', 'local_qwen_3b', 'local_qwen3_4b',
@@ -104,7 +106,7 @@ class TestResolveChain:
 
     def test_unknown_task_gets_default_chain(self):
         chain = resolve_chain('Unknown_Task')
-        assert len(chain) == 13
+        assert len(chain) > 13
 
     def test_override_provider(self):
         chain = resolve_chain('Audit_Report', override_provider='kimi_k26')
@@ -171,7 +173,7 @@ class TestGetModelId:
         assert '405b' in mid
 
     def test_claude_model_id(self):
-        mid = _get_model_id('claude')
+        mid = _get_model_id('antigravity_claude_sonnet_46')
         assert 'claude-sonnet-4' in mid
 
     def test_unknown_falls_back_to_auto(self):

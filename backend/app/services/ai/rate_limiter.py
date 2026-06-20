@@ -4,6 +4,12 @@ from collections import defaultdict
 
 
 PROVIDER_LIMITS = {
+    'antigravity_claude_sonnet_46': 30,
+    'antigravity_claude_opus_46': 30,
+    'antigravity_gemini_3_flash': 30,
+    'antigravity_gemini_25_flash': 60,
+    'antigravity_gemini_25_flash_thinking': 60,
+    'antigravity_gemini_25_pro': 30,
     'groq': 30,
     'groq_llama': 30,
     'openrouter': 30,

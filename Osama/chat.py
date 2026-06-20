@@ -145,17 +145,39 @@ def detect_api_url() -> str:
             return LOCAL_API
     except Exception:
         pass
-    tunnel_file = HERE / ".tunnel-url"
-    if tunnel_file.exists():
-        url = tunnel_file.read_text().strip()
-        if url:
-            return f"{url}/v1/chat/completions"
-    tunnel_file2 = Path("/tmp/compliancehub-url.txt")
-    if tunnel_file2.exists():
-        url = tunnel_file2.read_text().strip()
-        if url:
-            return f"{url}/v1/chat/completions"
+    # Read tunnel URL from file with SSRF protection
+    for tf in [HERE / ".tunnel-url", Path("/tmp/compliancehub-url.txt")]:
+        if tf.exists():
+            url = tf.read_text().strip()
+            if url and _is_valid_tunnel_url(url):
+                return f"{url}/v1/chat/completions"
     return LOCAL_API
+
+
+def _is_valid_tunnel_url(url: str) -> bool:
+    """Validate tunnel URL to prevent SSRF. Only allow known safe patterns."""
+    from urllib.parse import urlparse
+    import ipaddress
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+    if parsed.scheme not in ("http", "https"):
+        return False
+    if not parsed.hostname:
+        return False
+    # Block private/internal IPs
+    try:
+        ip = ipaddress.ip_address(parsed.hostname)
+        if ip.is_private or ip.is_loopback or ip.is_reserved:
+            return False
+    except ValueError:
+        pass  # hostname, not IP — allow
+    # Allow known tunnel domains
+    allowed_suffixes = (".trycloudflare.com", ".ngrok.io", ".loca.lt", ".tunnel.app")
+    if not any(parsed.hostname.endswith(s) for s in allowed_suffixes):
+        return False
+    return True
 
 
 def call_api(api_url: str, model: str, messages: list,
@@ -197,12 +219,29 @@ def stream_chat(api_url: str, model: str, messages: list,
         resp = urllib.request.urlopen(req, timeout=120)
         buffer = ""
         while True:
-            chunk = resp.read(1).decode("utf-8", errors="replace")
+            chunk = resp.read(4096).decode("utf-8", errors="replace")
             if not chunk:
+                # Flush remaining buffer on stream end
+                if buffer.strip():
+                    for line in buffer.strip().split("\n"):
+                        if line.startswith("data: "):
+                            payload = line[6:]
+                            if payload == "[DONE]":
+                                return
+                            try:
+                                d = json.loads(payload)
+                                if "choices" in d and len(d["choices"]) > 0:
+                                    delta = d["choices"][0].get("delta", {})
+                                    content = delta.get("content", "")
+                                    if content:
+                                        yield content
+                            except json.JSONDecodeError:
+                                pass
                 break
             buffer += chunk
-            if buffer.endswith("\n\n"):
-                for line in buffer.strip().split("\n"):
+            while "\n\n" in buffer:
+                event_text, buffer = buffer.split("\n\n", 1)
+                for line in event_text.strip().split("\n"):
                     if line.startswith("data: "):
                         payload = line[6:]
                         if payload == "[DONE]":
@@ -216,7 +255,6 @@ def stream_chat(api_url: str, model: str, messages: list,
                                     yield content
                         except json.JSONDecodeError:
                             pass
-                buffer = ""
     except Exception as e:
         yield f"\n{color(f'[Error: {e}]', RED)}"
 
@@ -326,6 +364,11 @@ def load_file_as_text(fpath: str) -> Optional[str]:
     p = Path(fpath).expanduser().resolve()
     if not p.exists():
         return None
+    # Path traversal protection: only allow files within workspace
+    try:
+        p.relative_to(HERE)
+    except ValueError:
+        return None  # File is outside workspace
     ext = p.suffix.lower()
     if ext == ".txt":
         return p.read_text(encoding="utf-8", errors="replace")
@@ -410,7 +453,9 @@ def main():
     if args.message:
         msgs = build_prompt(mode, agent, knowledge, args.message, context_text)
         if messages:
-            msgs = messages[:-1] + msgs if messages[-1].get("role") != "user" else messages + msgs
+            # Keep all non-system messages from history, replace system with new prompt
+            existing = [m for m in messages if m.get("role") != "system"]
+            msgs = msgs[:1] + existing + msgs[1:]  # new system + history + new user msg
         print_header(mode, agent, model)
         print(f"\n{color('You:', BLUE, bold=True)} {args.message}\n")
         print(f"{color('🤖:', GREEN, bold=True)} ", end="", flush=True)
@@ -472,6 +517,7 @@ def main():
             elif command == "mode":
                 if len(cmd) > 1 and cmd[1] in ("general", "audit"):
                     mode = cmd[1]
+                    messages = []  # Clear history on mode switch to avoid conflicting system prompts
                     if mode == "audit" and agent is None:
                         agent = 1
                     print(f"{color(f'→ Switched to {mode.upper()} mode', GREEN)}")
@@ -484,6 +530,7 @@ def main():
             elif command == "agent":
                 if mode != "audit":
                     mode = "audit"
+                    messages = []  # Clear history on mode switch
                     print(f"{color('→ Auto-switched to AUDIT mode', GREEN)}")
                 if len(cmd) > 1 and cmd[1].isdigit():
                     agent = int(cmd[1])

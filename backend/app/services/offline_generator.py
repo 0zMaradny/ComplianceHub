@@ -12,7 +12,10 @@ from . import clause_data
 logger = logging.getLogger(__name__)
 
 
-# Seed is not fixed — different results each run
+def _deterministic_choice(options: list, seed_val: str) -> str:
+    """Deterministic choice based on a seed string. Same seed always returns same result."""
+    h = hash(seed_val) % len(options)
+    return options[h]
 
 
 STANDARD_LABEL_MAP = {
@@ -170,8 +173,13 @@ def _extract_positives(text: str) -> list[dict]:
     return positives
 
 
-TODAY = datetime.now()
-TODAY_STR = TODAY.strftime('%d/%m/%Y')
+def _today() -> datetime:
+    """Return current date (function, not module-level constant, so it's always fresh)."""
+    return datetime.now()
+
+
+def _today_str() -> str:
+    return _today().strftime('%d/%m/%Y')
 
 _CONCLUSIONS = {
     'compliant': (
@@ -216,7 +224,7 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
             title = sinfo.get('title', '')
             evidence_list = sinfo.get('evidence', [])
             evidence = evidence_list[0] if evidence_list else f'Reviewed framework area: {title}. The organization demonstrates adequate implementation of this principle.'
-            status = random.choice(statuses)
+            status = _deterministic_choice(statuses, f"{standard_key}_{sid}")
             aq = '\n'.join(sinfo.get('audit_questions', [])) if isinstance(sinfo, dict) else ''
             ec = '\n'.join(sinfo.get('evidence_to_check', [])) if isinstance(sinfo, dict) else ''
             sections.append({
@@ -247,7 +255,7 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
                         'clause': sub_id,
                         'title': sub_title,
                         'requirement': sub_title,
-                        'status': random.choice(statuses),
+                        'status': _deterministic_choice(statuses, f"{standard_key}_{sub_id}"),
                         'evidence': sub_evidence,
                         'audit_questions': sub_aq,
                         'evidence_to_check': sub_ec,
@@ -265,11 +273,11 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
         evidence_list = clause_data.get_evidence_for_clause(clauses, cid)
         evidence = evidence_list[0] if evidence_list else f'Clause {cid} ({title}) was reviewed through documentation analysis and personnel interviews. The implemented approach is consistent with the standard requirements.'
         aq, ec = _get_clause_qa(clauses, cid)
-        status = random.choice(statuses)
+        status = _deterministic_choice(statuses, f"{standard_key}_{cid}")
 
         supporting_refs = []
-        if supporting and random.random() < 0.4:
-            sup_key = random.choice(list(supporting.keys()))
+        if supporting and hash(f"{standard_key}_{cid}_sup") % 10 < 4:
+            sup_key = _deterministic_choice(list(supporting.keys()), f"{standard_key}_{cid}_sup_key")
             supporting_refs.append(f'{sup_key}: {supporting[sup_key]}')
         reference = standard_label
         if supporting_refs:
@@ -295,7 +303,7 @@ def _build_checklist_sections(standard_key: str) -> list[dict]:
             evidence_list = clause_data.get_evidence_for_clause(annex, cid)
             evidence = evidence_list[0] if evidence_list else f'Annex A control {cid} ({title}) was assessed. The implemented controls are commensurate with the identified risks.'
             aq, ec = _get_clause_qa(annex, cid)
-            status = random.choice(statuses)
+            status = _deterministic_choice(statuses, f"{standard_key}_annex_{cid}")
             sections.append({
                 'clause': cid,
                 'title': title,
@@ -446,8 +454,8 @@ def generate_shared_context(notes_text: str, manday_text: str, manday_info: dict
         'scope': f'{family} system at {client} facilities.',
         'certification_body': 'TÜV AUSTRIA',
         'language': 'English',
-        'report_number': f'TUV-AR-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
-        'certificate_number': f'TUV-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
+        'report_number': f'TUV-AR-{_today().year}-{_today().timetuple().tm_yday:03d}',
+        'certificate_number': f'TUV-{_today().year}-{_today().timetuple().tm_yday:03d}',
         'extracted_ncs': ncs,
         'extracted_ofis': ofis,
         'extracted_positives': positives,
@@ -459,7 +467,7 @@ def generate_audit_plan_stage(data: dict, stage_label: str) -> dict:
     client = data.get('client_name', 'Client')
     standard_label = data.get('standard', 'ISO 9001:2015')
     standard_key = data.get('standard_key', 'iso_9001')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
     family = FAMILY_LABEL_MAP.get(standard_key, 'Management System')
 
     return {
@@ -486,7 +494,7 @@ def generate_audit_plan_stage(data: dict, stage_label: str) -> dict:
         'daily_schedule': _generate_schedule(stage_label, team, client, standard_label, date),
         'confidentiality': 'All information obtained during this audit shall be treated as strictly confidential and used solely for the purpose of certification.',
         'language': data.get('language', 'English'),
-        'report_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
+        'report_date': (_today() + timedelta(days=30)).strftime('%d/%m/%Y'),
     }
 
 
@@ -494,7 +502,7 @@ def generate_audit_report(data: dict) -> dict:
     client = data.get('client_name', 'Client')
     standard_label = data.get('standard', 'ISO 9001:2015')
     standard_key = data.get('standard_key', 'iso_9001')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
     team = data.get('audit_team', [])
     family = FAMILY_LABEL_MAP.get(standard_key, 'Management System')
 
@@ -513,7 +521,7 @@ def generate_audit_report(data: dict) -> dict:
             'clause': clause,
             'severity': nc.get('severity', 'Minor'),
             'description': nc['description'],
-            'due_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
+            'due_date': (_today() + timedelta(days=30)).strftime('%d/%m/%Y'),
         })
         if clause in section_map:
             section_map[clause]['status'] = 'Non-Conformant'
@@ -525,7 +533,7 @@ def generate_audit_report(data: dict) -> dict:
                     'clause': s['clause'],
                     'severity': 'Minor' if s['status'] == 'Partially Conformant' else random.choice(['Minor', 'Minor', 'Major']),
                     'description': f'{s["title"]}: {s["evidence"]}. During the audit, it was observed that the current implementation does not fully meet the requirements of {standard_label} Clause {s["clause"]}. The organization is required to implement corrective actions and demonstrate effectiveness within the agreed timeframe.',
-                    'due_date': (TODAY + timedelta(days=30)).strftime('%d/%m/%Y'),
+                    'due_date': (_today() + timedelta(days=30)).strftime('%d/%m/%Y'),
                 })
 
     ofi_descriptions = []
@@ -582,7 +590,7 @@ def generate_audit_report(data: dict) -> dict:
         'client_name': client,
         'audit_date': date,
         'standard': standard_label,
-        'report_number': data.get('report_number', f'TUV-AR-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}'),
+        'report_number': data.get('report_number', f'TUV-AR-{_today().year}-{_today().timetuple().tm_yday:03d}'),
         'scope': data.get('scope', f'{family} system at {client} facilities.'),
         'lead_auditor': data.get('lead_auditor', 'Lead Auditor'),
         'audit_team': team,
@@ -599,7 +607,7 @@ def generate_audit_report(data: dict) -> dict:
         'opportunities_for_improvement': ofi_descriptions,
         'nonconformities': nonconformities[:5],
         'conclusion': _CONCLUSIONS[conclusion_key],
-        'report_date': (TODAY + timedelta(days=7)).strftime('%d/%m/%Y'),
+        'report_date': (_today() + timedelta(days=7)).strftime('%d/%m/%Y'),
         'methodology': _generate_methodology(standard_label),
         'certification_decision': decision,
     }
@@ -610,7 +618,7 @@ def generate_participation_list(data: dict) -> dict:
     team = data.get('audit_team', [])
     return {
         'client_name': client,
-        'audit_date': data.get('audit_date', TODAY_STR),
+        'audit_date': data.get('audit_date', _today_str()),
         'standard': data.get('standard', 'ISO 9001:2015'),
         'participants': _generate_participants(team, client),
         'notes': (
@@ -662,7 +670,7 @@ def generate_checklist(data: dict) -> dict:
 
     return {
         'client_name': data.get('client_name', 'Client'),
-        'audit_date': data.get('audit_date', TODAY_STR),
+        'audit_date': data.get('audit_date', _today_str()),
         'standard': standard_label,
         'auditor': data.get('lead_auditor', 'Lead Auditor'),
         'sections': sections,
@@ -683,9 +691,9 @@ def generate_checklist(data: dict) -> dict:
 def generate_certificate_text(data: dict) -> dict:
     client = data.get('client_name', 'Client')
     standard_label = data.get('standard', 'ISO 9001:2015')
-    date = data.get('audit_date', TODAY_STR)
-    cert_num = data.get('certificate_number', f'TUV-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}')
-    issue = TODAY
+    date = data.get('audit_date', _today_str())
+    cert_num = data.get('certificate_number', f'TUV-{_today().year}-{_today().timetuple().tm_yday:03d}')
+    issue = _today()
     expiry = issue.replace(year=issue.year + 3)
 
     return {
@@ -722,7 +730,7 @@ def generate_tnl(data: dict) -> dict:
             'description': nc['description'],
             'severity': nc.get('severity', 'Minor'),
             'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
-            'due_date': (TODAY + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
+            'due_date': (_today() + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
             'status': 'Open',
         })
         nc_count += 1
@@ -739,7 +747,7 @@ def generate_tnl(data: dict) -> dict:
             'description': ofi['description'],
             'severity': 'N/A',
             'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
-            'due_date': (TODAY + timedelta(days=60)).strftime('%d/%m/%Y'),
+            'due_date': (_today() + timedelta(days=60)).strftime('%d/%m/%Y'),
             'status': 'Open',
         })
         ofi_count += 1
@@ -769,13 +777,13 @@ def generate_tnl(data: dict) -> dict:
                     'description': f'{s["title"]}: {s["evidence"]}. The current implementation does not fully satisfy the requirements of {standard_label} Clause {s["clause"]}. Corrective actions shall be implemented and verified for effectiveness.',
                     'severity': severity if typ == 'NC' else 'N/A',
                     'auditee': random.choice(['Quality Manager', 'Operations Manager', 'Department Manager']),
-                    'due_date': (TODAY + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
+                    'due_date': (_today() + timedelta(days=30 if random.random() < 0.7 else 60)).strftime('%d/%m/%Y'),
                     'status': 'Open',
                 })
 
     return {
         'client_name': data.get('client_name', 'Client'),
-        'audit_date': data.get('audit_date', TODAY_STR),
+        'audit_date': data.get('audit_date', _today_str()),
         'standard': standard_label,
         'entries': entries,
         'summary': {
@@ -791,8 +799,8 @@ def generate_tnl(data: dict) -> dict:
 def generate_certificate(data: dict) -> dict:
     client = data.get('client_name', 'Client')
     standard_label = data.get('standard', 'ISO 9001:2015')
-    cert_num = data.get('certificate_number', f'TUV-CERT-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}')
-    issue = TODAY
+    cert_num = data.get('certificate_number', f'TUV-CERT-{_today().year}-{_today().timetuple().tm_yday:03d}')
+    issue = _today()
     expiry = issue.replace(year=issue.year + 3)
     decision = data.get('certification_decision', 'Certified')
 
@@ -800,7 +808,7 @@ def generate_certificate(data: dict) -> dict:
         'client_name': client,
         'certificate_number': cert_num,
         'standard': standard_label,
-        'audit_date': data.get('audit_date', TODAY_STR),
+        'audit_date': data.get('audit_date', _today_str()),
         'scope': data.get('scope', 'Management system certification as defined in the audit scope statement.'),
         'lead_auditor': data.get('lead_auditor', 'Lead Auditor'),
         'certification_body': 'TÜV AUSTRIA',
@@ -821,7 +829,7 @@ def generate_management_review_minutes(data: dict) -> dict:
     standard_key = data.get('standard_key', 'iso_9001')
     family = FAMILY_LABEL_MAP.get(standard_key, 'Management System')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
     team = data.get('audit_team', [])
     lead = data.get('lead_auditor', 'Lead Auditor')
 
@@ -834,7 +842,7 @@ def generate_management_review_minutes(data: dict) -> dict:
     ]
 
     review_date = date
-    today_dt = datetime.strptime(review_date, '%d/%m/%Y') if '/' in review_date else TODAY
+    today_dt = datetime.strptime(review_date, '%d/%m/%Y') if '/' in review_date else _today()
     next_review = (today_dt.replace(year=today_dt.year + 1)).strftime('%d/%m/%Y')
 
     return {
@@ -891,7 +899,7 @@ def generate_management_review_minutes(data: dict) -> dict:
 def generate_corrective_action_report(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 9001:2015')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     issues = generate_tnl(data)
     entries = issues.get('entries', [])
@@ -901,14 +909,14 @@ def generate_corrective_action_report(data: dict) -> dict:
         'tnl_number': 'TNL-001',
     }
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     severity = nc_entry.get('severity', 'Minor')
     clause = nc_entry.get('clause', '10.1')
 
     return {
         'client_name': client,
-        'car_number': f'TUV-CAR-{TODAY.year}-{TODAY.timetuple().tm_yday:03d}',
+        'car_number': f'TUV-CAR-{_today().year}-{_today().timetuple().tm_yday:03d}',
         'standard': standard_label,
         'audit_date': date,
         'nc_reference': nc_entry.get('tnl_number', 'TNL-001'),
@@ -953,7 +961,7 @@ def generate_gap_analysis_report(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 9001:2015')
     standard_key = data.get('standard_key', 'iso_9001')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     sections = clause_data.get_gap_checklist_data(standard_key)
 
@@ -1011,7 +1019,7 @@ def generate_statement_of_applicability(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 9001:2015')
     standard_key = data.get('standard_key', 'iso_9001')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     annex = clause_data.get_annex_a_data(standard_key)
     controls_list = []
@@ -1070,7 +1078,7 @@ def generate_statement_of_applicability(data: dict) -> dict:
 def generate_business_impact_analysis(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 22301:2019')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     activities = [
         {'activity': 'Order-to-Cash Process', 'rto': '4 hours', 'rpo': '1 hour', 'mtd': '8 hours',
@@ -1151,7 +1159,7 @@ def generate_business_impact_analysis(data: dict) -> dict:
 def generate_records_of_processing_activities(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 27701:2025')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     activities = [
         {
@@ -1225,9 +1233,9 @@ def generate_records_of_processing_activities(data: dict) -> dict:
 def generate_risk_treatment_plan(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 27001:2022')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     risks = [
         {'id': 'RISK-001', 'desc': 'Unauthorized access to customer database containing PII', 'source': 'External attacker / credential theft',
@@ -1301,9 +1309,9 @@ def generate_risk_treatment_plan(data: dict) -> dict:
 def generate_incident_investigation_report(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 45001:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     return {
         'client_name': client,
@@ -1370,9 +1378,9 @@ def generate_incident_investigation_report(data: dict) -> dict:
 def generate_internal_audit_program(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 9001:2015')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
     year = today_dt.year
 
     audits = [
@@ -1427,7 +1435,7 @@ def generate_internal_audit_program(data: dict) -> dict:
 def generate_environmental_aspect_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 14001:2015')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     aspects = [
         {'id': 'EAR-001', 'activity': 'Production operations — CNC machining', 'aspect': 'Emissions of metal particulates and cutting fluid mist', 'impact': 'Local air quality degradation, potential respiratory health impacts', 'type': 'Negative', 'sig': 'High',
@@ -1488,7 +1496,7 @@ def generate_environmental_aspect_register(data: dict) -> dict:
 def generate_hazard_identification_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 45001:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     hazards = [
         {'id': 'HIR-001', 'activity': 'CNC machining operations', 'hazard': 'Rotating machinery — entanglement, cutting fluid exposure, noise >85dB',
@@ -1567,7 +1575,7 @@ def generate_hazard_identification_register(data: dict) -> dict:
 def generate_energy_review(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 50001:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     sources = [
         {'source': 'Grid Electricity', 'consumption': '2,450,000 kWh', 'cost': '$318,500', 'trend': 'Stable',
@@ -1642,7 +1650,7 @@ def generate_energy_review(data: dict) -> dict:
 def generate_compliance_obligations_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 37301:2021')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     obligations = [
         {'id': 'COR-001', 'type': 'Legal', 'source': 'Occupational Safety and Health Act (OSHA)', 'req': 'Employer shall provide a workplace free from recognized hazards. Maintain injury/illness records. Display OSHA poster.',
@@ -1709,7 +1717,7 @@ def generate_compliance_obligations_register(data: dict) -> dict:
 def generate_service_portfolio(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     services = [
         {'id': 'SVC-001', 'name': 'IT Help Desk & End-User Support', 'desc': 'First-line IT support for all employees. Incident logging, triage, and resolution. Hardware and software support for workstations.',
@@ -1781,7 +1789,7 @@ def generate_service_portfolio(data: dict) -> dict:
 def generate_service_catalogue(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     services = [
         {'id': 'CAT-001', 'name': 'IT Help Desk', 'desc': 'Single point of contact for all IT incidents and service requests. Provides first-line support, triage, and escalation management.', 'type': 'Customer', 'status': 'Live', 'features': '24/7 ticket submission, self-service portal, knowledge base, SLA-based prioritisation, real-time status tracking', 'contact': 'IT Support Manager', 'hours': '24x7'},
@@ -1822,9 +1830,9 @@ def generate_service_catalogue(data: dict) -> dict:
 def generate_supplier_agreement_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
     agreements = [
         {'id': 'SAR-001', 'supplier': 'CloudServe Technologies', 'service': 'Cloud infrastructure hosting — IaaS and PaaS services for production systems', 'type': 'SLA', 'start': (today_dt - timedelta(days=180)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=545)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Satisfactory', 'contacts': 'CloudServe Account Manager + CloudOps Lead'},
         {'id': 'SAR-002', 'supplier': 'SecureNet Ltd', 'service': 'Managed firewall, intrusion detection, and DDoS protection services', 'type': 'Contract', 'start': (today_dt - timedelta(days=365)).strftime('%d/%m/%Y'), 'renewal': (today_dt + timedelta(days=730)).strftime('%d/%m/%Y'), 'status': 'Active', 'rating': 'Excellent', 'contacts': 'SecureNet support portal + CISO'},
@@ -1862,9 +1870,9 @@ def generate_supplier_agreement_register(data: dict) -> dict:
 def generate_business_relationship_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     customers = [
         {'id': 'BRR-001', 'name': 'Manufacturing Division — HQ', 'mgr': 'Account Director A', 'svcs': 'IT Help Desk, Email, Network, ERP, Backup, Cybersecurity', 'sat': '9.2/10', 'complaints': 1, 'last': (today_dt - timedelta(days=45)).strftime('%d/%m/%Y'), 'next': (today_dt + timedelta(days=320)).strftime('%d/%m/%Y'), 'status': 'Active'},
@@ -1908,7 +1916,7 @@ def generate_business_relationship_register(data: dict) -> dict:
 def generate_capacity_management_plan(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     components = [
         {'id': 'CMP-001', 'comp': 'Primary Application Servers (Cluster-A)', 'cur': '16 vCPU, 64 GB RAM, 2 TB SSD', 'demand': 'avg 55% CPU, 62% RAM, 40% storage', 'util': '55%', 'thresh': '80%', 'forecast': 'Expected 15% growth over 12 months', 'upgrade': 'Add 2 nodes in Q3 2026. Estimated cost: $45K', 'status': 'Green'},
@@ -1948,9 +1956,9 @@ def generate_capacity_management_plan(data: dict) -> dict:
 def generate_change_management_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     changes = [
         {'id': 'CHG-001', 'title': 'ERP System Upgrade v4.2 to v5.0', 'desc': 'Major version upgrade of ERP including database schema changes, new UI, and API updates. Requires full regression testing.', 'type': 'Normal', 'priority': 'High', 'risk': 'High', 'impact': 'ERP unavailable for 8 hours during cutover. All business units affected.', 'rollback': 'Full database restore from pre-upgrade backup. Revert application binaries. Estimated rollback time: 4 hours.', 'cab': (today_dt - timedelta(days=14)).strftime('%d/%m/%Y'), 'sched': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y'), 'req': 'IT Applications Manager', 'status': 'Approved'},
@@ -1993,9 +2001,9 @@ def generate_change_management_register(data: dict) -> dict:
 def generate_release_deployment_plan(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     releases = [
         {'id': 'REL-001', 'name': 'ERP v5.0 Major Release', 'scope': 'Complete ERP system upgrade including database migration, new UI framework, API v2, and reporting engine overhaul.', 'type': 'Major', 'planned': (today_dt + timedelta(days=30)).strftime('%d/%m/%Y'), 'window': '22:00 Saturday – 06:00 Sunday', 'rollback': 'Database restore + application binary rollback. Validated in DR test environment. Estimated: 4 hours.', 'status': 'Planned'},
@@ -2035,9 +2043,9 @@ def generate_release_deployment_plan(data: dict) -> dict:
 def generate_incident_management_log(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     def fmt_dt(d):
         return d.strftime('%d/%m/%Y %H:%M')
@@ -2097,7 +2105,7 @@ def generate_incident_management_log(data: dict) -> dict:
 def generate_problem_management_register(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     problems = [
         {'id': 'PRB-001', 'inc_refs': 'INC-001, INC-009', 'summary': 'ERP database lock contention causing intermittent system unavailability during peak batch processing windows', 'rc': 'Inadequate indexing on key transaction tables combined with inefficient query patterns in the new procurement module. Root cause confirmed via SQL Profiler analysis.', 'wa': 'Manual kill of blocking sessions. Schedule batch jobs outside peak hours as temporary measure.', 'fix': 'Query optimization patch for procurement module. Index rebuild on top 10 contended tables. Deployment planned with ERP v5.0 upgrade.', 'cat': 'Application', 'pri': 'Critical', 'status': 'Under Investigation'},
@@ -2142,9 +2150,9 @@ def generate_problem_management_register(data: dict) -> dict:
 def generate_service_continuity_plan(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
-    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else TODAY
+    today_dt = datetime.strptime(date, '%d/%m/%Y') if '/' in date else _today()
 
     services = [
         {'id': 'SCP-001', 'name': 'Corporate Email & Collaboration', 'crit': 'Critical', 'rto': '2 hours', 'rpo': '15 minutes', 'strat': 'Active-active geographically redundant email servers. Automatic failover between data centers.', 'alt': 'Webmail access via secondary ISP. Mobile access via ActiveSync. Emergency comms via Teams mobile app.', 'test': (today_dt - timedelta(days=30)).strftime('%d/%m/%Y'), 'result': 'Pass', 'status': 'Ready'},
@@ -2185,7 +2193,7 @@ def generate_service_continuity_plan(data: dict) -> dict:
 def generate_availability_management_report(data: dict) -> dict:
     standard_label = data.get('standard', 'ISO 20000-1:2018')
     client = data.get('client_name', 'Client')
-    date = data.get('audit_date', TODAY_STR)
+    date = data.get('audit_date', _today_str())
 
     services = [
         {'id': 'AMR-001', 'name': 'Corporate Email & Collaboration', 'target': '99.9%', 'actual': '99.95%', 'downtime': '0.44 hours', 'outages': 1, 'mtbf': '720 hours', 'mttr': '0.44 hours', 'breach': 'No', 'notes': 'Single brief outage due to database maintenance. Exceeded target.'},

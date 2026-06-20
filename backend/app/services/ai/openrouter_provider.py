@@ -8,6 +8,9 @@ the model ID from the registry based on provider_name passed at init.
 import time
 import json
 import logging
+import random
+import urllib.request
+import urllib.error
 from typing import Any
 
 logger = logging.getLogger(__name__)
