@@ -117,6 +117,42 @@ async def startup():
     cleanup_old_jobs()
 
 
+@app.get("/api/health/detailed", tags=["System"])
+async def detailed_health():
+    """Comprehensive health check including provider status and system info."""
+    from .services.ai.router import _is_provider_healthy
+
+    provider_status = {}
+    for name in ["nemotron_ultra", "nemotron_super", "groq_llama", "local_qwen"]:
+        try:
+            healthy = _is_provider_healthy(name)
+            provider_status[name] = {"healthy": healthy}
+        except Exception:
+            provider_status[name] = {"healthy": False}
+
+    import shutil
+    disk = shutil.disk_usage(OUTPUT_FOLDER)
+
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "providers": provider_status,
+        "storage": {
+            "upload_dir_exists": os.path.exists(UPLOAD_FOLDER),
+            "output_dir_exists": os.path.exists(OUTPUT_FOLDER),
+            "free_space_gb": round(disk.free / 1e9, 2),
+            "total_space_gb": round(disk.total / 1e9, 2),
+        },
+        "capabilities": {
+            "ocr": True,
+            "ai_generation": True,
+            "excel_export": True,
+            "pdf_conversion": True,
+            "offline_generation": True,
+        },
+    }
+
+
 frontend_dir = FRONTEND_STATIC_DIR
 if frontend_dir and os.path.isdir(frontend_dir):
     try:
