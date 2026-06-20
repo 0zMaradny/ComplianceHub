@@ -22,7 +22,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import LanguageSwitcher from './components/LanguageSwitcher'
 
-const API = '/api'
+const API = 'https://individually-textbooks-contrary-leather.trycloudflare.com/api'
 
 const ICONS = {
   dashboard: (

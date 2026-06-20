@@ -1,9 +1,16 @@
 import os
 import re
 from docx import Document
+from app import settings as app_settings
 
 
 def parse_with_markitdown(filepath):
+    # Path traversal protection: ensure file is within upload directory
+    real_path = os.path.realpath(filepath)
+    allowed_base = os.path.realpath(app_settings.UPLOAD_FOLDER)
+    if not real_path.startswith(allowed_base):
+        logger.warning("Path traversal blocked: %s", filepath)
+        return {'error': 'Access denied', 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
     try:
         from markitdown import MarkItDown
         md = MarkItDown()
@@ -17,14 +24,16 @@ def parse_with_markitdown(filepath):
             'tables': [],
         }
     except Exception as e:
-        return {'error': str(e), 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
+        logger.warning("parse_with_markitdown failed for %s: %s", os.path.basename(filepath), e)
+        return {'error': 'Failed to parse file', 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
 
 
 def parse_docx(filepath):
     try:
         doc = Document(filepath)
     except Exception as e:
-        return {'error': str(e), 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
+        logger.warning("parse_docx failed for %s: %s", os.path.basename(filepath), e)
+        return {'error': 'Invalid or corrupt DOCX file', 'filename': os.path.basename(filepath), 'paragraphs': [], 'text': '', 'tables': []}
     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
     tables = []
     for table in doc.tables:

@@ -166,19 +166,46 @@ def resolve_chain(
 ) -> list[str]:
     if override_provider:
         return [override_provider]
-    return ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+    # Per-task model ordering: models that claim this task in their strengths
+    # appear first within each tier, preserving tier priority order.
+    all_names = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+    priority = TASK_PRIORITY.get(task_type, 'high')
+
+    def sort_key(name: str) -> tuple:
+        model = ALL_MODELS.get(name)
+        claims_task = model and task_type in model.strengths
+        # (tier_group, claims_task, original_index)
+        # tier_group: 0=antigravity, 1=frontier, 2=strong, 3=groq, 4=local
+        if name in ANTIGRAVITY_NAMES:
+            tier = 0
+        elif name in FRONTIER_NAMES:
+            tier = 1
+        elif name in STRONG_NAMES:
+            tier = 2
+        elif name in GROQ_NAMES:
+            tier = 3
+        else:
+            tier = 4
+        return (tier, 0 if claims_task else 1, all_names.index(name))
+
+    # For low-priority tasks during peak hours, prefer fast/cheap models
+    if _skip_openrouter(task_type):
+        # Reorder: local first, then groq, then antigravity (skip frontier/strong)
+        fast_names = LOCAL_NAMES + GROQ_NAMES + ANTIGRAVITY_NAMES
+        return sorted(fast_names, key=sort_key)
+
+    return sorted(all_names, key=sort_key)
 
 
 def set_api_key(provider_name: str, api_key: str):
+    """Store API key in provider instance cache (thread-safe, no global env mutation)."""
     if not api_key:
         return
-    model = ALL_MODELS.get(provider_name)
-    if model and model.provider == 'openrouter':
-        os.environ['OPENROUTER_API_KEY'] = api_key
-    elif provider_name == 'openrouter':
-        os.environ['OPENROUTER_API_KEY'] = api_key
-    elif provider_name == 'groq':
-        os.environ['GROQ_API_KEY'] = api_key
+    from . import _PROVIDER_LOCK, _PROVIDER_CACHE
+    with _PROVIDER_LOCK:
+        provider = _PROVIDER_CACHE.get(provider_name)
+        if provider and hasattr(provider, 'api_key'):
+            provider.api_key = api_key
 
 
 def _cache_key(task_type: str, prompt: str) -> str:
@@ -416,7 +443,7 @@ def _route(
         return result
 
     if _skip_openrouter(task_type):
-        logger.info('PEAK: task_type=%s %s -> direct to Groq (Tier 3)', task_type, mode)
+        logger.info('PEAK: task_type=%s %s -> Groq (Tier 3) + Local (Tier 4)', task_type, mode)
         result, last_error = _try_providers_batched(
             GROQ_NAMES, task_type, prompt,
             sp, api_key, mode, **kwargs,
@@ -424,7 +451,15 @@ def _route(
         if result is not None:
             _set_cache(ck, result)
             return result
-        return {'error': f'Groq exhausted. Last: {last_error}'}
+        # Fall through to local AI as last resort
+        result, last_error = _try_providers_batched(
+            LOCAL_NAMES, task_type, prompt,
+            sp, api_key, mode, **kwargs,
+        )
+        if result is not None:
+            _set_cache(ck, result)
+            return result
+        return {'error': f'Groq + Local exhausted. Last: {last_error}'}
 
     result, _ = _try_providers_batched(
         FRONTIER_NAMES, task_type, prompt,
@@ -492,8 +527,9 @@ def generate_stream(
     if override_provider:
         chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     elif _skip_openrouter(task_type):
-        logger.info('PEAK: task_type=%s streaming -> direct to Groq (Tier 3)', task_type)
-        chain = GROQ_NAMES[:]
+        # Keep Antigravity (Google API, not OpenRouter) + Groq + Local fallback
+        logger.info('PEAK: task_type=%s streaming -> Antigravity + Groq + Local', task_type)
+        chain = ANTIGRAVITY_NAMES + GROQ_NAMES + LOCAL_NAMES
     else:
         chain = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 

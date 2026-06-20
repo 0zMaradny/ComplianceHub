@@ -259,8 +259,12 @@ async def upload_files(
     os.makedirs(job_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
-    notes_ext = os.path.splitext(audit_notes.filename)[1].lower()
-    notes_path = os.path.join(job_dir, f'audit_notes{notes_ext}')
+    # Sanitize extension: only allow known safe extensions, strip path separators
+    raw_ext = os.path.splitext(audit_notes.filename)[1].lower()
+    safe_ext = re.sub(r'[^.a-z0-9]', '', raw_ext)[:10]  # Strip any non-alphanumeric chars
+    if not safe_ext or safe_ext not in ('.docx', '.txt', '.pdf', '.png', '.jpg', '.jpeg', '.tiff', '.tif', '.bmp', '.gif'):
+        safe_ext = '.bin'  # Fallback for unknown types
+    notes_path = os.path.join(job_dir, f'audit_notes{safe_ext}')
     manday_path = os.path.join(job_dir, 'manday.docx')
 
     content = await audit_notes.read()
@@ -279,9 +283,23 @@ async def upload_files(
     if notes_ext == '.pdf' and content[:5] != b'%PDF-':
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid PDF')
-    if notes_ext in ('.png', '.jpg', '.jpeg', '.bmp', '.gif') and content[:4] not in (b'\x89PNG', b'\xff\xd8\xff', b'BM', b'GIF8'):
-        # Minimal header check — tiff has variable headers, skip
-        pass
+    if notes_ext in ('.png', '.jpg', '.jpeg', '.bmp', '.gif'):
+        valid_headers = {
+            '.png': (b'\x89PNG',),
+            '.jpg': (b'\xff\xd8\xff',),
+            '.jpeg': (b'\xff\xd8\xff',),
+            '.bmp': (b'BM',),
+            '.gif': (b'GIF8',),
+        }
+        expected = valid_headers.get(notes_ext, ())
+        if expected and not any(content[:len(h)] == h for h in expected):
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise HTTPException(status_code=400, detail=f'Invalid image file: header does not match {notes_ext} format')
+    if notes_ext in ('.tiff', '.tif'):
+        # TIFF has variable headers (II/MM byte order), check for TIFF magic
+        if content[:4] not in (b'II\x2a\x00', b'MM\x00\x2a'):
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise HTTPException(status_code=400, detail='Invalid TIFF file: unrecognized header')
     with open(notes_path, 'wb') as f:
         f.write(content)
 
@@ -398,12 +416,14 @@ async def generate_docs(
 
     # Empty api_key → offline mode (template-based generation, no AI)
     job_dir = os.path.join(UPLOAD_FOLDER, job_id)
-    notes_path = os.path.join(job_dir, 'audit_notes.docx')
-    if not os.path.exists(notes_path):
-        for f in os.listdir(job_dir):
-            if f.startswith('audit_notes'):
-                notes_path = os.path.join(job_dir, f)
-                break
+    # Find audit notes file — supports .docx, .txt, .pdf, and image formats
+    notes_path = None
+    for f in os.listdir(job_dir):
+        if f.startswith('audit_notes'):
+            notes_path = os.path.join(job_dir, f)
+            break
+    if notes_path is None:
+        raise HTTPException(status_code=400, detail='No audit notes file found for this job')
 
     manday_path = os.path.join(job_dir, 'manday.docx')
     notes_data = extract_audit_notes(notes_path)
