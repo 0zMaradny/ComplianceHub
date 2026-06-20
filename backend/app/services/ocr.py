@@ -142,20 +142,22 @@ def extract_pdf(filepath: str) -> dict:
     try:
         import pypdf
         reader = pypdf.PdfReader(filepath)
-        result["pages"] = len(reader.pages)
-        text_parts = []
-        for page in reader.pages:
-            text = page.extract_text() or ""
-            text_parts.append(text)
-        full_text = "\n".join(text_parts).strip()
+        try:
+            result["pages"] = len(reader.pages)
+            text_parts = []
+            for page in reader.pages:
+                text = page.extract_text() or ""
+                text_parts.append(text)
+            full_text = "\n".join(text_parts).strip()
 
-        if len(full_text) >= MIN_TEXT_LENGTH_FOR_TEXT_PDF:
-            lines = [l.strip() for l in full_text.splitlines() if l.strip()]
-            result["text"] = full_text
-            result["paragraphs"] = lines
-            result["ocr_method"] = "pypdf"
-            return result
-
+            if len(full_text) >= MIN_TEXT_LENGTH_FOR_TEXT_PDF:
+                lines = [l.strip() for l in full_text.splitlines() if l.strip()]
+                result["text"] = full_text
+                result["paragraphs"] = lines
+                result["ocr_method"] = "pypdf"
+                return result
+        finally:
+            reader.stream.close()  # Explicitly close file handle
     except Exception as e:
         logger.info("pypdf failed, falling back to OCR: %s", e)
         result["pypdf_error"] = str(e)
@@ -171,7 +173,10 @@ def extract_pdf(filepath: str) -> dict:
                 all_text.append(f"--- Page {i + 1} ---\n{ocr_result['text']}")
                 if ocr_result.get("ocr_confidence"):
                     all_confidences.append(ocr_result["ocr_confidence"])
-            if i > 50:
+            if i >= 50:
+                result["truncated"] = True
+                result["pages_processed"] = 50
+                logger.warning("PDF OCR truncated at 50 pages (total: %d)", len(images))
                 break
 
         result["text"] = "\n\n".join(all_text)

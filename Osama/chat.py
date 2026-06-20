@@ -126,6 +126,8 @@ def save_session(messages: list, mode: str, agent: Optional[int], model: str):
         "model": model,
         "messages": messages[-100:],
     }
+    if len(messages) > 100:
+        logger.debug("Session save: truncating %d messages to last 100", len(messages))
     fname.write_text(json.dumps(data, ensure_ascii=False, indent=2))
     return fname
 
@@ -655,7 +657,8 @@ def main():
 
         use_model = model
         if model == "auto":
-            risk_keywords = ["risk", "evaluate", "analyze", "compare", "complex", "scenario", "trade-off", "factor"]
+            risk_keywords = ["risk", "evaluate", "analyze", "compare", "complex", "scenario", "trade-off", "factor",
+                             "audit", "compliance", "iso", "nc", "clause", "non-conformity", "capa", "bcmd"]
             if any(kw in user_input.lower() for kw in risk_keywords):
                 use_model = OPUS_MODEL
             else:
