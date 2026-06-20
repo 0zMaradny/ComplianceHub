@@ -373,18 +373,27 @@ def _try_providers_batched(
         batch = eligible[batch_start:batch_start + batch_size]
         logger.debug('Trying batch %s', batch)
 
+        cancel_event = threading.Event()
+
+        def _try_provider_cancelable(p, *args, **kw):
+            if cancel_event.is_set():
+                return None, 'Cancelled'
+            result, err = _try_provider(p, *args, **kw)
+            if result is not None:
+                cancel_event.set()
+            return result, err
+
         with ThreadPoolExecutor(max_workers=len(batch)) as ex:
             futures = {
                 ex.submit(
-                    _try_provider, p, task_type, prompt, system_prompt,
+                    _try_provider_cancelable, p, task_type, prompt, system_prompt,
                     api_key, mode, **kwargs,
                 ): p for p in batch
             }
             for future in as_completed(futures):
                 result, err = future.result()
                 if result is not None:
-                    for f in futures:
-                        f.cancel()
+                    cancel_event.set()
                     return result, None
                 last_error = err
 

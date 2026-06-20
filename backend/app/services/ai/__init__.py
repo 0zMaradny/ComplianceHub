@@ -27,7 +27,9 @@ class AIProvider(ABC):
         yield text
 
 
+import threading
 _PROVIDER_CACHE: dict[str, AIProvider] = {}
+_PROVIDER_LOCK = threading.Lock()
 
 
 def create_provider(provider_name: str | None = None) -> AIProvider:
