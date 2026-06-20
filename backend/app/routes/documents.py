@@ -336,6 +336,10 @@ async def upload_files(
         if content[:4] not in (b'II\x2a\x00', b'MM\x00\x2a'):
             shutil.rmtree(job_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail='Invalid TIFF file: unrecognized header')
+    # MIME type validation (python-magic if available, header check fallback)
+    if not _validate_mime_type(content, safe_ext):
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=400, detail=f'Invalid file: content does not match {safe_ext} format')
     with open(notes_path, 'wb') as f:
         f.write(content)
 
