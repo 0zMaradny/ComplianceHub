@@ -28,6 +28,13 @@ PROVIDER_LIMITS = {
 
 
 class ProviderRateLimiter:
+    """Thread-safe sliding window rate limiter.
+
+    NOTE: This is per-process. For multi-worker gunicorn deployments,
+    each worker has its own counter. For strict global rate limiting,
+    use a shared backend (Redis, memcached, or file-based lock).
+    For single-worker deployments (default), this is sufficient.
+    """
     def __init__(self):
         self._windows: dict[str, list[float]] = defaultdict(list)
         self._window_size = 60

@@ -110,14 +110,18 @@ def _ocr_image(img: Image.Image, lang: str = TESSERACT_LANG) -> dict:
         # Validate Tesseract language data is available, fall back if needed
         effective_lang = _validate_tesseract_lang(lang)
         data = pytesseract.image_to_data(preprocessed, lang=effective_lang, config=TESSERACT_CONFIG, output_type=pytesseract.Output.DICT)
-        lines = []
-        confidences = []
-        current_line = ""
+        # Build word objects with position data for layout-aware assembly
+        words = []
         text_list = data.get("text", [])
         conf_list = data.get("conf", [])
+        left_list = data.get("left", [])
+        top_list = data.get("top", [])
+        width_list = data.get("width", [])
+        height_list = data.get("height", [])
         for i, text in enumerate(text_list):
             text = text.strip()
-            # Safe zip: handle mismatched text/conf array lengths from Tesseract
+            if not text:
+                continue
             if i < len(conf_list):
                 try:
                     conf = int(conf_list[i])
@@ -125,19 +129,61 @@ def _ocr_image(img: Image.Image, lang: str = TESSERACT_LANG) -> dict:
                     conf = -1
             else:
                 conf = -1
-            if not text:
-                if current_line:
-                    lines.append(current_line)
-                    current_line = ""
+            if conf <= 0:
                 continue
-            if conf > 0:
-                confidences.append(conf)
-            if current_line:
-                current_line += " " + text
+            left = left_list[i] if i < len(left_list) else 0
+            top = top_list[i] if i < len(top_list) else 0
+            w = width_list[i] if i < len(width_list) else 0
+            h = height_list[i] if i < len(height_list) else 0
+            words.append({"text": text, "conf": conf, "left": left, "top": top, "w": w, "h": h})
+
+        if not words:
+            return {
+                "text": "", "paragraphs": [], "tables": [],
+                "ocr_confidence": 0, "ocr_method": f"tesseract_{effective_lang.replace('+', '_')}",
+                "preprocessing": ["grayscale", "contrast", "sharpen", "binary_threshold"],
+            }
+
+        # Sort by top (line), then left (column)
+        avg_word_height = sum(w["h"] for w in words) / len(words)
+        line_threshold = max(avg_word_height * 0.5, 5)  # Pixels within same line
+
+        words.sort(key=lambda w: (w["top"], w["left"]))
+
+        # Group words into lines based on vertical position
+        lines_data = []
+        current_line_words = [words[0]]
+        current_line_top = words[0]["top"]
+        for w in words[1:]:
+            if abs(w["top"] - current_line_top) <= line_threshold:
+                current_line_words.append(w)
             else:
-                current_line = text
-        if current_line:
-            lines.append(current_line)
+                lines_data.append(current_line_words)
+                current_line_words = [w]
+                current_line_top = w["top"]
+        if current_line_words:
+            lines_data.append(current_line_words)
+
+        # Detect columns: if there's a significant gap in left positions,
+        # treat as separate columns and join with proper spacing
+        lines = []
+        confidences = []
+        for line_words in lines_data:
+            # Sort words in line by left position
+            line_words.sort(key=lambda w: w["left"])
+            line_text_parts = []
+            prev_right = 0
+            for w in line_words:
+                confidences.append(w["conf"])
+                # Detect column gap: if there's a large horizontal gap,
+                # insert a tab/space to separate columns
+                if prev_right > 0 and (w["left"] - prev_right) > avg_word_height * 3:
+                    line_text_parts.append("    ")  # 4-space column separator
+                elif line_text_parts:
+                    line_text_parts.append(" ")
+                line_text_parts.append(w["text"])
+                prev_right = w["left"] + w["w"]
+            lines.append("".join(line_text_parts))
 
         full_text = "\n".join(lines)
         avg_confidence = sum(confidences) / len(confidences) if confidences else 0
