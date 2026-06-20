@@ -54,14 +54,46 @@ def _detect_has_arabic(text: str) -> bool:
 
 
 def _preprocess_image(img: Image.Image) -> Image.Image:
-    """Preprocess image for better OCR accuracy."""
+    """Preprocess image for better OCR accuracy.
+
+    Uses Otsu's method for adaptive thresholding instead of a fixed
+    threshold, which preserves faint text and handles uneven lighting.
+    """
     if img.mode != "L":
         img = img.convert("L")
 
     img = ImageEnhance.Contrast(img).enhance(1.5)
     img = img.filter(ImageFilter.SHARPEN)
 
-    img = img.point(lambda x: 0 if x < 128 else 255)
+    # Otsu's adaptive thresholding — finds optimal threshold automatically
+    try:
+        import numpy as np
+        arr = np.array(img)
+        # Compute Otsu's threshold
+        hist, _ = np.histogram(arr.flatten(), bins=256, range=(0, 256))
+        total = arr.size
+        sum_total = np.dot(np.arange(256), hist)
+        sum_bg, weight_bg, max_var = 0.0, 0.0, 0.0
+        threshold = 128
+        for t in range(256):
+            weight_bg += hist[t]
+            if weight_bg == 0:
+                continue
+            weight_fg = total - weight_bg
+            if weight_fg == 0:
+                break
+            sum_bg += t * hist[t]
+            mean_bg = sum_bg / weight_bg
+            mean_fg = (sum_total - sum_bg) / weight_fg
+            var_between = weight_bg * weight_fg * (mean_bg - mean_fg) ** 2
+            if var_between > max_var:
+                max_var = var_between
+                threshold = t
+        img = Image.fromarray((arr > threshold).astype(np.uint8) * 255)
+    except ImportError:
+        # Fallback: use PIL's autocontrast + adaptive point
+        img = ImageOps.autocontrast(img, cutoff=1)
+        img = img.point(lambda x: 0 if x < 128 else 255)
 
     return img
 

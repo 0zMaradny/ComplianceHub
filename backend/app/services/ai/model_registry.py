@@ -249,7 +249,7 @@ def get_best_for_task(task_type: str, tier: str) -> "ModelCaps | None":
 
 
 MIN_SCORE_THRESHOLDS: dict[str, int] = {
-    "Audit_Report": 70,
+    "Audit_Report": 55,  # Lowered from 70 — Stage 1 and small audits may legitimately score lower
     "Certificate_Text": 70,
     "Certificate": 70,
     "ISO_Checklist": 60,

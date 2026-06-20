@@ -358,6 +358,10 @@ async def upload_files(
         if not checklist_template.filename.lower().endswith('.docx') or content[:2] != b'PK':
             shutil.rmtree(job_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail='Invalid template file: must be a valid DOCX')
+        # Additional MIME type validation
+        if not _validate_mime_type(content, '.docx'):
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise HTTPException(status_code=400, detail='Invalid template file: content does not match DOCX format')
         template_path = os.path.join(job_dir, 'checklist_template.docx')
         with open(template_path, 'wb') as f:
             f.write(content)

@@ -131,4 +131,18 @@ class AntigravityProvider(AIProvider):
             max_tokens=4096,
         )
 
-    # generate_stream omitted — parent class AIProvider default handles it
+    def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
+        """Stream response by yielding chunks. Antigravity API is non-streaming,
+        so we fetch the full response and yield it in word-sized chunks."""
+        result = self.generate(prompt, system_prompt, **kwargs)
+        if 'error' in result:
+            yield f"[Error: {result['error']}]"
+            return
+        text = result.get('text', '')
+        if not text and isinstance(result, dict):
+            # If result is structured data, serialize it
+            text = json.dumps(result, ensure_ascii=False)
+        # Yield in word-sized chunks for a natural streaming feel
+        words = text.split(' ')
+        for i, word in enumerate(words):
+            yield word + (' ' if i < len(words) - 1 else '')

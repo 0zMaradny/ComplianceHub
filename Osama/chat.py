@@ -34,6 +34,8 @@ KNOWLEDGE_FILES = {
 AGENT_PROMPTS_FILE = HERE / "AGENT_PROMPTS.md"
 
 DEFAULT_MODEL = "claude-sonnet-4-6"
+# NOTE: OPUS_MODEL is provider-specific (Antigravity API format).
+# For OpenRouter, use "anthropic/claude-opus-4" instead.
 OPUS_MODEL = "claude-opus-4-6-thinking"
 
 LOCAL_API = "http://localhost:8000/v1/chat/completions"
