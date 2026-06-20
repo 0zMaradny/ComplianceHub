@@ -1,5 +1,6 @@
 import os
 import json
+import mimetypes
 import zipfile
 import uuid
 import shutil
@@ -7,6 +8,7 @@ import threading
 import time
 import asyncio
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
@@ -29,6 +31,36 @@ from app.routes import (
 )
 
 router = APIRouter(tags=["Document Generation"])
+
+# MIME type allowlist: extension → set of allowed MIME types
+_MIME_ALLOWLIST = {
+    '.docx': {'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'},
+    '.txt': {'text/plain'},
+    '.pdf': {'application/pdf'},
+    '.png': {'image/png'},
+    '.jpg': {'image/jpeg'},
+    '.jpeg': {'image/jpeg'},
+    '.tiff': {'image/tiff'},
+    '.tif': {'image/tiff'},
+    '.bmp': {'image/bmp'},
+    '.gif': {'image/gif'},
+}
+
+
+def _validate_mime_type(content: bytes, ext: str) -> bool:
+    """Validate file content against expected MIME type for the extension."""
+    allowed = _MIME_ALLOWLIST.get(ext)
+    if not allowed:
+        return False
+    # Try python-magic first (most accurate), fall back to mimetypes
+    try:
+        import magic
+        detected = magic.from_buffer(content[:4096], mime=True)
+        return detected in allowed
+    except ImportError:
+        pass
+    # Fallback: check magic bytes directly (already done per-type in upload handler)
+    return True
 
 
 def _make_doc_result(output_dir, template_path, standard_key, doc_type, doc_data, client_key=None):
@@ -206,6 +238,10 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
             _update_progress(job_id, status='generating', current_doc=DOC_LABELS.get(dt, dt),
                              progress=20 + int((completed / total) * 70))
 
+    # All futures complete — ensure all file handles are flushed before packaging
+    import gc
+    gc.collect()
+
     _update_progress(job_id, progress=95, current_doc='Creating package...')
 
     try:
@@ -222,6 +258,7 @@ def generate_background(job_id, api_key, notes_data, manday_data, standards_full
                     zf.write(result['pdf_path'], pdf_filename)
         logger.info('JOB %s zip took %.2fs', job_id, time.perf_counter() - _ts)
 
+        # Safe to cleanup input directory after zip is fully written
         shutil.rmtree(job_dir, ignore_errors=True)
     except Exception as e:
         logger.error('JOB %s packaging failed: %s', job_id, e)
@@ -271,19 +308,19 @@ async def upload_files(
     if len(content) > MAX_FILE_SIZE:
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=413, detail=f'Audit notes file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
-    if notes_ext == '.docx' and content[:2] != b'PK':
+    if safe_ext == '.docx' and content[:2] != b'PK':
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid DOCX')
-    if notes_ext == '.txt':
+    if safe_ext == '.txt':
         try:
             content.decode('utf-8')
         except UnicodeDecodeError:
             shutil.rmtree(job_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid text file')
-    if notes_ext == '.pdf' and content[:5] != b'%PDF-':
+    if safe_ext == '.pdf' and content[:5] != b'%PDF-':
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=400, detail='Invalid audit notes file: not a valid PDF')
-    if notes_ext in ('.png', '.jpg', '.jpeg', '.bmp', '.gif'):
+    if safe_ext in ('.png', '.jpg', '.jpeg', '.bmp', '.gif'):
         valid_headers = {
             '.png': (b'\x89PNG',),
             '.jpg': (b'\xff\xd8\xff',),
@@ -291,12 +328,11 @@ async def upload_files(
             '.bmp': (b'BM',),
             '.gif': (b'GIF8',),
         }
-        expected = valid_headers.get(notes_ext, ())
+        expected = valid_headers.get(safe_ext, ())
         if expected and not any(content[:len(h)] == h for h in expected):
             shutil.rmtree(job_dir, ignore_errors=True)
-            raise HTTPException(status_code=400, detail=f'Invalid image file: header does not match {notes_ext} format')
-    if notes_ext in ('.tiff', '.tif'):
-        # TIFF has variable headers (II/MM byte order), check for TIFF magic
+            raise HTTPException(status_code=400, detail=f'Invalid image file: header does not match {safe_ext} format')
+    if safe_ext in ('.tiff', '.tif'):
         if content[:4] not in (b'II\x2a\x00', b'MM\x00\x2a'):
             shutil.rmtree(job_dir, ignore_errors=True)
             raise HTTPException(status_code=400, detail='Invalid TIFF file: unrecognized header')
@@ -307,6 +343,10 @@ async def upload_files(
     if len(content) > MAX_FILE_SIZE:
         shutil.rmtree(job_dir, ignore_errors=True)
         raise HTTPException(status_code=413, detail=f'Manday file exceeds {MAX_FILE_SIZE // (1024*1024)} MB limit')
+    # Validate manday file is a valid DOCX (PK header)
+    if not manday.filename.lower().endswith('.docx') or content[:2] != b'PK':
+        shutil.rmtree(job_dir, ignore_errors=True)
+        raise HTTPException(status_code=400, detail='Invalid manday file: must be a valid DOCX')
     with open(manday_path, 'wb') as f:
         f.write(content)
 

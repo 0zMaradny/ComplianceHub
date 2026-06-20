@@ -8,6 +8,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 ANTIGRAVITY_CLIENT_ID: str = os.environ.get('ANTIGRAVITY_CLIENT_ID', '')
 ANTIGRAVITY_CLIENT_SECRET: str = os.environ.get('ANTIGRAVITY_CLIENT_SECRET', '')
 ANTIGRAVITY_REFRESH: str = os.environ.get('ANTIGRAVITY_REFRESH', '')
+ANTIGRAVITY_REFRESH_TOKENS: str = os.environ.get('ANTIGRAVITY_REFRESH_TOKENS', ANTIGRAVITY_REFRESH)
 
 # OpenRouter (Tier 1+2)
 OPENROUTER_API_KEY: str = os.environ.get('OPENROUTER_API_KEY', '')

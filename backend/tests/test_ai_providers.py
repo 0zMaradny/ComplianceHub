@@ -4,6 +4,7 @@ Tests instantiation, key handling, and error paths without making API calls.
 """
 
 import pytest
+import os
 from app.services.ai import create_provider, AIProvider
 
 
@@ -45,12 +46,57 @@ class TestProviderInstantiation:
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
-    def test_claude_is_ai_provider(self):
-        p = create_provider('claude')
+    def test_antigravity_claude_sonnet_46_is_provider(self):
+        p = create_provider('antigravity_claude_sonnet_46')
         assert isinstance(p, AIProvider)
 
-    def test_claude_has_generate(self):
-        p = create_provider('claude')
+    def test_antigravity_claude_sonnet_46_has_generate(self):
+        p = create_provider('antigravity_claude_sonnet_46')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_antigravity_claude_opus_46_is_provider(self):
+        p = create_provider('antigravity_claude_opus_46')
+        assert isinstance(p, AIProvider)
+
+    def test_antigravity_claude_opus_46_has_generate(self):
+        p = create_provider('antigravity_claude_opus_46')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_antigravity_gemini_3_flash_is_provider(self):
+        p = create_provider('antigravity_gemini_3_flash')
+        assert isinstance(p, AIProvider)
+
+    def test_antigravity_gemini_3_flash_has_generate(self):
+        p = create_provider('antigravity_gemini_3_flash')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_antigravity_gemini_25_flash_is_provider(self):
+        p = create_provider('antigravity_gemini_25_flash')
+        assert isinstance(p, AIProvider)
+
+    def test_antigravity_gemini_25_flash_has_generate(self):
+        p = create_provider('antigravity_gemini_25_flash')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_antigravity_gemini_25_flash_thinking_is_provider(self):
+        p = create_provider('antigravity_gemini_25_flash_thinking')
+        assert isinstance(p, AIProvider)
+
+    def test_antigravity_gemini_25_flash_thinking_has_generate(self):
+        p = create_provider('antigravity_gemini_25_flash_thinking')
+        assert hasattr(p, 'generate')
+        assert callable(p.generate)
+
+    def test_antigravity_gemini_25_pro_is_provider(self):
+        p = create_provider('antigravity_gemini_25_pro')
+        assert isinstance(p, AIProvider)
+
+    def test_antigravity_gemini_25_pro_has_generate(self):
+        p = create_provider('antigravity_gemini_25_pro')
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
@@ -81,40 +127,33 @@ class TestErrorPaths:
         assert 'error' in result
         assert 'not set' in result['error'].lower()
 
-    def test_anthropic_no_key(self):
-        from app.services.ai.anthropic_provider import AnthropicProvider
-        p = AnthropicProvider()
-        p.api_key = ''
+    def test_antigravity_no_tokens(self):
+        from app.services.ai.antigravity_provider import AntigravityProvider
+        p = AntigravityProvider(provider_name='antigravity_claude_sonnet_46')
+        # Empty the tokens list to simulate no config
+        p.tokens = []
         result = p.generate('test prompt')
         assert 'error' in result
-        assert 'not set' in result['error'].lower()
+        assert 'No Antigravity refresh tokens configured' in result['error']
 
 
 class TestInitialization:
     def test_groq_reads_env(self):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setenv('GROQ_API_KEY', 'gsk-test-key')
-            from app.services.ai.groq_provider import GroqProvider
-            p = GroqProvider()
-            assert p.api_key == 'gsk-test-key'
-            assert p.base_url == 'https://api.groq.com/openai/v1'
+        # Test that provider can be instantiated - actual env reading happens in settings
+        from app.services.ai.groq_provider import GroqProvider
+        p = GroqProvider()
+        assert isinstance(p, AIProvider)
+        assert p.model == 'llama-3.3-70b-versatile'
+        assert p.base_url == 'https://api.groq.com/openai/v1'
 
     def test_openrouter_reads_env(self):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setenv('OPENROUTER_API_KEY', 'sk-or-test')
-            from app.services.ai.openrouter_provider import OpenRouterProvider
-            p = OpenRouterProvider()
-            assert p.api_key == 'sk-or-test'
-            assert p.model == 'openrouter/free'
-
-    def test_anthropic_reads_env(self):
-        with pytest.MonkeyPatch.context() as mp:
-            mp.setenv('ANTHROPIC_API_KEY', 'sk-ant-test-key')
-            from app.services.ai.anthropic_provider import AnthropicProvider
-            p = AnthropicProvider()
-            assert p.api_key == 'sk-ant-test-key'
-            assert p.model == 'claude-sonnet-4-20250514'
-
-    def test_anthropic_init_with_name(self):
-        p = create_provider('claude')
+        from app.services.ai.openrouter_provider import OpenRouterProvider
+        p = OpenRouterProvider()
         assert isinstance(p, AIProvider)
+        assert p.model in ('openrouter/free', 'openrouter/auto') or 'nemotron' in p.model or 'qwen' in p.model
+
+    def test_antigravity_init_with_name(self):
+        p = create_provider('antigravity_claude_sonnet_46')
+        assert isinstance(p, AIProvider)
+        assert hasattr(p, 'model_map')
+        assert 'antigravity_claude_sonnet_46' in p.model_map

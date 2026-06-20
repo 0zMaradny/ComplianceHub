@@ -15,6 +15,7 @@ the router upgrades to the next tier.
 """
 
 import os
+import re
 import time
 import json
 import hashlib
@@ -253,7 +254,7 @@ def _provider_has_key(provider_name: str) -> bool:
     if model and model.provider == 'local':
         return True
     if model and model.provider == 'antigravity':
-        return bool(app_settings.ANTIGRAVITY_REFRESH.strip())
+        return bool(app_settings.ANTIGRAVITY_REFRESH_TOKENS.strip())
     if provider_name == 'groq':
         return bool(app_settings.GROQ_API_KEY.strip())
     return False
@@ -518,6 +519,22 @@ def generate(
     return _route(task_type, prompt, 'generate', system_prompt, api_key, override_provider, client_key, **kwargs)
 
 
+def _is_streaming_quality_acceptable(text: str, task_type: str) -> bool:
+    """Basic quality check for streamed responses — catches placeholders without AI calls."""
+    if not text or len(text.strip()) < 50:
+        return False
+    # Check for common placeholder patterns
+    placeholder_patterns = [
+        r'\[Client Name\]', r'\[client_name\]', r'\[TBD\]', r'\[TODO\]',
+        r'XXXXXX', r'xxxxxx', r'\[insert', r'\[Insert',
+        r'N/A\s*$', r'lorem ipsum',
+    ]
+    for pat in placeholder_patterns:
+        if re.search(pat, text, re.IGNORECASE):
+            return False
+    return True
+
+
 def generate_stream(
     task_type: str,
     prompt: str,
@@ -561,8 +578,13 @@ def generate_stream(
 
             full = ''.join(collected)
             if full and not full.startswith('[Error:'):
-                _mark_provider_success(provider_name)
-                return
+                # Basic quality gate: check for placeholder patterns
+                if _is_streaming_quality_acceptable(full, task_type):
+                    _mark_provider_success(provider_name)
+                    return
+                else:
+                    logger.warning('Streaming quality check failed for %s (task=%s)', provider_name, task_type)
+                    _mark_provider_failure(provider_name)
             else:
                 _mark_provider_failure(provider_name)
         except Exception as e:

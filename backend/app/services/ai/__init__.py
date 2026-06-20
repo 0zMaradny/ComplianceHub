@@ -42,6 +42,10 @@ def create_provider(provider_name: str | None = None) -> AIProvider:
     providers = {
         'antigravity_claude_sonnet_46': ('.antigravity_provider', 'AntigravityProvider'),
         'antigravity_claude_opus_46': ('.antigravity_provider', 'AntigravityProvider'),
+        'antigravity_gemini_3_flash': ('.antigravity_provider', 'AntigravityProvider'),
+        'antigravity_gemini_25_flash': ('.antigravity_provider', 'AntigravityProvider'),
+        'antigravity_gemini_25_flash_thinking': ('.antigravity_provider', 'AntigravityProvider'),
+        'antigravity_gemini_25_pro': ('.antigravity_provider', 'AntigravityProvider'),
         'groq': ('.groq_provider', 'GroqProvider'),
         'groq_llama': ('.groq_provider', 'GroqProvider'),
         'openrouter': ('.openrouter_provider', 'OpenRouterProvider'),

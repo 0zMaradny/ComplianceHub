@@ -10,6 +10,7 @@ Extends file_parser.py with:
 import os
 import re
 import logging
+import shutil
 from pathlib import Path
 
 from PIL import Image, ImageEnhance, ImageFilter
@@ -26,6 +27,24 @@ MAX_IMAGE_PIXELS = 10_000_000
 SUPPORTED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".bmp", ".gif"}
 
 # ── Helpers ────────────────────────────────────────────────────────────────
+
+def _validate_tesseract_lang(lang: str) -> str:
+    """Validate Tesseract language packs are installed. Falls back to available langs."""
+    try:
+        import pytesseract
+        available = pytesseract.get_languages()
+    except Exception:
+        return lang  # Can't check, proceed and let tesseract fail naturally
+    requested = lang.split('+')
+    missing = [l for l in requested if l not in available]
+    if missing:
+        logger.warning("Tesseract language pack(s) not installed: %s. Available: %s", missing, available)
+        # Fall back to available languages only
+        available_requested = [l for l in requested if l in available]
+        if available_requested:
+            return '+'.join(available_requested)
+        return 'eng'  # Ultimate fallback
+    return lang
 
 
 def _detect_has_arabic(text: str) -> bool:
@@ -56,13 +75,24 @@ def _ocr_image(img: Image.Image, lang: str = TESSERACT_LANG) -> dict:
 
     preprocessed = _preprocess_image(img)
     try:
-        data = pytesseract.image_to_data(preprocessed, lang=lang, config=TESSERACT_CONFIG, output_type=pytesseract.Output.DICT)
+        # Validate Tesseract language data is available, fall back if needed
+        effective_lang = _validate_tesseract_lang(lang)
+        data = pytesseract.image_to_data(preprocessed, lang=effective_lang, config=TESSERACT_CONFIG, output_type=pytesseract.Output.DICT)
         lines = []
         confidences = []
         current_line = ""
-        for i, text in enumerate(data.get("text", [])):
+        text_list = data.get("text", [])
+        conf_list = data.get("conf", [])
+        for i, text in enumerate(text_list):
             text = text.strip()
-            conf = int(data.get("conf", [0])[i]) if i < len(data.get("conf", [])) else 0
+            # Safe zip: handle mismatched text/conf array lengths from Tesseract
+            if i < len(conf_list):
+                try:
+                    conf = int(conf_list[i])
+                except (ValueError, TypeError):
+                    conf = -1
+            else:
+                conf = -1
             if not text:
                 if current_line:
                     lines.append(current_line)
@@ -172,6 +202,14 @@ def extract_image(filepath: str) -> dict:
     }
 
     try:
+        img = Image.open(filepath)
+        # Validate image is not corrupt or polyglot (verify forces full decode)
+        try:
+            img.verify()
+        except Exception as e:
+            result["error"] = f"Invalid or corrupt image: {e}"
+            return result
+        # Re-open after verify (verify closes the file)
         img = Image.open(filepath)
 
         if img.width * img.height > MAX_IMAGE_PIXELS:
