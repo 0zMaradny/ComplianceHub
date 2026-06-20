@@ -184,6 +184,8 @@ def extract_pdf(filepath: str) -> dict:
         result["ocr_method"] = "pdf2image_tesseract"
         result["ocr_confidence"] = round(sum(all_confidences) / len(all_confidences), 1) if all_confidences else 0
         result["pages"] = len(images)
+        if not result["text"].strip():
+            result["error"] = "No text extracted from any page"
         return result
 
     except ImportError as e:
@@ -246,4 +248,12 @@ def extract_any(filepath: str) -> dict:
     if ext in SUPPORTED_IMAGE_EXTS:
         return extract_image(filepath)
 
-    return {"error": f"Unsupported file type: {ext}"}
+    return {
+        "filename": os.path.basename(filepath),
+        "paragraphs": [],
+        "text": "",
+        "tables": [],
+        "ocr_confidence": None,
+        "ocr_method": None,
+        "error": f"Unsupported file type: {ext}",
+    }

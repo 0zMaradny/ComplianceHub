@@ -145,8 +145,8 @@ def detect_api_url() -> str:
         resp = urllib.request.urlopen(req, timeout=3)
         if resp.status == 200:
             return LOCAL_API
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Local API probe failed: %s", e)
     # Read tunnel URL from file with SSRF protection
     for tf in [HERE / ".tunnel-url", Path("/tmp/compliancehub-url.txt")]:
         if tf.exists():

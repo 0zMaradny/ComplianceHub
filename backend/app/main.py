@@ -93,10 +93,6 @@ async def rate_limit_middleware(request: Request, call_next):
     return await call_next(request)
 
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-
-
 app.include_router(system_router)
 app.include_router(documents_router)
 app.include_router(excel_router)
@@ -116,6 +112,8 @@ app.include_router(chat_router)
 
 @app.on_event("startup")
 async def startup():
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
     cleanup_old_jobs()
 
 

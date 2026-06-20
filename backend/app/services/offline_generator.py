@@ -88,14 +88,32 @@ def _extract_standard(text: str) -> str:
     return (m.group(1) + ':2015') if m else 'ISO 9001:2015'
 
 
-def _extract_date(text: str) -> str:
-    formats = [r'(\d{2}[/-]\d{2}[/-]\d{4})', r'(\d{4}[/-]\d{2}[/-]\d{2})',
-               r'(\d{1,2}\s+\w+\s+\d{4})', r'(\w+\s+\d{1,2},?\s+\d{4})']
-    for fmt in formats:
+def _extract_date(text: str, dayfirst: bool = True) -> str:
+    """Extract date from text. Tries multiple formats.
+
+    Args:
+        text: Text to search for dates
+        dayfirst: If True (default), ambiguous dd/mm vs mm/dd is interpreted as dd/mm.
+                  Set to False for US-style mm/dd interpretation.
+    """
+    # Try unambiguous formats first (4-digit year or textual month)
+    for fmt in [r'(\d{4}[/-]\d{2}[/-]\d{2})', r'(\d{1,2}\s+\w+\s+\d{4})', r'(\w+\s+\d{1,2},?\s+\d{4})']:
         m = re.search(fmt, text)
         if m:
             d = m.group(1)
             return d.replace('-', '/')
+    # Ambiguous format: dd/mm/yyyy or mm/dd/yyyy
+    m = re.search(r'(\d{2}[/-]\d{2}[/-]\d{4})', text)
+    if m:
+        d = m.group(1).replace('-', '/')
+        parts = d.split('/')
+        if len(parts) == 3:
+            first, second, year = int(parts[0]), int(parts[1]), parts[2]
+            if dayfirst:
+                return f"{first:02d}/{second:02d}/{year}"
+            else:
+                return f"{second:02d}/{first:02d}/{year}"
+        return d
     return datetime.now().strftime('%d/%m/%Y')
 
 
@@ -120,20 +138,44 @@ def _extract_total_days(text: str) -> int:
 
 def _extract_ncs(text: str) -> list[dict]:
     ncs = []
-    for line in text.split('\n'):
-        line = line.strip()
+    nc_pattern = re.compile(
+        r'(?:#?\d+\s*)?(?:NC|Non-Conformity|Nonconformity|Finding)\s*[-–—:]*\s*(Major|Minor)?\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?(?:\s*$|\s*\n)',
+        re.I
+    )
+    continuation_pattern = re.compile(r'^\s+(.+)$')
+    i = 0
+    lines = text.split('\n')
+    while i < len(lines):
+        line = lines[i].strip()
         if not line:
+            i += 1
             continue
-        m = re.match(
-            r'(?:#?\d+\s*)?(?:NC|Non-Conformity|Nonconformity|Finding)\s*[-–—:]*\s*(Major|Minor)?\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?\s*$',
-            line, re.I
-        )
+        m = nc_pattern.match(line)
         if m:
+            description = m.group(2).strip().rstrip('.')
+            clause = m.group(3).strip() if m.group(3) else ''
+            severity = m.group(1).strip() if m.group(1) else 'Minor'
+            # Accumulate continuation lines (indented or not starting with NC/Finding)
+            j = i + 1
+            while j < len(lines):
+                next_line = lines[j].strip()
+                if not next_line:
+                    j += 1
+                    continue
+                # Stop if next line starts a new NC
+                if re.match(r'(?:#?\d+\s*)?(?:NC|Non-Conformity|Nonconformity|Finding)\s*[-–—:]', next_line, re.I):
+                    break
+                description += ' ' + next_line
+                j += 1
+            description = description.strip().rstrip('.')
             ncs.append({
-                'severity': m.group(1).strip() if m.group(1) else 'Minor',
-                'description': m.group(2).strip().rstrip('.'),
-                'clause': m.group(3).strip() if m.group(3) else '',
+                'severity': severity,
+                'description': description,
+                'clause': clause,
             })
+            i = j if j > i + 1 else i + 1
+        else:
+            i += 1
     return ncs
 
 
