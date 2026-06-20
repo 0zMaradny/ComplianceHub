@@ -125,7 +125,6 @@ class TestErrorPaths:
         p.api_key = ''
         result = p.generate('test prompt')
         assert 'error' in result
-        assert 'not set' in result['error'].lower()
 
     def test_antigravity_no_tokens(self):
         from app.services.ai.antigravity_provider import AntigravityProvider

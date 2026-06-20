@@ -3,8 +3,10 @@
 from unittest.mock import patch
 
 from app.services.ai_pipeline import (
-    _get_standard_key, _build_family_context, _build_manday_summary,
     _build_shared_prompt, _build_prompt, generate_document,
+)
+from app.services.ai.prompts import (
+    _get_standard_key, _build_family_context, _build_manday_summary,
 )
 
 
@@ -131,10 +133,10 @@ class TestBuildPrompt:
 class TestGenerateDocument:
     def test_calls_router_generate(self):
         with patch('app.services.ai_pipeline.router_generate',
-                   return_value={'result': 'ok'}) as mock:
+                   return_value={'result': 'ok', '_score': {'overall': 7.0}}) as mock:
             result = generate_document('api_key', 'notes', 'manday',
                                        ['iso_9001'], 'Audit_Report')
-            assert result == {'result': 'ok'}
+            assert result == {'result': 'ok', '_score': {'overall': 7.0}}
             mock.assert_called_once()
 
     def test_passes_correct_doc_type(self):

@@ -1,6 +1,7 @@
 import time
 import json
 import logging
+import threading
 import urllib.request
 import urllib.error
 from typing import Any
@@ -8,8 +9,46 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 from . import AIProvider
+from .errors import from_exception
 from .json_utils import extract_json
-from app.settings import ANTIGRAVITY_CLIENT_ID, ANTIGRAVITY_CLIENT_SECRET, ANTIGRAVITY_REFRESH
+from app.settings import ANTIGRAVITY_CLIENT_ID, ANTIGRAVITY_CLIENT_SECRET, ANTIGRAVITY_REFRESH_TOKENS
+
+# Per-model concurrency limits (stress-tested June 2026)
+# Claude + gemini-3-flash: 2 concurrent per account (429 at 3+)
+# gemini-2.5-*: 15+ concurrent per account (effectively unlimited)
+_MODEL_CONCURRENCY = {
+    'claude-sonnet-4-6': 2,
+    'claude-opus-4-6-thinking': 2,
+    'gemini-3-flash': 2,
+    'gemini-2.5-pro': 2,
+    'gemini-2.5-flash': 20,
+    'gemini-2.5-flash-thinking': 20,
+}
+
+_semaphore_lock = threading.Lock()
+_semaphores: dict[tuple[str, int], threading.Semaphore] = {}
+
+
+def _get_semaphore(model: str, token_idx: int) -> threading.Semaphore:
+    key = (model, token_idx)
+    with _semaphore_lock:
+        if key not in _semaphores:
+            limit = _MODEL_CONCURRENCY.get(model, 2)
+            _semaphores[key] = threading.Semaphore(limit)
+        return _semaphores[key]
+
+
+class _RetryableError(Exception):
+    def __init__(self, reason: str, cooldown: float = 86400):
+        self.reason = reason
+        self.cooldown = cooldown
+        super().__init__(reason)
+
+
+class _FatalError(Exception):
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
 
 
 class AntigravityProvider(AIProvider):
@@ -18,25 +57,44 @@ class AntigravityProvider(AIProvider):
         self.model_map = {
             'antigravity_claude_sonnet_46': 'claude-sonnet-4-6',
             'antigravity_claude_opus_46': 'claude-opus-4-6-thinking',
+            'antigravity_gemini_3_flash': 'gemini-3-flash',
+            'antigravity_gemini_25_flash': 'gemini-2.5-flash',
+            'antigravity_gemini_25_flash_thinking': 'gemini-2.5-flash-thinking',
+            'antigravity_gemini_25_pro': 'gemini-2.5-pro',
         }
         self.model = self.model_map.get(self.provider_name, 'claude-sonnet-4-6')
         self.client_id = ANTIGRAVITY_CLIENT_ID
         self.client_secret = ANTIGRAVITY_CLIENT_SECRET
-        self.refresh_token = ANTIGRAVITY_REFRESH
+
+        raw_tokens = [t.strip() for t in ANTIGRAVITY_REFRESH_TOKENS.split(',') if t.strip()]
+        self.tokens = [{'token': t, 'exhausted_until': 0.0, 'access_token': None, 'token_expiry': 0.0} for t in raw_tokens]
+        self.current_token_idx = 0
+
         self.base_url = 'https://cloudcode-pa.googleapis.com/v1internal:generateContent'
         self.project = 'rising-fact-p41fc'
-        self._access_token = None
-        self._token_expiry = 0.0
+
+    def _get_active_token_obj(self):
+        if not self.tokens:
+            return None
+        for _ in range(len(self.tokens)):
+            t_obj = self.tokens[self.current_token_idx]
+            if time.time() > t_obj['exhausted_until']:
+                return t_obj
+            self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
+        return self.tokens[self.current_token_idx]
 
     def _ensure_token(self) -> str | None:
-        if time.time() < self._token_expiry - 60 and self._access_token:
-            return self._access_token
-        if not self.refresh_token:
+        t_obj = self._get_active_token_obj()
+        if not t_obj:
             return None
+
+        if time.time() < t_obj['token_expiry'] - 60 and t_obj['access_token']:
+            return t_obj['access_token']
+
         data = json.dumps({
             'client_id': self.client_id,
             'client_secret': self.client_secret,
-            'refresh_token': self.refresh_token,
+            'refresh_token': t_obj['token'],
             'grant_type': 'refresh_token',
         }).encode()
         req = urllib.request.Request(
@@ -47,20 +105,106 @@ class AntigravityProvider(AIProvider):
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 tok = json.loads(resp.read().decode())
-                self._access_token = tok['access_token']
-                self._token_expiry = time.time() + tok.get('expires_in', 3599)
-                return self._access_token
+                t_obj['access_token'] = tok['access_token']
+                t_obj['token_expiry'] = time.time() + tok.get('expires_in', 3599)
+                return t_obj['access_token']
         except Exception as e:
-            logger.error('Antigravity token refresh failed: %s', e)
+            logger.error('Antigravity token refresh failed for a token: %s', e)
             return None
+
+    def _call_with_retry(self, body_data: bytes, max_retries: int = 3) -> dict[str, Any]:
+        last_error = None
+        for attempt in range(max_retries):
+            t_obj = self._get_active_token_obj()
+            if not t_obj:
+                return {'error': 'No Antigravity refresh tokens configured.'}
+
+            token_idx = self.current_token_idx
+            access = self._ensure_token()
+            if not access:
+                t_obj['exhausted_until'] = time.time() + 300
+                self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
+                continue
+
+            sem = _get_semaphore(self.model, token_idx)
+            acquired = sem.acquire(timeout=30)
+            if not acquired:
+                logger.warning('Antigravity semaphore timeout model=%s token=%d', self.model, token_idx)
+                self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
+                last_error = {'error': f'Concurrency limit reached for {self.model}'}
+                continue
+
+            try:
+                result = self._do_request(access, body_data)
+                return result
+            except _RetryableError as re:
+                logger.warning('Antigravity %s (attempt %d/%d)', re.reason, attempt + 1, max_retries)
+                t_obj['exhausted_until'] = time.time() + re.cooldown
+                self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
+                last_error = {'error': re.reason}
+                continue
+            except _FatalError as fe:
+                return {'error': fe.reason}
+            finally:
+                sem.release()
+
+        return last_error or {'error': 'Antigravity failed after retries.'}
+
+    def _do_request(self, access: str, body_data: bytes) -> dict[str, Any]:
+        req = urllib.request.Request(
+            self.base_url,
+            data=body_data,
+            headers={
+                'Authorization': f'Bearer {access}',
+                'Content-Type': 'application/json',
+                'User-Agent': 'antigravity/2.0 linux/arm64',
+                'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
+                'Client-Metadata': json.dumps({
+                    'ideType': 'ANTIGRAVITY', 'platform': 'LINUX', 'pluginType': 'ANTIGRAVITY',
+                }),
+            },
+            method='POST',
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                result = json.loads(resp.read().decode())
+            candidates = result.get('response', {}).get('candidates', [])
+            if not candidates:
+                raise _FatalError('No candidates in Antigravity response')
+            parts = candidates[0].get('content', {}).get('parts', [])
+            text = ''.join(p.get('text', '') for p in parts if 'text' in p)
+            if not text:
+                raise _FatalError('Empty text in Antigravity response')
+
+            parsed = extract_json(text)
+            if parsed is not None:
+                return parsed
+            return {'text': text}
+
+        except urllib.error.HTTPError as e:
+            body_bytes = e.read()
+            try:
+                detail = json.loads(body_bytes.decode())
+                msg = detail.get('error', {}).get('message', str(detail)[:200])
+            except Exception:
+                msg = body_bytes.decode()[:200]
+
+            if e.code == 429:
+                raise _RetryableError(f'Rate limited (429): {msg}', cooldown=86400)
+            elif e.code == 503:
+                raise _RetryableError(f'No capacity (503): {msg}', cooldown=300)
+            else:
+                raise _FatalError(f'Antigravity HTTP {e.code}: {msg}')
+
+        except (_RetryableError, _FatalError):
+            raise
+        except Exception as e:
+            raise _FatalError(f'Antigravity error: {e}')
 
     def _call(
         self, prompt: str, system_prompt: str | None = None,
         temperature: float = 0.3, max_tokens: int = 8192,
     ) -> dict[str, Any]:
-        access = self._ensure_token()
-        if not access:
-            return {'error': 'ANTIGRAVITY_REFRESH not set or expired'}
         body = {
             'project': self.project,
             'model': self.model,
@@ -71,50 +215,15 @@ class AntigravityProvider(AIProvider):
                     'temperature': temperature,
                 },
             },
-            'userAgent': 'antigravity',
+            'userAgent': 'antigravity/2.0',
             'requestId': f't-{int(time.time())}',
         }
         if system_prompt:
             body['request']['systemInstruction'] = {'parts': [{'text': system_prompt}]}
+
         data = json.dumps(body).encode()
-        req = urllib.request.Request(
-            self.base_url,
-            data=data,
-            headers={
-                'Authorization': f'Bearer {access}',
-                'Content-Type': 'application/json',
-                'User-Agent': 'antigravity/1.15.8 linux/arm64',
-                'X-Goog-Api-Client': 'google-cloud-sdk vscode_cloudshelleditor/0.1',
-                'Client-Metadata': json.dumps({
-                    'ideType': 'ANTIGRAVITY', 'platform': 'LINUX', 'pluginType': 'GEMINI',
-                }),
-            },
-            method='POST',
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                result = json.loads(resp.read().decode())
-            candidates = result.get('response', {}).get('candidates', [])
-            if not candidates:
-                return {'error': 'No candidates in Antigravity response'}
-            parts = candidates[0].get('content', {}).get('parts', [])
-            text = ''.join(p.get('text', '') for p in parts)
-            if not text:
-                return {'error': 'Empty text in Antigravity response'}
-            parsed = extract_json(text)
-            if parsed is not None:
-                return parsed
-            return {'text': text}
-        except urllib.error.HTTPError as e:
-            body_bytes = e.read()
-            try:
-                detail = json.loads(body_bytes.decode())
-                msg = detail.get('error', {}).get('message', str(detail)[:200])
-            except Exception:
-                msg = body_bytes.decode()[:200]
-            return {'error': f'Antigravity HTTP {e.code}: {msg}'}
-        except Exception as e:
-            return {'error': f'Antigravity error: {e}'}
+        retries = max(1, len(self.tokens))
+        return self._call_with_retry(data, max_retries=retries)
 
     def generate(self, prompt: str, system_prompt: str | None = None, **kwargs) -> dict[str, Any]:
         return self._call(
@@ -132,17 +241,13 @@ class AntigravityProvider(AIProvider):
         )
 
     def generate_stream(self, prompt: str, system_prompt: str | None = None, **kwargs):
-        """Stream response by yielding chunks. Antigravity API is non-streaming,
-        so we fetch the full response and yield it in word-sized chunks."""
         result = self.generate(prompt, system_prompt, **kwargs)
         if 'error' in result:
             yield f"[Error: {result['error']}]"
             return
         text = result.get('text', '')
         if not text and isinstance(result, dict):
-            # If result is structured data, serialize it
             text = json.dumps(result, ensure_ascii=False)
-        # Yield in word-sized chunks for a natural streaming feel
         words = text.split(' ')
         for i, word in enumerate(words):
             yield word + (' ' if i < len(words) - 1 else '')

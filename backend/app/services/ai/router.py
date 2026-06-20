@@ -442,7 +442,7 @@ def _route(
             if result is not None:
                 _set_cache(ck, result)
                 return result
-        return {'error': f'Override provider exhausted. Last: {err}'}
+        return {'error': f'Override provider exhausted. Last: {err}', 'code': 'ALL_PROVIDERS_EXHAUSTED', 'provider': 'router'}
 
     result, _ = _try_providers_batched(
         ANTIGRAVITY_NAMES, task_type, prompt,
@@ -469,7 +469,7 @@ def _route(
         if result is not None:
             _set_cache(ck, result)
             return result
-        return {'error': f'Groq + Local exhausted. Last: {last_error}'}
+        return {'error': f'Groq + Local exhausted. Last: {last_error}', 'code': 'ALL_PROVIDERS_EXHAUSTED', 'provider': 'router'}
 
     result, _ = _try_providers_batched(
         FRONTIER_NAMES, task_type, prompt,
@@ -503,7 +503,7 @@ def _route(
         _set_cache(ck, result)
         return result
 
-    return {'error': f'All providers exhausted. Last: {last_error}'}
+    return {'error': f'All providers exhausted. Last: {last_error}', 'code': 'ALL_PROVIDERS_EXHAUSTED', 'provider': 'router'}
 
 
 def generate(

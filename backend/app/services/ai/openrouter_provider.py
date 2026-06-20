@@ -13,6 +13,8 @@ import urllib.request
 import urllib.error
 from typing import Any
 
+from .errors import from_http_error, from_exception, ensure_error_dict
+
 logger = logging.getLogger(__name__)
 
 from . import AIProvider
@@ -23,6 +25,7 @@ from .json_utils import extract_json
 class OpenRouterProvider(AIProvider):
     def __init__(self, provider_name: str = None):
         self.provider_name = provider_name or 'openrouter'
+        self.name = self.provider_name
         from app.settings import OPENROUTER_API_KEY
         self.api_key = OPENROUTER_API_KEY
         # Look up model ID from registry
@@ -36,7 +39,7 @@ class OpenRouterProvider(AIProvider):
 
     def _call_with_retry(self, messages, temperature=0.3, max_tokens=4096, max_retries=2, response_format=None):
         if not self.api_key:
-            return {'error': 'OPENROUTER_API_KEY not set'}
+            return from_exception(ValueError("OPENROUTER_API_KEY not set"), self.name).to_dict()
 
         url = 'https://openrouter.ai/api/v1/chat/completions'
         payload = {
@@ -83,7 +86,7 @@ class OpenRouterProvider(AIProvider):
                 try:
                     text = result['choices'][0]['message']['content'].strip()
                 except (KeyError, IndexError):
-                    return {'error': 'No response from OpenRouter'}
+                    return from_exception(ValueError("No response from OpenRouter"), self.name).to_dict()
 
                 if response_format:
                     try:
@@ -102,7 +105,9 @@ class OpenRouterProvider(AIProvider):
                     body = e.read().decode()
                 except Exception as ex:
                     logger.debug("Failed to decode HTTP error body: %s", ex)
-                last_error = f'HTTP {e.code}: {body[:200]}'
+                std_err = from_http_error(e.code, body, self.name)
+                last_error = str(std_err)
+                logger.warning("OpenRouter HTTP error: %s", std_err)
                 if e.code == 429:
                     delay = 30 + random.uniform(0, 10)
                     time.sleep(delay)
@@ -116,7 +121,10 @@ class OpenRouterProvider(AIProvider):
                     delay = 2 ** attempt + random.uniform(0, 1)
                     time.sleep(delay)
 
-        return {'error': f'OpenRouter failed after {max_retries} retries: {last_error}'}
+        return from_exception(
+            RuntimeError(f"OpenRouter failed after {max_retries} retries: {last_error}"),
+            self.name,
+        ).to_dict()
 
     def generate(self, prompt: str, system_prompt: str | None = None, **kwargs) -> dict[str, Any]:
         messages = []

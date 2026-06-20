@@ -154,7 +154,9 @@ LOCAL_FREE = [
     ),
 ]
 
-# Antigravity: free Claude via Google's internal API (confirmed working June 18 2026)
+# Antigravity: free Claude + Gemini via Google's internal API
+# Stress-tested June 2026 — Claude/gemini-3-flash = 2 concurrent per account,
+# gemini-2.5-flash/thinking = 20+ concurrent per account
 ANTIGRAVITY_FREE = [
     ModelCaps(
         model_id="claude-sonnet-4-6",
@@ -178,7 +180,7 @@ ANTIGRAVITY_FREE = [
             "Service_Continuity_Plan", "Availability_Management_Report",
             "extract_shared_context", "chat_query",
         ),
-        notes="Claude Sonnet 4.6 — free via Antigravity API. Used as Tier 0.",
+        notes="Claude Sonnet 4.6 — free via Antigravity v2.0 API. 2 concurrent per account. Tier 0 primary.",
     ),
     ModelCaps(
         model_id="claude-opus-4-6-thinking",
@@ -192,7 +194,68 @@ ANTIGRAVITY_FREE = [
             "Statement_of_Applicability", "Risk_Treatment_Plan",
             "extract_shared_context",
         ),
-        notes="Claude Opus 4.6 — free via Antigravity API. Extended thinking, use for complex reasoning.",
+        notes="Claude Opus 4.6 — free via Antigravity v2.0 API. Extended thinking, 2 concurrent per account.",
+    ),
+    ModelCaps(
+        model_id="gemini-3-flash",
+        openrouter_name="antigravity_gemini_3_flash",
+        provider="antigravity",
+        tier="antigravity",
+        context_length=1_000_000,
+        strengths=(
+            "Audit_Report", "ISO_Checklist", "Certificate_Text",
+            "Gap_Analysis_Report", "Statement_of_Applicability",
+            "Records_of_Processing_Activities", "Risk_Treatment_Plan",
+            "Business_Impact_Analysis", "Incident_Investigation_Report",
+            "extract_shared_context", "chat_query",
+        ),
+        notes="Gemini 3 Flash — thinking model (63 avg thought tokens). 2 concurrent per account.",
+    ),
+    ModelCaps(
+        model_id="gemini-2.5-flash",
+        openrouter_name="antigravity_gemini_25_flash",
+        provider="antigravity",
+        tier="antigravity",
+        context_length=1_000_000,
+        strengths=(
+            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Participation_List", "TNL",
+            "Management_Review_Minutes", "Corrective_Action_Report",
+            "Environmental_Aspect_Register", "Hazard_Identification_Register",
+            "Energy_Review", "Compliance_Obligations_Register",
+            "Service_Portfolio", "Service_Catalogue", "Supplier_Agreement_Register",
+            "Business_Relationship_Register", "Capacity_Management_Plan",
+            "Change_Management_Register", "Release_Deployment_Plan",
+            "Incident_Management_Log", "Problem_Management_Register",
+            "Service_Continuity_Plan", "Availability_Management_Report",
+            "chat_query",
+        ),
+        notes="Gemini 2.5 Flash — 20+ concurrent per account, 1M context. Highest throughput.",
+    ),
+    ModelCaps(
+        model_id="gemini-2.5-flash-thinking",
+        openrouter_name="antigravity_gemini_25_flash_thinking",
+        provider="antigravity",
+        tier="antigravity",
+        context_length=1_000_000,
+        strengths=(
+            "Audit_Report", "Gap_Analysis_Report", "Statement_of_Applicability",
+            "Risk_Treatment_Plan", "Business_Impact_Analysis",
+            "extract_shared_context",
+        ),
+        notes="Gemini 2.5 Flash Thinking — extended reasoning + 20+ concurrent.",
+    ),
+    ModelCaps(
+        model_id="gemini-2.5-pro",
+        openrouter_name="antigravity_gemini_25_pro",
+        provider="antigravity",
+        tier="antigravity",
+        context_length=1_000_000,
+        strengths=(
+            "Audit_Report", "ISO_Checklist", "Certificate_Text",
+            "Gap_Analysis_Report", "Statement_of_Applicability",
+            "Risk_Treatment_Plan",
+        ),
+        notes="Gemini 2.5 Pro — often returns 503 (no capacity). Fallback only.",
     ),
 ]
 

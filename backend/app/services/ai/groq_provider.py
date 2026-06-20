@@ -3,6 +3,7 @@ from typing import Any
 from openai import OpenAI
 
 from . import AIProvider
+from .errors import from_exception, from_http_error
 from .json_utils import extract_json
 from app.settings import GROQ_API_KEY
 
@@ -15,7 +16,7 @@ class GroqProvider(AIProvider):
 
     def _call_with_retry(self, prompt, system_prompt=None, max_retries=2, temperature=0.3, max_tokens=4096, response_format=None):
         if not self.api_key:
-            return {'error': 'GROQ_API_KEY not set'}
+            return from_exception(ValueError("GROQ_API_KEY not set"), "groq").to_dict()
         client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         last_error = None
         for attempt in range(max_retries):
