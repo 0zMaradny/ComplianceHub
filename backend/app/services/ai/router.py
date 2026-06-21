@@ -166,7 +166,10 @@ def resolve_chain(
     client_key: str = '',
 ) -> list[str]:
     if override_provider:
-        return [override_provider]
+        # Backward compat: "claude" → antigravity_claude_sonnet_46
+        ALIASES = {"claude": "antigravity_claude_sonnet_46"}
+        resolved = ALIASES.get(override_provider, override_provider)
+        return [resolved]
     # Per-task model ordering: models that claim this task in their strengths
     # appear first within each tier, preserving tier priority order.
     all_names = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES

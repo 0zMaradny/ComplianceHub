@@ -9,7 +9,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 from . import AIProvider
-from .errors import from_exception
+
 from .json_utils import extract_json
 from app.settings import ANTIGRAVITY_CLIENT_ID, ANTIGRAVITY_CLIENT_SECRET, ANTIGRAVITY_REFRESH_TOKENS
 
@@ -39,9 +39,13 @@ def _get_semaphore(model: str, token_idx: int) -> threading.Semaphore:
 
 
 class _RetryableError(Exception):
-    def __init__(self, reason: str, cooldown: float = 86400):
+    def __init__(self, reason: str, cooldown: float = 86400, attempt: int = 0):
         self.reason = reason
-        self.cooldown = cooldown
+        self.attempt = attempt
+        # Exponential backoff: 30s → 300s → 3600s → 86400s max
+        backoff_sequence = [30, 300, 3600, 86400]
+        idx = min(attempt, len(backoff_sequence) - 1)
+        self.cooldown = backoff_sequence[idx]
         super().__init__(reason)
 
 
@@ -112,8 +116,9 @@ class AntigravityProvider(AIProvider):
             logger.error('Antigravity token refresh failed for a token: %s', e)
             return None
 
-    def _call_with_retry(self, body_data: bytes, max_retries: int = 3) -> dict[str, Any]:
+    def _call_with_retry(self, body_data: bytes, max_retries: int = 6) -> dict[str, Any]:
         last_error = None
+        _429_count = 0
         for attempt in range(max_retries):
             t_obj = self._get_active_token_obj()
             if not t_obj:
@@ -127,7 +132,7 @@ class AntigravityProvider(AIProvider):
                 continue
 
             sem = _get_semaphore(self.model, token_idx)
-            acquired = sem.acquire(timeout=30)
+            acquired = sem.acquire(timeout=2)
             if not acquired:
                 logger.warning('Antigravity semaphore timeout model=%s token=%d', self.model, token_idx)
                 self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
@@ -138,7 +143,10 @@ class AntigravityProvider(AIProvider):
                 result = self._do_request(access, body_data)
                 return result
             except _RetryableError as re:
-                logger.warning('Antigravity %s (attempt %d/%d)', re.reason, attempt + 1, max_retries)
+                if 'Rate limited (429)' in re.reason:
+                    _429_count += 1
+                    re.attempt = _429_count
+                logger.warning('Antigravity %s (attempt %d/%d, cooldown=%.0fs)', re.reason, attempt + 1, max_retries, re.cooldown)
                 t_obj['exhausted_until'] = time.time() + re.cooldown
                 self.current_token_idx = (self.current_token_idx + 1) % len(self.tokens)
                 last_error = {'error': re.reason}
@@ -190,7 +198,7 @@ class AntigravityProvider(AIProvider):
                 msg = body_bytes.decode()[:200]
 
             if e.code == 429:
-                raise _RetryableError(f'Rate limited (429): {msg}', cooldown=86400)
+                raise _RetryableError(f'Rate limited (429): {msg}', attempt=0)
             elif e.code == 503:
                 raise _RetryableError(f'No capacity (503): {msg}', cooldown=300)
             else:
