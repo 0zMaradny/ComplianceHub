@@ -36,32 +36,69 @@ async def validate_and_heal(content: str, prompt: str, client_id: str, doc_type:
     
     return content, validation
 
-def generate_document(api_key, notes_text, manday_text, standards, doc_type, shared_context=None, client_key=None, manday_info=None):
-    prompt = build_prompt(notes_text, manday_text, standards, doc_type, shared_context, client_key=client_key, manday_info=manday_info)
-    
-    # Primary Generation Loop (Existing Quality Logic)
-    for attempt in range(AI_QUALITY_MAX_RETRIES + 1):
-        result = router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, api_key=api_key, client_key=client_key)
-        
+import json
+from app.services.validator import validate_and_heal
+
+async def generate_document(api_key, notes_text, manday_text, standards, doc_type, 
+                           shared_context=None, client_key=None, manday_info=None):
+    """Generate document with Autodebugger + 10-gate validator."""
+    prompt = build_prompt(notes_text, manday_text, standards, doc_type, 
+                         shared_context, client_key=client_key, manday_info=manday_info)
+
+    # ─── Phase 1: Autodebugger Quality Loop (existing) ───────────────
+    for attempt in range(QUALITY_MAX_RETRIES + 1):
+        result = router_generate(doc_type, prompt, system_prompt=SYSTEM_PROMPT, 
+                                 api_key=api_key, client_key=client_key)
+
         if 'error' in result:
             return result
-            
-        # Existing Quality Score Check
+
         score_data = result.get('_score', {})
         quality_score = score_data.get('overall', 0) if isinstance(score_data, dict) else 0
         
-        if quality_score >= AI_QUALITY_THRESHOLD:
-            # NEW: Run 10-Gate Validator before returning
-            content = result.get('content', '')
-            validated_content, validation_result = await validate_and_heal(content, prompt, client_key or "UNKNOWN", doc_type)
-            result['content'] = validated_content
-            result['validator_gates'] = validation_result
-            return result
+        if quality_score >= QUALITY_THRESHOLD:
+            break
 
-        # Retry Logic for Low Quality Score
-        logger.warning('Quality score %.1f below threshold (attempt %d)', quality_score, attempt + 1)
-        if attempt < AI_QUALITY_MAX_RETRIES:
-            prompt = f"{prompt}\n\n[QUALITY FEEDBACK]\n- Score was {quality_score}/100. Improve clause accuracy and evidence detail."
+        logger.warning(
+            'Quality score %.1f below threshold %.1f for %s (attempt %d/%d)',
+            quality_score, QUALITY_THRESHOLD, doc_type,
+            attempt + 1, QUALITY_MAX_RETRIES + 1
+        )
 
-    result['_quality_retries'] = AI_QUALITY_MAX_RETRIES + 1
+        if attempt < QUALITY_MAX_RETRIES:
+            quality_errors = result.get('_quality_errors', [])
+            feedback = [f"Quality score was {quality_score}/100 (threshold: {QUALITY_THRESHOLD}/100)"]
+            if quality_errors:
+                feedback.extend(quality_errors[:5])
+            else:
+                feedback.append("Improve clause accuracy, evidence detail, and format compliance")
+            prompt = _inject_quality_feedback(prompt, feedback)
+
+    # ─── Phase 2: 10-Gate Validator (NEW) ────────────────────────────
+    content = result.get('content', '')
+    if not content:
+        content = str(result)
+
+    validated_content, validation_result = await validate_and_heal(
+        content=content,
+        prompt=prompt,
+        client_key=client_key,
+        doc_type=doc_type,
+        api_key=api_key,
+        max_retries=2,
+    )
+
+    # ─── Return with validator metadata ──────────────────────────────
+    result['content'] = validated_content
+    result['_validator_passed'] = validation_result["passed"]
+    result['_validator_issues'] = validation_result["issues"]
+    result['_validator_gates'] = validation_result["gates_run"]
+
+    if not validation_result["passed"]:
+        result['_validator_warnings'] = validation_result["issues"]
+        logger.warning(
+            'Validator failed after retries for %s: %s',
+            doc_type, validation_result["issues"][:3]
+        )
+
     return result
