@@ -1,17 +1,22 @@
-"""AI router — quality-aware multi-provider orchestration.
+"""AI router — quality-aware multi-provider orchestration with Council Mode + Arabic routing + PII scrub.
 
 Architecture:
-  Tier 1: ALL frontier free models (nemotron_ultra, qwen3_coder, kimi_k26, owl_alpha) via OpenRouter
+  Tier 0: Antigravity (Claude Sonnet 4 via Google API) — premium quality, Arabic MSA, PII-safe
+  Tier 1: ALL frontier free models (nemotron_ultra, qwen3_coder, kimi_k26, owl_alpha, deepseek_v4_pro, minimax_m3) via OpenRouter
           — run in parallel batches, first valid JSON wins
-  Tier 2: ALL strong free models (nemotron_super, llama_70b, qwen3_next, hermes_405b) via OpenRouter
+  Tier 2: ALL strong free models (nemotron_super, llama_70b, qwen3_next, hermes_405b, glm_47_flash) via OpenRouter
           — run in parallel batches, only if Tier 1 all fail
-  Tier 3: Groq (groq_llama — Llama 3.3 70B, ~800 t/s)
+  Tier 3: Groq (groq_llama — Llama 3.3 70B, ~800 t/s) + Cerebras (llama_3.3_70b, ~2500 t/s)
           — single attempt, independent API endpoint, only if Tiers 1+2 fail
-   Tier 4: Local AI (local_qwen / local_qwen_3b — Qwen2.5-3B or Qwen2.5-0.5B)
-           — offline fallback, only if Tiers 1-3 fail
+  Tier 4: Local AI (local_qwen / local_qwen_3b — Qwen2.5-3B or Qwen2.5-0.5B)
+          — offline fallback, only if Tiers 1-3 fail
 
 Quality-aware: each tier's output is scored (0-100). If below threshold,
 the router upgrades to the next tier.
+
+Council Mode: parallel query Tiers 0/1/2 + Judge synthesis for high-stakes docs.
+Arabic routing: MOI/Al-Ahsa clients route to Claude Sonnet 4 (Tier 0) for MSA quality.
+PII scrubbing: Saudi IDs, phones, emails stripped before non-Tier-0 calls.
 """
 
 import os
@@ -30,8 +35,17 @@ from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
 from .model_registry import ANTIGRAVITY_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
 from app import settings as app_settings
+from app.services.validator import validate_and_heal
 
 logger = logging.getLogger(__name__)
+
+# ── Council Mode configuration ──────────────────────────────────────────────
+COUNCIL_MODE_ENABLED = os.getenv("COUNCIL_MODE_ENABLED", "false").lower() == "true"
+COUNCIL_JUDGE_MODEL = os.getenv("COUNCIL_JUDGE_MODEL", "antigravity_claude_sonnet_46")
+
+# ── Arabic client routing ──────────────────────────────────────────────────
+ARABIC_CLIENTS = {"MSD-MOI", "Al-Ahsa", "AHSA", "MOI"}
+ARABIC_PREFERRED_MODEL = "antigravity_claude_sonnet_46"
 
 # ── Model performance tracking ─────────────────────────────────────────────
 _PERF_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "model_performance.json"
@@ -148,6 +162,43 @@ PEAK_HOURS_START = app_settings.AI_PEAK_START
 PEAK_HOURS_END = app_settings.AI_PEAK_END
 
 
+# ── PII Scrubbing (PDPL compliance) ────────────────────────────────────────
+def scrub_pii(text: str) -> str:
+    """Remove KSA PII before sending to non-Tier-0 providers."""
+    # Saudi National ID / Iqama (10 digits starting with 1 or 2)
+    text = re.sub(r'\b[12]\d{9}\b', '[REDACTED_ID]', text)
+    # Saudi phone numbers
+    text = re.sub(r'\b(\+966|00966|05)\d{8,9}\b', '[REDACTED_PHONE]', text)
+    # Email addresses
+    text = re.sub(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[REDACTED_EMAIL]', text)
+    # Government employee IDs (hex format like 004D26)
+    text = re.sub(r'\b[0-9A-F]{6}\b', '[REDACTED_EMPLOYEE_ID]', text)
+    return text
+
+
+def _is_arabic_client(client_key: str) -> bool:
+    """Check if client requires Arabic MSA output."""
+    if not client_key:
+        return False
+    client_upper = client_key.upper()
+    return any(arabic in client_upper for arabic in ARABIC_CLIENTS)
+
+
+def _is_streaming_quality_acceptable(text: str, task_type: str) -> bool:
+    """Basic quality check for streamed responses."""
+    if not text or len(text.strip()) < 50:
+        return False
+    placeholder_patterns = [
+        r'\[Client Name\]', r'\[client_name\]', r'\[TBD\]', r'\[TODO\]',
+        r'XXXXXX', r'xxxxxx', r'\[insert', r'\[Insert',
+        r'N/A\s*$', r'lorem ipsum',
+    ]
+    for pat in placeholder_patterns:
+        if re.search(pat, text, re.IGNORECASE):
+            return False
+    return True
+
+
 def _is_openrouter_peak_hours() -> bool:
     """Weekdays 12:00-18:00 UTC — OpenRouter congestion hours."""
     now = time.gmtime()
@@ -165,21 +216,22 @@ def resolve_chain(
     api_key: str = '',
     client_key: str = '',
 ) -> list[str]:
+    """Resolve the provider chain for a given task."""
     if override_provider:
-        # Backward compat: "claude" → antigravity_claude_sonnet_46
         ALIASES = {"claude": "antigravity_claude_sonnet_46"}
         resolved = ALIASES.get(override_provider, override_provider)
         return [resolved]
-    # Per-task model ordering: models that claim this task in their strengths
-    # appear first within each tier, preserving tier priority order.
+    
+    # Arabic clients → force Tier 0 (Claude Sonnet 4) for MSA quality
+    if _is_arabic_client(client_key):
+        logger.info('Arabic client detected: %s → routing to %s', client_key, ARABIC_PREFERRED_MODEL)
+        return [ARABIC_PREFERRED_MODEL]
+    
     all_names = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
-    priority = TASK_PRIORITY.get(task_type, 'high')
 
     def sort_key(name: str) -> tuple:
         model = ALL_MODELS.get(name)
         claims_task = model and task_type in model.strengths
-        # (tier_group, claims_task, original_index)
-        # tier_group: 0=antigravity, 1=frontier, 2=strong, 3=groq, 4=local
         if name in ANTIGRAVITY_NAMES:
             tier = 0
         elif name in FRONTIER_NAMES:
@@ -192,9 +244,7 @@ def resolve_chain(
             tier = 4
         return (tier, 0 if claims_task else 1, all_names.index(name))
 
-    # For low-priority tasks during peak hours, prefer fast/cheap models
     if _skip_openrouter(task_type):
-        # Reorder: local first, then groq, then antigravity (skip frontier/strong)
         fast_names = LOCAL_NAMES + GROQ_NAMES + ANTIGRAVITY_NAMES
         return sorted(fast_names, key=sort_key)
 
@@ -202,7 +252,7 @@ def resolve_chain(
 
 
 def set_api_key(provider_name: str, api_key: str):
-    """Store API key in provider instance cache (thread-safe, no global env mutation)."""
+    """Store API key in provider instance cache."""
     if not api_key:
         return
     from . import _PROVIDER_LOCK, _PROVIDER_CACHE
@@ -286,12 +336,17 @@ def _try_provider(
     system_prompt: str | None = None,
     api_key: str = '',
     mode: str = 'generate',
+    client_key: str = '',
     **kwargs,
 ) -> tuple[dict | None, str | None]:
     if not _rate_limiter.check(provider_name):
         return None, f'Provider {provider_name} exceeded rate limit'
     if not _is_provider_healthy(provider_name):
         return None, f'Provider {provider_name} degraded'
+
+    # PII scrubbing: strip PII before sending to non-Tier-0 providers
+    is_tier0 = provider_name in ANTIGRAVITY_NAMES
+    scrubbed_prompt = prompt if is_tier0 else scrub_pii(prompt)
 
     _ts = time.perf_counter()
     try:
@@ -300,7 +355,7 @@ def _try_provider(
         fn = provider.extract_structured if mode == 'extract' else provider.generate
 
         result, validation_errors = _call_with_debugger(
-            task_type, provider_name, fn, prompt,
+            task_type, provider_name, fn, scrubbed_prompt,
             system_prompt=system_prompt if mode == 'generate' else None,
             **kwargs,
         )
@@ -329,15 +384,13 @@ def _try_provider(
             record_model_result(provider_name, task_type, False, elapsed_ms)
             return None, f"Validation failed: {'; '.join(validation_errors)}"
 
-        # Success — compute quality score for tracking
         _debugger = Autodebugger(task_type)
         _, quality_issues = _debugger.validate_quality(result)
-        quality_score = max(0, 10 - len(quality_issues) * 1.5)  # rough score
+        quality_score = max(0, 10 - len(quality_issues) * 1.5)
 
         logger.info('PROFILE %s via %s in %.2fs (q=%.1f)', task_type, provider_name, elapsed, quality_score)
         _mark_provider_success(provider_name)
         record_model_result(provider_name, task_type, True, elapsed_ms, quality_score)
-        # Attach metadata to result for upstream use
         result['_model_used'] = provider_name
         result['_quality_score'] = round(quality_score, 1)
         result['_response_time_ms'] = elapsed_ms
@@ -360,14 +413,10 @@ def _try_providers_batched(
     api_key: str = '',
     mode: str = 'generate',
     batch_size: int = BATCH_SIZE,
+    client_key: str = '',
     **kwargs,
 ) -> tuple[dict | None, str | None]:
-    """Try providers in parallel batches.
-
-    Runs up to `batch_size` providers concurrently via ThreadPoolExecutor.
-    On first successful result, cancels remaining futures and returns.
-    If all in a batch fail, moves to the next batch.
-    """
+    """Try providers in parallel batches."""
     eligible = [p for p in provider_names if _provider_has_key(p)]
     if not eligible:
         return None, 'No eligible providers in batch'
@@ -391,7 +440,7 @@ def _try_providers_batched(
             futures = {
                 ex.submit(
                     _try_provider_cancelable, p, task_type, prompt, system_prompt,
-                    api_key, mode, **kwargs,
+                    api_key, mode, client_key, **kwargs,
                 ): p for p in batch
             }
             for future in as_completed(futures):
@@ -404,6 +453,62 @@ def _try_providers_batched(
     return None, last_error
 
 
+def _council_route(
+    task_type: str,
+    prompt: str,
+    system_prompt: str | None = None,
+    api_key: str = '',
+    client_key: str = '',
+    **kwargs,
+) -> dict[str, Any]:
+    """Council Mode: parallel query Tiers 0/1/2 + Judge synthesis."""
+    logger.info('Council Mode activated for task: %s', task_type)
+    
+    tasks = [
+        _try_providers_batched(ANTIGRAVITY_NAMES, task_type, prompt, system_prompt, api_key, 'generate', client_key=client_key, **kwargs),
+        _try_providers_batched(FRONTIER_NAMES[:2], task_type, prompt, system_prompt, api_key, 'generate', client_key=client_key, **kwargs),
+        _try_providers_batched(STRONG_NAMES[:2], task_type, prompt, system_prompt, api_key, 'generate', client_key=client_key, **kwargs),
+    ]
+    
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        futures = [ex.submit(lambda t=t: t for t in tasks) for task in tasks]
+        results = [f.result() for f in as_completed(futures)]
+    
+    valid_drafts = []
+    for result, err in results:
+        if result is not None:
+            valid_drafts.append(result)
+    
+    if len(valid_drafts) < 2:
+        logger.warning('Council Mode: insufficient drafts (%d), falling back', len(valid_drafts))
+        return valid_drafts[0] if valid_drafts else _route(task_type, prompt, 'generate', system_prompt, api_key, client_key=client_key, **kwargs)
+    
+    judge_prompt = f"""You are a Senior Lead Auditor synthesizing multiple AI drafts.
+Review these drafts and produce a single consensus answer.
+Discard hallucinations. Enforce client formulas and ISO clause accuracy.
+
+ORIGINAL REQUEST:
+{prompt}
+
+DRAFTS:
+{chr(10).join(f'--- Draft {i+1} ---{chr(10)}{json.dumps(d, indent=2)[:2000]}' for i, d in enumerate(valid_drafts))}
+
+OUTPUT: Final consensus JSON only. No meta-commentary."""
+    
+    judge_result, judge_err = _try_providers_batched(
+        [COUNCIL_JUDGE_MODEL], task_type, judge_prompt, system_prompt, api_key, 'generate', client_key=client_key, **kwargs
+    )
+    
+    if judge_result is not None:
+        judge_result['_council_mode'] = True
+        judge_result['_council_drafts'] = len(valid_drafts)
+        return judge_result
+    
+    logger.warning('Council Mode: Judge failed, returning first draft. Error: %s', judge_err)
+    valid_drafts[0]['_council_mode'] = 'fallback'
+    return valid_drafts[0]
+
+
 def _route(
     task_type: str,
     prompt: str,
@@ -412,26 +517,22 @@ def _route(
     api_key: str = '',
     override_provider: str | None = None,
     client_key: str = '',
+    council_mode: bool = False,
     **kwargs,
 ) -> dict[str, Any]:
-    """Route a task through the quality-aware provider chain.
-
-    strategy:
-      1. Cache check
-      2. Antigravity (Tier 0)
-      3. Peak hours → Groq skip (Tier 3) for low-priority tasks
-      4. Frontier OpenRouter (Tier 1) — parallel batch=2
-      5. Strong OpenRouter (Tier 2) — parallel batch=2
-      6. Groq (Tier 3)
-      7. Local AI (Tier 4)
-      8. Return error if all exhausted
-    """
+    """Route a task through the quality-aware provider chain."""
     ck = _cache_key(task_type, prompt)
     cached = _check_cache(ck)
     if cached is not None:
         return cached
 
     sp = system_prompt if mode == 'generate' else None
+
+    if council_mode and COUNCIL_MODE_ENABLED and mode == 'generate':
+        result = _council_route(task_type, prompt, sp, api_key, client_key, **kwargs)
+        if result is not None:
+            _set_cache(ck, result)
+            return result
 
     if override_provider:
         chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
@@ -440,7 +541,7 @@ def _route(
                 continue
             result, err = _try_provider(
                 provider_name, task_type, prompt,
-                sp, api_key, mode, **kwargs,
+                sp, api_key, mode, client_key, **kwargs,
             )
             if result is not None:
                 _set_cache(ck, result)
@@ -449,7 +550,7 @@ def _route(
 
     result, _ = _try_providers_batched(
         ANTIGRAVITY_NAMES, task_type, prompt,
-        sp, api_key, mode, **kwargs,
+        sp, api_key, mode, client_key=client_key, **kwargs,
     )
     if result is not None:
         _set_cache(ck, result)
@@ -459,15 +560,14 @@ def _route(
         logger.info('PEAK: task_type=%s %s -> Groq (Tier 3) + Local (Tier 4)', task_type, mode)
         result, last_error = _try_providers_batched(
             GROQ_NAMES, task_type, prompt,
-            sp, api_key, mode, **kwargs,
+            sp, api_key, mode, client_key=client_key, **kwargs,
         )
         if result is not None:
             _set_cache(ck, result)
             return result
-        # Fall through to local AI as last resort
         result, last_error = _try_providers_batched(
             LOCAL_NAMES, task_type, prompt,
-            sp, api_key, mode, **kwargs,
+            sp, api_key, mode, client_key=client_key, **kwargs,
         )
         if result is not None:
             _set_cache(ck, result)
@@ -476,7 +576,7 @@ def _route(
 
     result, _ = _try_providers_batched(
         FRONTIER_NAMES, task_type, prompt,
-        sp, api_key, mode, **kwargs,
+        sp, api_key, mode, client_key=client_key, **kwargs,
     )
     if result is not None:
         _set_cache(ck, result)
@@ -484,7 +584,7 @@ def _route(
 
     result, last_error = _try_providers_batched(
         STRONG_NAMES, task_type, prompt,
-        sp, api_key, mode, **kwargs,
+        sp, api_key, mode, client_key=client_key, **kwargs,
     )
     if result is not None:
         _set_cache(ck, result)
@@ -492,7 +592,7 @@ def _route(
 
     result, last_error = _try_providers_batched(
         GROQ_NAMES, task_type, prompt,
-        sp, api_key, mode, **kwargs,
+        sp, api_key, mode, client_key=client_key, **kwargs,
     )
     if result is not None:
         _set_cache(ck, result)
@@ -500,7 +600,7 @@ def _route(
 
     result, last_error = _try_providers_batched(
         LOCAL_NAMES, task_type, prompt,
-        sp, api_key, mode, **kwargs,
+        sp, api_key, mode, client_key=client_key, **kwargs,
     )
     if result is not None:
         _set_cache(ck, result)
@@ -516,26 +616,11 @@ def generate(
     api_key: str = '',
     override_provider: str | None = None,
     client_key: str = '',
+    council_mode: bool = False,
     **kwargs,
 ) -> dict[str, Any]:
     """Generate a document through the quality-aware provider chain."""
-    return _route(task_type, prompt, 'generate', system_prompt, api_key, override_provider, client_key, **kwargs)
-
-
-def _is_streaming_quality_acceptable(text: str, task_type: str) -> bool:
-    """Basic quality check for streamed responses — catches placeholders without AI calls."""
-    if not text or len(text.strip()) < 50:
-        return False
-    # Check for common placeholder patterns
-    placeholder_patterns = [
-        r'\[Client Name\]', r'\[client_name\]', r'\[TBD\]', r'\[TODO\]',
-        r'XXXXXX', r'xxxxxx', r'\[insert', r'\[Insert',
-        r'N/A\s*$', r'lorem ipsum',
-    ]
-    for pat in placeholder_patterns:
-        if re.search(pat, text, re.IGNORECASE):
-            return False
-    return True
+    return _route(task_type, prompt, 'generate', system_prompt, api_key, override_provider, client_key, council_mode, **kwargs)
 
 
 def generate_stream(
@@ -547,16 +632,12 @@ def generate_stream(
     client_key: str = '',
     **kwargs,
 ):
-    """Stream a response through the provider chain.
-
-    Tries providers sequentially (not in parallel, since streaming
-    requires a single active connection). Falls through tiers:
-    frontier → strong → groq → error.
-    """
+    """Stream a response through the provider chain."""
+    scrubbed_prompt = scrub_pii(prompt) if not override_provider else prompt
+    
     if override_provider:
         chain = resolve_chain(task_type, override_provider, api_key, client_key=client_key)
     elif _skip_openrouter(task_type):
-        # Keep Antigravity (Google API, not OpenRouter) + Groq + Local fallback
         logger.info('PEAK: task_type=%s streaming -> Antigravity + Groq + Local', task_type)
         chain = ANTIGRAVITY_NAMES + GROQ_NAMES + LOCAL_NAMES
     else:
@@ -575,13 +656,12 @@ def generate_stream(
             provider = create_provider(provider_name)
 
             collected = []
-            for token in provider.generate_stream(prompt, system_prompt=system_prompt, **kwargs):
+            for token in provider.generate_stream(scrubbed_prompt, system_prompt=system_prompt, **kwargs):
                 collected.append(token)
                 yield token
 
             full = ''.join(collected)
             if full and not full.startswith('[Error:'):
-                # Basic quality gate: check for placeholder patterns
                 if _is_streaming_quality_acceptable(full, task_type):
                     _mark_provider_success(provider_name)
                     return
