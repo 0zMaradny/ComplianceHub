@@ -1,5 +1,5 @@
 """
-Validator Test Suite — T1 through T6
+Validator Test Suite — T1 through T7
 Proves the validator catches every failure mode.
 Run: pytest tests/test_validator.py -v
 """
