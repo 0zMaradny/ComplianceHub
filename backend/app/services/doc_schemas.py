@@ -838,6 +838,99 @@ DOCUMENT_CONTRACTS = {
             'overall_availability': 'str',
         },
     },
+
+    # ── Surveillance Audit Plan (combined, no Stage 1/2 split) ───────────
+    'Surveillance_Plan': {
+        'client_name': 'str — legal entity name',
+        'audit_date': 'str DD/MM/YYYY — start date of surveillance audit',
+        'standard': 'str — full standard name with year, e.g. ISO 9001:2015',
+        'surveillance_cycle': 'str — e.g. "Year 1 Surveillance" or "Year 2 Surveillance"',
+        'audit_team': [
+            {'name': 'str', 'role': 'str', 'days': 'int'},
+        ],
+        'audit_objectives': ['str — 4-6 specific objectives including review of open NCs and changes'],
+        'audit_scope': 'str — 2-3 sentence scope description (reduced scope, critical clauses 4-10)',
+        'audit_criteria': ['str — ISO clauses, previous NC clauses, organizational changes'],
+        'review_of_open_ncs': 'str — mandatory section: status of previously raised nonconformities',
+        'review_of_changes': 'str — mandatory section: organizational changes since initial certification',
+        'daily_schedule': [
+            {
+                'day': 'int',
+                'date': 'str DD/MM/YYYY',
+                'time': 'str e.g. 09:00-10:30',
+                'activity': 'str — specific audit activity',
+                'auditee': 'str — person/role interviewed',
+                'auditor': 'str — auditor name from team',
+                'clause': 'str — ISO clause reference',
+            },
+        ],
+        'confidentiality': 'str — confidentiality statement',
+        'language': 'str e.g. English',
+        'report_date': 'str DD/MM/YYYY — 30 days after audit',
+    },
+
+    # ── Surveillance Audit Report ────────────────────────────────────────
+    'Surveillance_Report': {
+        'client_name': 'str',
+        'audit_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'report_number': 'str — format TUV-SR-YYYY-NNN',
+        'scope': 'str',
+        'lead_auditor': 'str',
+        'audit_team': [
+            {'name': 'str', 'role': 'str', 'days': 'int'},
+        ],
+        'findings_summary': 'str — 3-5 paragraphs: overall assessment, strengths, concerns, effectiveness',
+        'positive_findings': ['str — 3-8 specific strengths observed'],
+        'opportunities_for_improvement': ['str — 2-6 specific OFIs with clause references'],
+        'nonconformities': [
+            {
+                'clause': 'str',
+                'severity': 'str — Major/Minor',
+                'description': 'str — detailed finding description',
+                'due_date': 'str DD/MM/YYYY',
+            },
+        ],
+        'previously_raised_ncs': 'str — mandatory section: review of nonconformities raised at initial certification',
+        'changes_since_initial': 'str — mandatory section: organizational changes since initial certification',
+        'cb_recommendation': 'str — defaults to "Continued Certification"',
+        'conclusion': 'str — 2-3 paragraphs: recommendation, conditions, next surveillance',
+        'report_date': 'str DD/MM/YYYY',
+        'methodology': {
+            'approach': 'str — process-based approach description',
+            'sampling': 'str — sampling methodology per ISO 19011',
+            'criteria': 'str — audit criteria reference',
+            'methods': 'str — specific methods employed',
+        },
+    },
+
+    # ── Surveillance Findings Summary ────────────────────────────────────
+    'Surveillance_Findings_Summary': {
+        'client_name': 'str',
+        'audit_date': 'str DD/MM/YYYY',
+        'standard': 'str',
+        'cycle': 'str — e.g. "Year 1 Surveillance"',
+        'summary': {
+            'total_findings': 'int',
+            'major': 'int',
+            'minor': 'int',
+            'ofi': 'int',
+            'observations': 'int',
+            'recurring_ncs': 'int',
+        },
+        'findings': [
+            {
+                'finding_id': 'str — e.g. SF-001',
+                'clause': 'str — ISO clause reference',
+                'type': 'str — NC/OFI/OBS',
+                'severity': 'str — Major/Minor/N/A',
+                'description': 'str — detailed finding description',
+                'status': 'str — Open/Closed/In Progress',
+                'previous_nc_id': 'str — link to original NC if recurring',
+            },
+        ],
+        'overall_assessment': 'str — 2-3 paragraphs summarizing surveillance findings',
+    },
 }
 
 

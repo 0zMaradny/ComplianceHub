@@ -18,6 +18,10 @@ env/
 backend/uploads/
 backend/output/
 
+# Legacy nested-repo leftovers (fold-in done; keep repo flat)
+ComplianceHub/
+output/
+
 # Local AI models (multi-GB, downloaded separately)
 models
 

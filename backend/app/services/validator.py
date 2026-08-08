@@ -1,4 +1,3 @@
-@"
 import re
 import json
 from datetime import datetime
@@ -53,7 +52,7 @@ def _formula_in_content(formula: str, content: str) -> bool:
     return normalized_formula in normalized_content
 
 # ─── Load ISO Clause Database ─────────────────────────────────────────────
-_CLAUSE_DB_PATH = Path(__file__).parent.parent.parent / "data" / "iso_clause_database.json"
+_CLAUSE_DB_PATH = Path(__file__).parent / "iso_clause_database.json"
 _CLAUSE_DB = {}
 if _CLAUSE_DB_PATH.exists():
     try:
@@ -387,4 +386,3 @@ async def validate_and_heal(
             break
     
     return content, validation
-"@ | Out-File -FilePath "app\services\validator.py" -Encoding UTF8

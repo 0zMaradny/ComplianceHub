@@ -1,4 +1,3 @@
-@"
 import pytest
 from app.services.validator import (
     check_client_isolation,
@@ -122,4 +121,3 @@ class TestT7Integration:
         """
         result = await validate_output(content, "SAGCO", "risk_register")
         assert result["passed"] is True
-"@ | Out-File -FilePath "tests\test_validator.py" -Encoding UTF8
