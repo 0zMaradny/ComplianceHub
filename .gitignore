@@ -9,10 +9,15 @@ build/
 venv/
 env/
 
-# Environment
+# Environment — never commit real secrets
 .env
 .env.local
+.env.*
 *.env
+!*.env.example
+!backend/.env.example
+backend/.env
+backend/.env.local
 
 # Backend uploads/output
 backend/uploads/
