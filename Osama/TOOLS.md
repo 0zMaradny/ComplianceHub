@@ -1,197 +1,194 @@
-# TOOLS.md — Local Notes
-_See also: Context.md (clients + platform) · AGENTS.md (roles) · SKILLS.md (SOPs) · SOUL.md (identity)_
+# TOOLS.md — Infrastructure, API Routing & Skills Registry
+_Version: 4.1 · August 2026_
 
-Skills define _how_ tools work. This file is for _your_ specifics — the stuff that's unique to your setup.
-
-## ComplianceHub Repo
-
-- **Location:** `~/ComplianceHub` (cloned from https://github.com/0zMaradny/ComplianceHub)
-- **Branch:** `main` (auto-pushes via post-commit hook)
-- **Never commit directly to main without testing first**
-
-## GitHub
-
-- **Username:** `0zMaradny` (zero, not O)
-- **PAT:** stored in `~/.git-credentials`
-- **gh CLI:** available and authenticated
-
-## API Keys Reference
-
-All API keys are stored in `backend/.env`. Each key powers specific tiers of the AI router or system features.
-
-### Quick Reference
-
-| Key | Provider | Tier | Powers | Cost | Status | Min Length |
-|-----|----------|------|--------|------|--------|------------|
-| `OPENROUTER_API_KEY` | OpenRouter | 1+2 (Free) | **8 free models:** frontier (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha) + strong (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B). Up to 1M ctx | **Free** | ✅ Valid | Any non-empty |
-| `GROQ_API_KEY` | Groq | 3 (Fastest) | Llama 3.3 70B Versatile (~800 t/s), 131K ctx | **Free** | ✅ Valid | Any non-empty |
-| `HF_API_KEY` | HuggingFace | Fallback | Meta-Llama-3-8B-Instruct (overridable via `HF_MODEL` env) | **Free** | ✅ Valid | Any non-empty |
-| `ANTHROPIC_API_KEY` | Anthropic | 0 (Premium) | Claude Sonnet 4 (200K ctx, best quality) | **Paid** | ⚠️ Truncated (61 chars, needs ≥100) — auto-skipped | ≥ 100 chars |
-| GitHub PAT | GitHub | — | `git push` via post-commit hook (`~/.git-credentials`) | **Free** | ✅ Valid | — |
-
-### Per-Key Detail
-
-#### `OPENROUTER_API_KEY` — Primary Free Cloud Tier
-
-| Field | Detail |
-|-------|--------|
-| **Prefix** | `sk-or-v1-` |
-| **File(s)** | `app/services/ai/openrouter_provider.py:27` — reads from env |
-| **Router** | `app/services/ai/router.py:176` — injected via `set_api_key()` |
-| **Models** | 8 free: Nemotron Ultra 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha, Nemotron Super 120B, Llama 3.3 70B, Qwen3 Next 80B, Hermes 405B |
-| **Parallel** | Batch size 2 per tier (configurable via `AI_BATCH_SIZE`) |
-| **Peak hours** | Weekdays 12–18 UTC — low-priority tasks skip OpenRouter |
-| **Rate limit** | 30 req/min per provider |
-| **Degrade** | 3 consecutive failures → provider skipped |
-| **Absent** | Tiers 1+2 skipped, falls through to Groq |
-| **Get key** | https://openrouter.ai/keys |
-
-#### `GROQ_API_KEY` — Fastest Free Backup
-
-| Field | Detail |
-|-------|--------|
-| **Prefix** | `gsk_` |
-| **File(s)** | `app/services/ai/groq_provider.py:12` — reads from env |
-| **Router** | `app/services/ai/router.py:180` — injected via `set_api_key()` |
-| **Models** | Llama 3.3 70B Versatile (~800 t/s inference) |
-| **Context** | 131K tokens |
-| **Rate limit** | 30 req/min |
-| **Absent** | Tier 3 skipped, falls through to local/offline |
-| **Get key** | https://console.groq.com/keys |
-
-#### `HF_API_KEY` — Optional HuggingFace Fallback
-
-| Field | Detail |
-|-------|--------|
-| **Prefix** | `hf_` |
-| **File(s)** | `app/services/ai/hf_provider.py` |
-| **Models** | Default: `meta-llama/Meta-Llama-3-8B-Instruct` (override via `HF_MODEL`) |
-| **Cooldown** | 402/429/503 → exponential backoff: 60s → 120s → 300s → 600s |
-| **Rate limit** | 10 req/min, 0.8s minimum inter-request gap |
-| **Setup** | Must enable Inference Providers at https://huggingface.co/settings/inference-providers |
-| **Absent** | Skipped — no fallback impact |
-| **Get key** | https://huggingface.co/settings/tokens |
-
-#### `ANTHROPIC_API_KEY` — Premium Tier (Currently Skipped)
-
-| Field | Detail |
-|-------|--------|
-| **Prefix** | `sk-ant-api` |
-| **File(s)** | `app/services/ai/anthropic_provider.py:15` — reads from env |
-| **Router** | `app/services/ai/router.py:182` — injected via `set_api_key()` |
-| **Models** | Claude Sonnet 4 (`claude-sonnet-4-20250514`) |
-| **Context** | 200K tokens |
-| **Length check** | `app/services/ai/router.py:233-235` — requires ≥ 100 chars or skipped |
-| **Status** | Current key is 61 chars — fast-fails in 0.0s instead of ~8s timeout |
-| **Rate limit** | 50 req/min |
-| **Absent/short** | Tier 0 skipped, falls through to OpenRouter free tiers |
-| **Get key** | https://console.anthropic.com/ |
-
-#### GitHub PAT — Auto-Push
-
-| Field | Detail |
-|-------|--------|
-| **Location** | `~/.git-credentials` |
-| **Purpose** | `git push` via `.git/hooks/post-commit` — auto-pushes every commit on `main` |
-| **Scope** | Repo access to `github.com/0zMaradny/ComplianceHub` |
-
-### No-Key Tiers
-
-| Tier | Provider | How to Enable |
-|------|----------|---------------|
-| **4 — Local AI** | `llama-server` (localhost:8080) | `bash run.sh --local-ai` or start manually: `/opt/llama-server/llama-server -m /opt/llama-server/models/qwen3-4b.gguf -c 32768 -t 4 -b 2048 --mlock --port 8080` |
-| **Offline** | Static template generator | Leave all API keys empty — instant generation, no AI needed (3.2s/8 docs) |
-
-### Where to Configure
-
-| Environment | File / Location |
-|-------------|-----------------|
-| **Local dev** | `backend/.env` — 4 keys already populated |
-| **Railway deploy** | Dashboard → Variables tab — auto-injected as env vars |
-| **Reference** | `backend/.env.example` — documents all 20+ configurable vars |
-
-### Related Env Vars (beyond keys)
-
-| Var | Default | Purpose |
-|-----|---------|---------|
-| `AI_CACHE_TTL` | 3600 | Response cache TTL (seconds) |
-| `AI_DEGRADE_THRESHOLD` | 3 | Consecutive failures before skipping a provider |
-| `AI_BATCH_SIZE` | 2 | Parallel model calls per tier |
-| `AI_PEAK_START` / `AI_PEAK_END` | 12 / 18 | OpenRouter peak hours (UTC) |
-| `LOCAL_AI_BASE` | http://localhost:8080 | Local llama-server URL |
-| `LOCAL_AI_TIMEOUT` | 120 | Local AI request timeout (seconds) |
-| `HF_MODEL` | meta-llama/Meta-Llama-3-8B-Instruct | HuggingFace model override |
-| `TUNNEL_SECRET` | — | Secret for tunnel URL updates |
-
-## Local AI (llama.cpp)
-
-- **Binary:** `/opt/llama-server/llama-server`
-- **Models directory:** `~/ComplianceHub/backend/models/`
-- **Available models (ordered best-first):**
-  - `qwen3-4b.gguf` (~2.5 GB, Q4_K_M) — **primary** ~40s/doc, 32K ctx, best local quality
-  - `qwen-3b.gguf` (~2.1 GB, Q4_K_M) — fallback ~60s/doc, 8K ctx
-  - `qwen-0.5b.gguf` (~469 MB, Q4_K_M) — minimal ~20s/doc, 4K ctx, lowest quality
-- **ARM64 flags:** `-t 4 -b 2048 --mlock --cache-type-k q8_0 --cache-type-v q8_0`
-- **Port:** 8080
-
-## TÜV Austria
-
-- **Employer:** TÜV Austria GCC (Feb 2023–present)
-- **Role:** Scheme Head — ISMS / ITSMS / BCMS
-- **Branding:** TUV_BLUE #003D7A · TUV_RED #C00000
-- **Logo:** `backend/static/tuv_logo.png`
-
-## Client Doc Code Prefixes
-
-| Client | Prefix |
-|--------|--------|
-| MSD-MOI | `MSD-MOI-GRC-` |
-| UACC | `UACC-EnMS-` |
-| SAGCO | SAGCO-IMS- |
-| MOC | MOC-ABMS- |
-| Al-Ahsa Municipality | AHSA-ISMS- |
-
-## SAGCO Dashboard
-
-- **URL:** https://sagcodrv-ux.github.io/sagco-im/
-- **Data backend:** Google Sheets → Apps Script Web App → static site
-- **API:** `https://script.google.com/macros/s/AKfycbweju9C4Xow2mJ95Y_namTbj8Zsll-faZv2vuL_vAwzcJ0xfmymXz88_vJanfCuXaM/exec?tab=TABNAME&action=read`
-- **Available data tabs (60+):** risks, compliance, objectives, context, pestle, moc, energy, hira, sea, bribery_risk, ghg_inventory, training, ptw_register, emergency, fire_ext, capa, incidents, and many more
-- **Domain vocabulary:** SHC, EnB, EnPI, SEU, SPC, GHG, HFO, LPG, HIRA, PTW, MOC, ECM, SEET
-- **Risk formula:** L × S (5×5 matrix, confirmed via WI-RA-01)
-- **Doc codes:** L4-430-RC-01, L4-IMS-410-WI-04, SAGCO-IMS-CKL-001, SAGCO-IMS-WI-RA-01
-- **IMS Champion** = system owner for all SAGCO IMS documentation
-## Excel Defaults
-
-- **Engine:** openpyxl (never xlsxwriter, never VBA)
-- **Calculations:** Live Excel formulas only — never hardcoded Python values
-- **Hidden sheets:** `_Lists` or `_Data` for all dropdown sources
-- **Print:** A4, rows_to_repeat on row 1, freeze panes
-- **Recalc:** Run `scripts/recalc.py` after every formula build — zero errors mandatory
-
-## Word / Arabic Defaults
-
-- **Engine:** python-docx
-- **Arabic:** WD_ALIGN_PARAGRAPH.RIGHT + explicit bidi run property
-- **Voice:** ﻗﻤﻨﺎ ﺑـ / ﺗﻢ ﺗﻄﺒﻴﻖ — first-person practitioner, active voice
-- **ISO refs + Risk IDs:** Always in English, even in Arabic documents
-
-## Python Defaults
-
-- **Style:** Modular scripts, `# --- CONFIG ---` block at top
-- **Quality:** `python -m compileall . -q` + `python -m pyflakes app/` — zero errors
-- **Deployment:** Locally deployable, no cloud dependency
-
-## React / Frontend Defaults
-
-- **Build:** Vite (`npm run build`)
-- **Lint:** ESLint (`npm run lint`)
-- **Dev server:** `npm run dev` (port 5173)
-
-## Why Separate?
-
-Skills are shared. Your setup is yours. Keeping them apart means you can update skills without losing your notes, and share skills without leaking your infrastructure.
+_Infrastructure specifics for OWL. Skills define how tools work; this file defines what tools exist and how they route._
 
 ---
 
-Add whatever helps you do your job. This is your cheat sheet.
+## API Routing
+
+### OpenRouter (Primary AI Router)
+
+| Route | Model | Use | Free? |
+|-------|-------|-----|-------|
+| Default | nvidia/nemotron-ultra-253b | Hermes Agent | ✅ |
+| Fast | google/gemma-3-27b-it:free | Cline fallback | ✅ |
+| Code | qwen/qwen3-235b-a22b:free | Cline fallback | ✅ |
+| Variety | mistralai/mistral-small-3.2-24b-instruct:free | Cline fallback | ✅ |
+| Speed | groq/llama-3.3-70b | Speed-critical | ✅ |
+
+**Endpoint:** `openrouter.ai/api/v1` — never hardcode provider endpoints directly
+
+### Direct Platform Access
+
+| Platform | Model | Endpoint Type | Auth |
+|----------|-------|---------------|------|
+| Qwen Studio | Qwen 3.8 Max | Web UI (qwen.ai) | Account login |
+| Z.ai Agent | GLM-5.2 | Agent mode (z.ai) | Account login |
+| Z.ai Chat | GLM-5.2 | Chat mode (z.ai) | Account login |
+| AutoClaw | Z.ai automation engine | AutoClaw (z.ai) | Account login |
+| Gemini Pro | Pro 3.1 / Flash 3.5 / Thinking 3.6 | API (ai.google.dev) | Company API key |
+| Cline | DeepSeek Flash V4 via OpenRouter | VS Code extension | OpenRouter key |
+| MiniMax | MiniMax | Web UI | Account login |
+| MiMo | MiMo-V2.5-Pro | Web UI | Account login |
+
+**⚠️ Anthropic API blocked in KSA** — access Claude via OpenRouter only, or use Claude phone app
+
+---
+
+## Z.ai Platform Modes — When to Use Which
+
+| Mode | What | OWL Load | Best For | Turn Limit |
+|------|------|----------|----------|------------|
+| **Z.ai Agent** | Full agent with knowledge files, instructions, tools | Full: SOUL + CONTEXT + AGENTS + MEMORY + skill domain file + client profile | Multi-step reasoning, CAPA, stress-test, formula verification, pre-audit analysis, Arabic doc drafting | ~60 desktop · ~40 phone |
+| **Z.ai Chat** | Lightweight conversation, no agent setup | Light: SOUL summary + CONTEXT client row + 1 skill paragraph | Quick lookups, one-off analysis, brainstorming, formula spot-checks, "what clause covers X?", simple triage | ~60 desktop · ~40 phone |
+| **AutoClaw** | Automated agent with scheduled triggers + OWL skill pipeline | Full: SOUL + CONTEXT + AGENTS + all skill domain files | Scheduled workflows (morning briefing, calendar sync), batch template population, quality gate automation, recurring client checks, audit package assembly | Unlimited (cron-driven) |
+
+**Decision rule:** If it needs full OWL context and multiple steps → Z.ai Agent. If it's one question or quick check → Z.ai Chat. If it runs on a schedule or repeats → AutoClaw.
+
+### AutoClaw — OWL Setup
+
+**Purpose:** Automated OWL workflows that run without manual intervention.
+
+| Automation | Schedule | OWL Skills | Description |
+|------------|----------|------------|-------------|
+| Morning Briefing | Daily 8 AM | 01b, 10, 28 | Load audit calendar → list today's audits → classify sensitivity → brief |
+| Audit Calendar Sync | Daily 9 AM | 14, 25 | Pull new audit clients → update CONTEXT.md Audit Clients table → classify |
+| Quality Gate Sweep | On deliverable save | 21, 22 | Auto-run Language Gate + Quality Gates on saved outputs |
+| Template Population | On audit start | 02, 14, 25 | Identify standard → load TÜV template → pre-fill (RICH/SEMI/SPARSE) → regulatory overlays → confidence report → queue |
+| Evening Digest | Daily 6 PM | 01b, 32 | Summarize day's work → update MEMORY.md → build board summary |
+| Weekly Reconciliation | Friday 5 PM | 22, 34 | Reconcile skill counts, client status, platform usage → update SOUL.md Canonical Counts |
+| ComplianceHub Deploy Check | On git push | 38, 17 | Run code review gate → lint check → build verification |
+
+**AutoClaw config location:** `autoclaw-projects/SETUP.md`
+
+---
+
+## MCP Server Registry
+
+| Server | Purpose | Status | Used By |
+|--------|---------|--------|---------|
+| Context7 | Live FastAPI/React API docs | ✅ Active | Agent 3, 7 |
+| GitHub | PR/issue/code management | ✅ Active | Agent 3, 7 |
+| Playwright | E2E testing | ✅ Active | Agent 7 |
+| agent-browser | Web scraping (government/ISO sites) | ✅ Active | Agent 1, 10 |
+| Alibaba OCR | Code review with custom rules | ✅ Active | Agent 3, 7 (Skill 38) |
+
+**Hard limit:** Never exceed 5 active MCP servers simultaneously (SOUL.md Law #7)
+
+---
+
+## Installed CLI Tools
+
+| Tool | Version | Purpose | Install |
+|------|---------|---------|---------|
+| caveman | latest | Token compression + review | npm global |
+| graphify | latest | Codebase knowledge graph (30+ file repos only) | npm global |
+| markitdown | latest | Document ingestion (PDF/DOCX/PPTX/XLSX/URL → .md) | pip global |
+| repomix | latest | One-shot codebase snapshots | npm global |
+| LeanCTX | latest | Compress terminal reads in Cline | npm global |
+
+### Tool-Specific Rules
+
+| Tool | Rule |
+|------|------|
+| markitdown | Always run on incoming files before reading — agent reads .md, not binary. Government/ISO sites → use agent-browser first (403 otherwise) |
+| caveman | Full at 60 turns (desktop) · ultra from message 1 (phone). Never modify code blocks, formulas, clause refs, or doc codes |
+| graphify | Only for repos 30+ files — overhead not worth it below that |
+| LeanCTX | `lean-ctx init --agent cline` — compresses terminal/file reads on Windows |
+| repomix | One-shot snapshots for sharing codebase context to AI |
+
+---
+
+## ComplianceHub Infrastructure
+
+| Component | Port | Stack | Notes |
+|-----------|------|-------|-------|
+| Backend | 8000 | FastAPI + python-docx + openpyxl | Always |
+| Frontend | 5173 | React + Vite | Always |
+| AI Router | — | OpenRouter → Groq → HuggingFace → Local Qwen3-4B → Offline | 8 free models |
+| Design System | — | templates/DESIGN.md | red #C00000 + black — no blue, no hardcoded hex |
+
+**Hard Constraints:**
+- NEVER Firebase → `window.storage` only
+- NEVER Excel as HTML blob → `window.XLSX.utils.aoa_to_sheet + writeFile`
+- ALWAYS `sanitizeHtml()` before `dangerouslySetInnerHTML`
+- ALWAYS `new AbortController()` per AI call
+- ALWAYS `<ErrorBoundary>` wrapping `<App/>`
+- NEVER `setAuditProjects` inside `.forEach` → accumulate then call once
+
+---
+
+## Gemini Gems Configuration
+
+| Gem | Name | Model | Features | Knowledge Files |
+|-----|------|-------|----------|-----------------|
+| 1 | OWL Auditor | Pro 3.1 | Deep Research + Grounding | SOUL + CONTEXT + SKILLS + skills/AUDIT.md + clients/KSA-REGULATORY.md + templates/ |
+| 2 | OWL Implementer | Pro 3.1 | Canvas + Deep Research | SOUL + CONTEXT + SKILLS + skills/IMPLEMENT.md + clients/ (MEDIUM only) |
+| 3 | OWL KSA Lead | Pro 3.1 | Deep Research + Grounding | SOUL + CONTEXT + SKILLS + skills/IMPLEMENT.md + clients/KSA-REGULATORY.md |
+| 4 | OWL Personal | Pro 3.1 | Deep Research | MEMORY.md only (no client data) |
+| 5 | OWL Code | Pro 3.1 | Deep Research | SOUL + SKILLS + skills/DEV.md + templates/DESIGN.md |
+
+**Gem coordination patterns:** 1→2→3 (audit→implement→KSA validate) · 3→2 (KSA requirements→implement) · 2→3 (Arabic doc→KSA validate) · 5→1 (code→compliance check) · 4 standalone (personal+board)
+
+**Gem rules:** Never upload raw PDF/DOCX → always markitdown first. Never upload full SKILLS.md → split into domain files. Strip PUSH → "Work through this step by step".
+
+---
+
+## Client Routing — Projects vs Audit Clients
+
+| Category | Clients | Formula Access | Platform Routing | Profile |
+|----------|---------|----------------|------------------|---------|
+| **Projects** | MSD-MOI, Al-Ahsa | Full · locked | HIGH → Claude/Cline/Hermes ONLY | Full `clients/<NAME>.md` |
+| **Projects** | SAGCO + new | Full · locked | MEDIUM → all with PII scrub | `clients/<NAME>.md` from TEMPLATE |
+| **Audit Clients** | Daily by calendar | No formulas | Varies → classify per client | One-line in CONTEXT.md |
+| Archived | UACC, MOC | Locked · reference only | — | `clients/archive/` |
+
+---
+
+## Skills Registry (38 Active)
+
+| # | Domain File | Skills |
+|---|------------|--------|
+| 1 | skills/AUDIT.md | 02, 07, 12, 14, 26, 27, 28 |
+| 2 | skills/IMPLEMENT.md | 01, 03, 04, 05, 06, 09, 16, 20, 24, 25 |
+| 3 | skills/DEV.md | 08, 11, 17, 38 |
+| 4 | skills/SYSTEM.md | 01b, 15, 21, 22, 23, 29, 30, 31, 37, 39 |
+| 5 | skills/PERSONAL.md | 10, 19, 32, 33, 34, 35 |
+| — | Tombstoned | 13, 18 |
+
+**Domain files split from SKILLS.md (v4.0):** 133KB → 4KB index + 5 domain files (~7KB each). 122KB saved per session.
+
+---
+
+## TÜV Austria Templates
+
+14 standardized CB forms in `templates/tuv-austria/`. **NEVER modify — populate with client data only.**
+
+| # | Form | Purpose | Code |
+|---|------|---------|------|
+| 1 | Audit Questionnaire (ISO 22301) | BCMS pre-audit questionnaire | Q01 |
+| 2 | Audit Questionnaire (General) | General pre-audit questionnaire | Q02 |
+| 3 | Manday Calculation | Audit duration determination | MD |
+| 4 | Audit Plan (General) | Audit scheduling and scope | AP-IMS |
+| 5 | Audit Plan (ISMS) | ISMS-specific audit plan | AP-ISMS |
+| 6 | Audit Report (IMS) | Post-audit findings and recommendation | AR |
+| 7 | Participation List | Audit attendee record | PL |
+| 8 | Audit Checklist (ISO 27001) | Clause-by-clause evidence check | CL-ISMS |
+| 9 | Audit Checklist (Combined) | QM/EMS/HSE clause evidence | CL-IMS |
+| 10 | Certificate Text | Certificate wording | CERT |
+
+**Population reference:** `templates/tuv-austria/POPULATION.md` — field maps, data sources, Projects vs Audit Clients modes, regulatory overlays, naming convention, confidence levels
+
+---
+
+## File Dependency Chain
+
+**Minimum load (any platform):** SOUL.md → CONTEXT.md
+**Full load (when task requires):** + AGENTS.md → SKILLS.md → MEMORY.md → TOOLS.md → PLATFORMS.md
+
+**Client profiles loaded on demand:** Only load the relevant `clients/<NAME>.md` for the active client, never all at once.
+
+---
+
+_Last updated: 2026-08-09 · OWL v4.2 · Z.ai Agent/Chat/AutoClaw added_

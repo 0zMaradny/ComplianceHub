@@ -1,641 +1,114 @@
-# Skills.md — Master Playbook (SOPs)
-_See also: AGENTS.md (who runs each skill) · Context.md (clients + platform) · MEMORY.md (preferences) · TOOLS.md (infrastructure + keys)_
-
-Standardized processes. Claude runs these without re-explanation. **All skills auto-trigger based on the intent of your message — just describe what you need in natural language. No need to say "Run Skill X" or mention skill numbers.**
-
-**Platform:** ComplianceHub — full-stack FastAPI + Vite/React (https://github.com/0zMaradny/ComplianceHub)
-**Legacy:** React artifact (TUV_Platform_Fixed.jsx) — archived, superseded by ComplianceHub
-
----
-
-## Skill 01 — New Session Startup
-
-**Trigger:** Start of any new session / "Let's start" / "New session" / first message
-
-**Auto-trigger:** ALWAYS runs at the start of every session. No user action needed.
-
-**Steps:**
-1. Load Context.md — read the full dual role structure:
-   - Track A (Auditor): Am I here to audit a client seeking certification? → Agent 1 (Judge)
-   - Track B (Implementer): Am I here to build/deliver for a client? → Agent 2 (Architect)
-   - Both tracks can be active in the same session
-2. Load Agents.md — identify which agent(s) are needed
-3. Review Memory.md — apply all confirmed preferences, avoid all logged mistakes
-4. Client isolation check: Which client is active?
-   - MSD-MOI → Arabic MSA · GRC formulas · MOI visual identity
-   - UACC → English technical · EnMS vocabulary · ISO 50001 formulas
-   - SAGCO → TBD per deliverable
-   - Al-Ahsa Municipality → Arabic · ISMS/27001 framework
-   - New client → establish doc code, formulas, language, visual identity in Context.md first
-5. Ask: "What are we delivering today — and in which role?"
-6. Begin — never re-explain standards, client context, or formulas already in Context.md
-
----
-
-## Skill 02 — IMS Audit (Multi-Standard)
-
-**Trigger:** "Audit this" / "Check against ISO" / "Surveillance audit" / "Initial audit" / "Recertification" / "Audit prep" / "NC finding" / "Nonconformity" / "Major NC" / "Minor NC" / "OFI" / "Audit report" / "Compliance check" / "Clause check" / "ISO audit" / "Multi-standard audit" / "IMS audit" / "Stage 1" / "Stage 2" / "Find gaps" / "What's missing" / "Are we compliant" / "Audit readiness"
-
-**Auto-trigger:** ANY message about auditing, checking compliance, finding gaps, NCs, OFIs, or reviewing documents against ISO standards.
-
-**Agent:** Agent 1 (The Judge) — Track A: Lead Auditor role
-
-**Scheme Responsibility Context:** Osama is Scheme Head at TÜV Austria GCC for:
-- ISMS (ISO 27001) · ITSMS (ISO 20000-1) · BCMS (ISO 22301)
-- Accredited to audit: ISO 9001 · 14001 · 45001 · 50001 · 42001 · 31000 · 37301
-
-**Steps:**
-1. Confirm: which standard(s), which audit type (Initial / Surveillance / Recertification)
-2. Confirm: which client — check if this is one of the active implementation clients (MOI, UACC, SAGCO, Al-Ahsa) or a new CB client
-3. Map each element to relevant clauses across all applicable standards
-4. For each clause: Compliance Status · Evidence Required · NC Severity
-5. Output table format:
-
-| Clause | Standard | Compliance Status | Evidence Required | NC Severity |
-|--------|----------|-------------------|-------------------|-------------|
-| 6.1 | ISO 9001 | Partially Met | Risk register with documented methodology | Minor NC |
-
-6. Summarize: total NCs by standard, top 3 priority gaps
-7. Hand off to Agent 2 if this is also an implementation engagement (dual role scenario)
-
----
-
-## Skill 03 — Build Excel Risk Register
-
-**Trigger:** "Risk register" / "Build risk register" / "Create risk register" / "Risk workbook" / "Risk assessment Excel" / "Risk matrix" / "Risk scoring" / "L×S rating" / "Nested IF risk" / "Risk dashboard" / "KPI risk" / "Risk ID" / "VLOOKUP risk" / "Treatment plan" / "Risk treatment" / "I need a risk register" / "Build me a risk tracker" / "Risk log" / "Enterprise risk" / "Corporate risk"
-
-**Auto-trigger:** ANY message about building, creating, or updating risk registers, risk matrices, risk scoring, or risk-related Excel workbooks.
-
-**Agent:** Agent 4 (Excel Engineer) + Agent 2 (Implementer) for content
-
-**Steps:**
-1. Confirm: number of risks, standard (ISO 31000 / ISO 50001), organization (MOI or UACC)
-2. Load visual identity from Context.md
-3. Create sheets: Dashboard · Risk Register · Opportunities (if EnMS) · Scoring Matrix · Reference · _Lists
-4. Build _Lists sheet: all dropdowns (likelihood, severity, level, owners, status)
-5. Apply data validation on all dropdown columns linked to _Lists
-6. Formula columns: L×S = Rating → nested IF → Risk Level
-7. Conditional formatting: Red (Critical) / Orange (High) / Yellow (Medium) / Green (Low)
-8. Dashboard: KPI cards (Total · Critical · High · Medium · Low) + summary chart
-9. A4 print layout, freeze panes, repeat header row 1
-10. Run scripts/recalc.py · verify zero formula errors
-11. Output: complete .xlsx
-
----
-
-## Skill 04 — Build BIA Workbook
-
-**Trigger:** "BIA" / "Business Impact Analysis" / "Build BIA" / "BIA workbook" / "MTD" / "RTO" / "RPO" / "Criticality" / "Recovery strategy" / "Process criticality" / "BIA table" / "Impact analysis" / "Business continuity analysis" / "Which processes are critical" / "Recovery priority"
-
-**Auto-trigger:** ANY message about business impact analysis, process criticality, recovery priorities, MTD/RTO/RPO, or BIA-related Excel workbooks.
-
-**Agent:** Agent 4 (Excel Engineer)
-
-**Steps:**
-1. Confirm: process list, MTD/RTO/RPO values if known, organization context
-2. Sheets: Dashboard · BIA Table · Process Detail · _Data
-3. Columns: Process ID · Name · Department · Criticality · MTD · RTO · RPO · Dependencies · Recovery Strategy
-4. Auto-calculate Criticality Score · conditional format by tier
-5. Dashboard: criticality distribution, top 5 critical processes, RTO compliance status
-6. Apply MOI visual identity
-7. Run scripts/recalc.py · verify zero errors · Output: .xlsx
-
----
-
-## Skill 05 — Write Arabic BCM Document
-
-**Trigger:** "BCM document" / "Business continuity plan" / "Arabic BCM" / "Arabic document" / "Write in Arabic" / "Arabic policy" / "Arabic procedure" / "BCP" / "Business continuity" / "Operational scenarios" / "Response plans" / "Implementation roadmap" / "KPI framework" / "Compliance mapping" / "DGA" / "NRC" / "BIA tables" / "Phased response" / "12-month roadmap" / "RTL document" / "Arabic Word"
-
-**Auto-trigger:** ANY message about writing Arabic documents, BCM plans, business continuity, or any document that needs RTL/Arabic formatting.
-
-**Agent:** Agent 5 (Arabic Writer) + Agent 2 (Implementer) for structure
-
-**Steps:**
-1. Confirm: scope (directorates/services), scenarios needed, compliance frameworks
-2. Document structure:
-   - ﺍﻟﻤﻘﺪﻣﺔ | Introduction
-   - ﻧﻄﺎﻕ ﺍﻟﺘﻄﺒﻴﻖ | Scope
-   - ﺗﺤﻠﻴﻞ ﺗﺄﺛﻴﺮ ﺍﻷﻋﻤﺎﻝ | BIA Tables
-   - ﺳﻴﻨﺎﺭﻳﻮﻫﺎﺕ ﺍﻟﺘﺸﻐﻴﻞ | Operational Scenarios (5 minimum)
-   - ﺧﻄﻂ ﺍﻻﺳﺘﺠﺎﺑﺔ ﺍﻟﻤﺮﺣﻠﻴﺔ | Phased Response Plans
-   - ﺧﺎﺭﻃﺔ ﻃﺮﻳﻖ ﺍﻟﺘﻨﻔﻴﺬ | 12-Month Implementation Roadmap
-   - ﺧﺮﻳﻄﺔ ﺍﻻﻣﺘﺜﺎﻝ | Compliance Mapping (ISO 22301 / DGA / NRC)
-   - ﺇﻃﺎﺭ ﻗﻴﺎﺱ ﺍﻷﺩﺍء | KPI Measurement Framework
-3. Voice: ﻗﻤﻨﺎ ﺑـ... / ﺗﻢ ﺗﻄﺒﻴﻖ... / first-person practitioner
-4. ISO clause references stay in English · Risk IDs stay in English
-5. Output: .docx via python-docx · full RTL formatting
-
----
-
-## Skill 06 — ISO 42001 AI Management Implementation
-
-**Trigger:** "ISO 42001" / "AI management" / "AI policy" / "AIMS" / "AI governance" / "AI risk" / "AI impact assessment" / "AIIA" / "AI system inventory" / "AI lifecycle" / "AI incident" / "AI change management" / "Human oversight" / "Explainability" / "AI bias" / "AI fairness" / "SoA AI" / "AI controls" / "Annex A AI" / "AI mandatory documents" / "AI compliance" / "Responsible AI" / "AI ethics"
-
-**Auto-trigger:** ANY message about ISO 42001, AI management systems, AI governance, AI risk assessment, AI impact assessment, AI policies, or AI compliance.
-
-**Agent:** Agent 2 (Implementer) + Agent 3 (Developer) for automation layer
-
-### 24 Mandatory Documents — ISO/IEC 42001:2023:
-
-| # | Document | Clause | Type |
-|---|----------|--------|------|
-| 1 | AIMS Scope | 4.1 | Word |
-| 2 | Interested Parties & Requirements | 4.2 | Excel |
-| 3 | AI System Inventory | A.3.2 | Excel |
-| 4 | AI Context & Applicability Assessment | 4.1 & 4.3 | Word |
-| 5 | AI Policy | 5.2 & A.2 | Word |
-| 6 | Roles & Responsibilities Matrix | 5.3 & A.3.2 | Excel |
-| 7 | AI Risk Assessment Methodology | 6.1.2 | Word |
-| 8 | AI Risk Register & Treatment Plan | 6.1.3 | Excel |
-| 9 | AI Objectives & Plans | 6.2 | Excel |
-| 10 | Statement of Applicability (SoA) | 6.1.3 | Excel |
-| 11 | Competency & Awareness Records | 7.2 & 7.3 | Excel |
-| 12 | AI Communication Process | 7.4 | Word |
-| 13 | Document Control Procedure | 7.5 | Word |
-| 14 | AI Lifecycle Management Procedure | A.6 | Word |
-| 15 | Human Oversight Mechanism | A.6.2 | Word |
-| 16 | AI Incident Management Procedure | A.9 | Word |
-| 17 | AI Change Management Procedure | A.9 | Word |
-| 18 | AI Monitoring & Validation Records | 9.1 | Excel |
-| 19 | Internal Audit Procedure & Reports | 9.2 | Word |
-| 20 | Management Review Records | 9.3 | Word |
-| 21 | KPI & Monitoring Metrics | 9.1 | Excel |
-| 22 | Nonconformity & Corrective Action Procedure | 10.2 | Word |
-| 23 | Continual Improvement Records | 10.1 | Excel |
-| 24 | AI Impact Assessment (AIA) — ISO 42005 | 6.1.4 & A.5.5 | Word + Excel |
-
-**Implementation Steps:**
-1. Define AIMS scope (Clause 4.3) and organizational AI context
-2. Build AI System Inventory (A.3.2) — all models, tools, services in scope
-3. Conduct AI Risk Assessment using documented methodology (6.1.2)
-4. Complete SoA (6.1.3) — justify all Annex A control inclusions/exclusions
-5. Develop AI Policy + Roles & Responsibilities (5.2 + 5.3)
-6. Run AI Impact Assessment per system (6.1.4)
-7. Establish lifecycle, oversight, incident, and change procedures (A.6, A.9)
-8. Set KPIs and monitoring plan (9.1)
-9. Map overlaps to ISO 27001 (security controls A.5–A.8 align with ISMS)
-10. Agent 3 adds: Python monitoring scripts for automated AI governance compliance tracking
-11. Output: all 24 mandatory documents — Word + Excel, audit-ready
-
-### ISO/IEC 42005 — AI System Impact Assessment (AIIA) — 7-Step Process:
-
-| Step | Name | Key Output |
-|------|------|------------|
-| 1 | Define AI System Context | System description: purpose, intended use, life cycle stage, key components |
-| 2 | Identify Stakeholders | Register of direct/indirect users, affected parties, vulnerable groups |
-| 3 | Identify Impact Categories | Assessment across 10 categories |
-| 4 | Assess Severity & Likelihood | Inherent Risk = Severity (1–5) × Likelihood (1–5) |
-| 5 | Review Controls & Mitigations | Existing controls adequacy + additional mitigations with owners and timelines |
-| 6 | Determine Residual Impact | Residual Severity × Residual Likelihood = Overall Residual Impact Level |
-| 7 | Governance Decision & Review | Accept / Conditionally Accept / Escalate / Reject + documented rationale + action plan |
-
-### AIIA Audit Key Points (checklist for auditors):
-- AI system purpose and intended use documented
-- All stakeholder groups identified including vulnerable groups
-- All 10 impact categories assessed (N/A requires justification)
-- Each impact scored: Severity (1–5) × Likelihood (1–5)
-- Controls identified and evaluated for adequacy
-- Additional mitigations planned with responsible owners and target dates
-- Residual impact determined after controls applied
-- Governance body has reviewed and recorded decision (Accept/Escalate/Reject)
-- Action plan exists for all conditional acceptances
-- Monitoring and periodic review schedule defined
-- Communication to affected stakeholders documented
-
-### 10 ISO 42005 Impact Categories:
-
-| # | Category | What to Check |
-|---|----------|---------------|
-| 1 | Fairness | Bias in data, model, or outcomes — protected characteristics |
-| 2 | Privacy | Personal data processing, consent, data minimisation |
-| 3 | Safety | Physical or psychological harm to users or third parties |
-| 4 | Security | Adversarial attacks, data poisoning, model manipulation |
-| 5 | Explainability | Ability to explain AI decisions to affected stakeholders |
-| 6 | Accountability | Clear ownership of AI decisions and outcomes |
-| 7 | Societal | Broad societal effects: employment, democracy, social cohesion |
-| 8 | Economic | Financial harm, market distortion, access inequity |
-| 9 | Legal | Compliance with applicable laws: GDPR, labour law, liability |
-| 10 | Human Autonomy | Degree to which AI overrides or undermines human decision-making |
-
----
-
-## Skill 07 — ISO Compliance Gap Check
-
-**Trigger:** "Gap analysis" / "Gap check" / "Compliance check" / "What gaps do we have" / "Are we ready for audit" / "Pre-audit" / "Readiness check" / "What's missing" / "Compliance status" / "How compliant are we" / "Clause-by-clause" / "Gap report" / "Compliance score" / "Audit readiness" / "IMS gaps" / "Multi-standard gaps"
-
-**Auto-trigger:** ANY message about gap analysis, compliance checking, audit readiness, or identifying what's missing against ISO standards.
-
-**Agent:** Agent 1 (Judge) for gaps · Agent 2 (Implementer) for remediation
-
-**Steps:**
-1. Confirm standard: ISO 31000 / 22301 / 50001 / 9001 / 27001 / 42001 (or multi-standard IMS)
-2. List all mandatory clauses for that standard
-3. Per clause: Status (Fully Met / Partially Met / Not Met / N/A) · Evidence · Gap · Recommended Action
-4. Calculate: compliance % by clause group
-5. Output: structured Excel table or Word report depending on request
-6. Priority matrix: Critical gaps (immediate) vs Medium gaps (90 days) vs Low gaps (6 months)
-
----
-
-## Skill 08 — Build Python Automation Tool
-
-**Trigger:** "Automate" / "Build a script" / "Python script" / "Automation tool" / "Write code for" / "Create a tool" / "Build a bot" / "Workflow automation" / "Python tool" / "Script for" / "Automate my workflow" / "I need a script" / "Code this" / "Program for" / "ISO monitoring script" / "Compliance tracking"
-
-**Auto-trigger:** ANY message about building Python scripts, automating workflows, creating tools, or writing code for ISO compliance monitoring.
-
-**Agent:** Agent 3 (Automator) + Agent 2 (Implementer) for ISO control layer
-
-**Steps:**
-1. Clarify: what is being automated, what inputs/outputs are needed
-2. Agent 3 drafts modular Python script with # --- CONFIG --- block
-3. Agent 2 reviews: identifies which ISO controls apply (e.g., ISO 27001 for data handling)
-4. Add ISO control comments inline in the code
-5. Provide: script + usage instructions + any ISO documentation requirements triggered by the tool
-6. Output: .py file, locally deployable, no cloud dependency assumed
-
----
-
-## Skill 09 — Add Treatment Plan Sheet
-
-**Trigger:** "Treatment plan" / "Link treatments" / "Risk treatment" / "Treatment sheet" / "VLOOKUP treatment" / "Risk action plan" / "Remediation plan" / "Risk response" / "What actions for risks" / "Who owns this risk" / "Risk due date" / "Treatment status" / "Residual risk after treatment"
-
-**Auto-trigger:** ANY message about treatment plans, risk remediation, risk action plans, or linking treatments to risk registers.
-
-**Agent:** Agent 4 (Excel Engineer)
-
-**Steps:**
-1. Load existing risk register · confirm Risk ID column reference
-2. Create Treatment Plan sheet
-3. Columns: Risk ID · Risk Description (VLOOKUP) · Treatment Type · Action · Owner · Due Date · Status · Post-Treatment Residual Risk
-4. VLOOKUP formula: =VLOOKUP(A2,'Risk Register'!$A:$C,2,0) for description
-5. Status dropdown: Not Started / In Progress / Completed / Deferred
-6. Conditional format Status column · link completion % back to Dashboard KPI
-
----
-
-## Skill 10 — Travel & Savings Optimizer
-
-**Trigger:** "Plan trip" / "Book flight" / "Travel to" / "Flight deal" / "Saudia" / "Flynas" / "EgyptAir" / "Alexandria" / "Makkah" / "Madinah" / "Umrah" / "Ziyara" / "Cashback" / "STC Pay" / "Urpay" / "Noon deal" / "Amazon KSA" / "Al-Rajhi" / "SNB offer" / "Save money" / "Best deal" / "Cheapest flight" / "Travel hack" / "Bank promotion" / "Credit card offer" / "How to save" / "Discount" / "Promo code"
-
-**Auto-trigger:** ANY message about travel planning, flights, Umrah, Ziyara, cashback, bank offers, deals, discounts, or saving money on purchases.
-
-**Agent:** Agent 6 (Personal Concierge)
-
-**Steps:**
-1. Identify: destination (Alexandria / Makkah / Madinah / other), dates, budget
-2. Search: current Saudia / Flynas / EgyptAir offers for Riyadh ↔ target route
-3. Layer: applicable cashback via STC Pay, Urpay, or bank offers (Al-Rajhi / SNB)
-4. For Umrah trips: check quiet periods, proximity to Haram, transport options
-5. Output: "Savings Strategy" — total trip cost with and without optimizations
-
----
-
-## Skill 11 — ComplianceHub Full-Stack Development
-
-**Trigger:** "Fix the platform" / "Add feature" / "Debug backend" / "Debug frontend" / "Build feature" / "Platform issue" / "ComplianceHub" / "Backend error" / "Frontend bug" / "API not working" / "Server down" / "Build fails" / "npm error" / "Python error" / "FastAPI" / "React issue" / "Vite" / "Update platform" / "New endpoint" / "Add page" / "UI fix" / "Database issue" / "AI not generating" / "Document generation failed"
-
-**Auto-trigger:** ANY message about developing, debugging, fixing, or enhancing the ComplianceHub platform — backend, frontend, AI pipeline, document generation, or deployment.
-
-**Agent:** Agent 3 (Developer) + Agent 7 (Platform Engineer)
-
-### Tech Stack
-- **Backend:** FastAPI + Uvicorn (port 8000) — `backend/app/`
-- **Frontend:** React + Vite (port 5173) — `frontend/src/`
-- **AI:** Multi-provider router — `backend/app/services/ai/router.py`
-- **Docs:** python-docx document generation — `backend/app/services/document_generator.py`
-- **Data:** clause_data.py — data-driven clause database for 13 standards
-- **PDF:** LibreOffice headless conversion — `backend/app/services/pdf_converter.py`
-
-### Key Constraints
-- Backend: `python -m compileall . -q` + `python -m pyflakes app/` — zero errors mandatory
-- Frontend: `npm run lint` + `npm run build` — zero errors mandatory
-- AI keys in `backend/.env` — never hardcode
-- All 8 document types generated via `OUTPUT_DOCUMENTS` list in config
-- 13 standards in `ISO_STANDARDS` — never hardcode ISO 9001 sections
-- TÜV branding: TUV_BLUE #003D7A, TUV_RED #C00000
-
-### Development Steps
-1. Identify: backend (Python/FastAPI) or frontend (React/Vite) or both
-2. Backend changes: edit → `compileall` → `pyflakes` → test endpoint
-3. Frontend changes: edit → `lint` → `build` → verify in browser
-4. AI changes: check router chain, provider fallback, Autodebugger integration
-5. Run full stack: `bash run.sh` (offline) or `bash run.sh --local-ai`
-6. Smoke test: `curl http://localhost:8000/api/standards`
-
----
-
-## Skill 12 — CAPA Plan Generation
-
-**Trigger:** "CAPA" / "Corrective action" / "Preventive action" / "Root cause" / "5-Whys" / "NC found" / "Nonconformity" / "Major NC" / "Minor NC" / "Containment" / "Effectiveness verification" / "CAPA log" / "CAPA plan" / "Fix this finding" / "How do I close this NC" / "Action plan for" / "Remediation" / "Corrective and preventive"
-
-**Auto-trigger:** ANY message about CAPA, corrective actions, preventive actions, root cause analysis, 5-Whys, NC remediation, or action plans for audit findings.
-
-**Agent:** Agent 1 (Judge) to confirm finding · Agent 2 (Implementer) to write CAPA
-
-**Steps:**
-1. Confirm: clause reference · NC severity (Minor / Major) · objective evidence of the finding
-2. CAPA structure (mandatory, in this order):
-   - Root Cause Analysis — 5-Whys methodology, documented per clause
-   - Immediate Containment Action — within 24–48 hours
-   - Corrective Action — eliminate root cause · assign responsible owner · set target date
-   - Preventive Action — systemic change to prevent recurrence across the system
-   - Effectiveness Verification — define measurable success criteria and review date
-3. Language: ISO audit formal English (or Arabic MSA if client is Arabic)
-4. Reference: ISO 9001 Clause 10.2 · ISO 27001 Clause 10.1 as applicable
-5. Output: CAPA table in Word or inline in platform UI (amber panel under NC clause)
-
----
-
-## Skill 13 — GitHub vs Platform Delta Comparison
-
-**Trigger:** "Compare GitHub" / "What's new in the code" / "Merge improvements" / "Delta check" / "GitHub version" / "Pull latest" / "What changed" / "Code comparison" / "Sync with GitHub" / "Update from repo" / "Fetch latest" / "Code diff"
-
-**Auto-trigger:** ANY message about comparing code with GitHub, pulling updates, checking what changed, or syncing the local workspace with the remote repo.
-
-**Agent:** Agent 3 (Developer)
-
-**Steps:**
-1. Fetch latest from GitHub: `gh api repos/0zMaradny/ComplianceHub/contents/<path>`
-2. Compare against local `~/ComplianceHub/` working copy
-3. For each changed file: classify as Critical / High / Medium
-4. Apply changes — backend: `compileall` + `pyflakes`; frontend: `lint` + `build`
-5. Update Memory.md session log with delta count and summary
-
----
-
-## Skill 14 — ComplianceHub: Audit Document Package Generation
-
-**Trigger:** "Generate audit package" / "Create all documents" / "Generate 8 docs" / "Audit documents" / "Full audit package" / "Stage 1 plan" / "Stage 2 plan" / "Audit report" / "Certificate" / "Participation list" / "ISO checklist" / "TNL" / "Certificate text" / "Upload audit notes" / "Generate docs" / "Audit paperwork" / "Certification documents" / "Document package"
-
-**Auto-trigger:** ANY message about generating audit documents, creating certification packages, uploading audit notes, or producing any of the 8 document types.
-
-**Agent:** Agent 7 (Platform Engineer) + Agent 2 (Implementer) for content
-
-### 8 Document Types (OUTPUT_DOCUMENTS)
-
-| # | Type | Label |
-|---|------|-------|
-| 1 | Audit_Plan_Stage_1 | Audit Plan Stage 1 |
-| 2 | Audit_Plan_Stage_2 | Audit Plan Stage 2 |
-| 3 | Participation_List | Participation List |
-| 4 | Audit_Report | Audit Report |
-| 5 | ISO_Checklist | ISO Checklist |
-| 6 | Certificate_Text | Certificate Text |
-| 7 | TNL | Test / Nonconformity Log |
-| 8 | Certificate | Certificate |
-
-### Generation Steps
-1. Upload audit notes (.docx/.txt) + manday data via `/api/upload`
-2. Select standard(s) from 14 available
-3. Provide API key (or use offline/local mode)
-4. System extracts shared context (client, date, team, scope) via AI (Tier 1 frontier free models)
-5. Each of the 8 documents generated through unified 5-tier fallback chain:
-   - Tier 0: Claude Sonnet 4 (Anthropic, paid, skipped if key truncated)
-   - Tier 1: OpenRouter frontier (Nemotron 550B, Qwen3 Coder 480B, Kimi K2.6, Owl Alpha — parallel batch=2)
-   - Tier 2: OpenRouter strong (Nemotron 120B, Llama 70B, Qwen3 Next 80B, Hermes 405B — parallel batch=2)
-   - Tier 3: Groq (Llama 3.3 70B, ~800 t/s)
-   - Tier 4: Local AI (Qwen3-4B ~40s/doc or Qwen2.5-3B ~60s/doc)
-   - Ultimate fallback: Offline static templates (instant, 3.2s/8docs)
-6. Each document validated by Autodebugger (placeholder check, required fields, self-heal retry, max 2 retries)
-7. Output: download package (DOCX + optional PDF via LibreOffice)
-8. TÜV-branded templates applied from `backend/templates/`
-
-### AI Modes
-- **Free Cloud:** OpenRouter frontier → strong → Groq (8 free models, up to 1M ctx) — fast, good quality
-- **Local AI:** llama.cpp Qwen3-4B (primary, ~40s/doc) / Qwen-3B (~60s/doc) / Qwen-0.5B (~20s/doc)
-- **Offline:** Professional templates — instant, no AI needed
-
----
-
-## Skill 15 — AI Prompt Engineering (12-part Anatomy Framework)
-
-**Trigger:** "Write a prompt" / "Improve this prompt" / "Build me a prompt" / "Help me prompt" / "Prompt engineering" / "How do I ask AI to" / "Structure my prompt" / "Make this prompt better" / "Optimize my prompt" / "I need a prompt for" / "Can you write a prompt" / "Prompt template" / "Help me get better results from AI" / "How should I phrase this for AI" / "ChatGPT prompt" / "Claude prompt" / "Gemini prompt" / "AI instructions" / "System prompt" / "I want AI to" / "Can you make a prompt that" / "Better AI output" / "AI gave me bad results"
-
-**Auto-trigger:** ANY message that involves writing, structuring, or improving prompts for AI tools; asking how to phrase something for AI; requesting prompt templates; or wanting better results from ChatGPT, Claude, Gemini, or any AI tool.
-
-**Agent:** Agent 8 (Prompt Architect)
-
-**Framework:** Merged from Ruben Hassid (9-part) + serveai.ig → 12-part master framework
-**Always include:** ROLE + TASK + OUTPUT + PUSH. Add others as needed.
-
-### The 12 Parts
-
-| # | Part | Color | When to Use |
-|---|------|-------|-------------|
-| 1 | ROLE | 🔴 | Always — define the expert persona and its priority |
-| 2 | TASK | 🔴 | Always — action verb + deliverable + scope + format |
-| 3 | CONTEXT | 🔵 | Always for client work — situation, files, risks |
-| 4 | REASONING | 🟡 | Complex outputs — state the goal and why the structure serves it |
-| 5 | REFERENCE | 🟢 | Matching existing document style or voice |
-| 6 | SUCCESS BRIEF | 🟡 | Client deliverables — define recipient behavior as success |
-| 7 | RULES | 🩷 | Any output needing guardrails — positive instructions only |
-| 8 | TOOLS | 🟣 | Web search / Drive / Calendar actions needed |
-| 9 | CONVERSATION | 🔴 | Task has more than 2 unstated assumptions |
-| 10 | PLAN | 🔵 | Multi-step deliverable over 500 words |
-| 11 | OUTPUT | 🔴 | Always — define format, sections, quality check per section |
-| 12 | PUSH | 🟢 | Always last — activates maximum reasoning |
-
-### Quick Selection Guide
-
-| Task Type | Parts to Include |
-|-----------|-----------------|
-| Quick answer | ROLE + TASK + OUTPUT + PUSH |
-| ISO clause check | ROLE + TASK + CONTEXT + RULES + OUTPUT + PUSH |
-| Client document | ROLE + TASK + CONTEXT + REASONING + SUCCESS BRIEF + RULES + OUTPUT + PUSH |
-| Arabic document | ROLE + TASK + CONTEXT + REFERENCE + SUCCESS BRIEF + RULES + OUTPUT + PUSH |
-| Complex audit | All 12 parts |
-
-### ISO/GRC ROLE Defaults
-- **Audit:** "Act as Senior Lead Auditor at UKAS-accredited CB. Prioritize NC precision over general advice."
-- **Implement:** "Act as Senior Lead Implementer for [standard]. Prioritize complete audit-defensible docs."
-- **Arabic:** "Act as Senior ISO Implementer and Arabic technical writer. MSA first-person practitioner voice."
-- **AI/42001:** "Act as ISO 42001 Lead Implementer. Prioritize ethical AI docs and Annex A control coverage."
-
----
-
-## Skill 16 — Six-Gate Delivery Pipeline (ISO Project)
-
-**Trigger:** "Plan the project" / "Delivery sequence" / "Project plan" / "Implementation roadmap" / "How do we start" / "What's the process" / "ISO project" / "Certification project" / "Delivery pipeline" / "Project phases" / "Project gates" / "Where do we begin" / "Implementation plan" / "Certification timeline" / "Scope the project"
-
-**Auto-trigger:** ANY message about planning ISO implementation projects, certification timelines, project phases, delivery sequences, or where to begin with a new client engagement.
-
-**Agent:** Agent 9 (Delivery Manager) coordinating Agents 1–6
-
-| Gate | Name | Agent | Output |
-|------|------|-------|--------|
-| G1 | Scope & Context | Agent 2 | Context doc, stakeholder map, scope statement |
-| G2 | Gap Analysis | Agent 1 | Full clause-by-clause gap report |
-| G3 | Risk Register | Agent 4 | Complete Excel risk register |
-| G4 | Implementation Docs | Agent 2 + 5 | Policies, procedures, CAPA log |
-| G5 | Internal Audit | Agent 1 | Pre-certification audit report |
-| G6 | Certification Package | Agent 7 | Full 8-document audit package via ComplianceHub |
-
-**Hard Rule:** No gate skips. Agent 1 gap analysis must precede Agent 2 implementation.
-
----
-
-## Skill 17 — ComplianceHub Debugging Checklist
-
-**Trigger:** "Something's broken" / "Error in platform" / "Build fails" / "Not working" / "Bug fix" / "Debug" / "Troubleshoot" / "Server error" / "API error" / "Frontend crash" / "Backend crash" / "Won't start" / "npm error" / "Python error" / "Import error" / "Module not found" / "AI not responding" / "Document won't generate" / "Upload failed" / "Download failed"
-
-**Auto-trigger:** ANY message about errors, bugs, crashes, build failures, servers not starting, or anything not working in the ComplianceHub platform.
-
-**Agent:** Agent 3 (Developer)
-
-### Backend Triage
-1. `cd backend && python -m compileall . -q` — syntax errors?
-2. `cd backend && python -m pyflakes app/` — unused imports, undefined vars?
-3. `curl http://localhost:8000/api/standards` — API responding?
-4. Check `backend/.env` — AI keys present and valid?
-5. Check `backend/app/config.py` — paths correct?
-
-### Frontend Triage
-1. `cd frontend && npm run lint` — ESLint errors?
-2. `cd frontend && npm run build` — build succeeds?
-3. Check browser console for React errors
-4. Verify `API = '/api'` proxy in vite.config.js
-
-### AI Pipeline Triage
-1. Check provider chain in `ai/router.py` — correct order for task type?
-2. Autodebugger: `debugger.py` — placeholder patterns, required fields?
-3. AI keys: env vars set? Key prefix matches provider?
-4. Fallback: does offline mode work when AI fails?
-
-### Full Stack
-1. `bash run.sh` — both servers start?
-2. Backend port 8000 + frontend port 5173 both accessible?
-3. Upload → generate → download flow works end-to-end?
-
----
-
-## Skill 18 — Legacy React Artifact (Reference Only)
-
-**Trigger:** "Old platform" / "React artifact" / "TUV_Platform_Fixed" / "window.storage" / "Anthropic artifact" / "Claude artifact" / "Old JSX" / "Legacy code" / "Previous platform" / "Artifact sandbox"
-
-**Auto-trigger:** ANY message referencing the old single-file React artifact, TUV_Platform_Fixed.jsx, or legacy artifact sandbox rules.
-
-**Agent:** Agent 7 (Platform Engineer)
-
-**Status:** Archived — superseded by ComplianceHub full-stack. Kept for reference only.
-
-**Hard Rules (never violate if maintaining legacy):**
-- ❌ NO import from "firebase/..." — use window.storage only
-- ❌ NO process.env · NO require() · NO Gemini API
-- ✅ AI: https://api.anthropic.com/v1/messages — claude-sonnet-4-6
-- ✅ CDN: cdnjs.cloudflare.com (mammoth, XLSX)
-- ✅ Excel: window.XLSX.utils.aoa_to_sheet + writeFile — NOT HTML blob
-- ✅ Checklist IDs: deterministic — `${std}-${clause.replace(/\./g,'_')}`
-- ✅ setAuditProjects called ONCE after loop — never inside forEach
-- ✅ sanitizeHtml() before any dangerouslySetInnerHTML
-- ✅ aiCallLimiter.canProceed() before every AI call
-- ✅ AbortController per AI call, cleanup in unmount
-- ✅ <ErrorBoundary> wrapping <App/>
-
----
-
-## Skill 19 — Productivity & Workflow Engine
-
-**Trigger:** "Productivity" / "Time management" / "Task prioritization" / "Deep work" / "Focus plan" / "Schedule optimization" / "Weekly review" / "Goal planning" / "Inbox management" / "Decision framework" / "Energy optimization" / "Learning system" / "Second brain" / "Knowledge management" / "Workflow automation" / "Meeting optimization" / "Anti-procrastination" / "Content creation workflow" / "Multi-project management" / "Productivity dashboard" / "I'm overwhelmed" / "Help me focus" / "How do I prioritize" / "I need a system" / "Help me get organized" / "I keep procrastinating" / "Manage my tasks" / "Plan my week" / "Plan my day" / "I have too many projects" / "Help me build a routine" / "I need structure" / "Help me plan" / "I'm stuck" / "Can't focus" / "Too much to do" / "Where do I start" / "Help me decide" / "What should I work on" / "I wasted my day" / "No motivation" / "Burnout" / "Work-life balance"
-
-**Auto-trigger:** ANY message about managing time, tasks, priorities, schedules, focus, procrastination, energy, goals, routines, habits, productivity systems, decision-making, inbox management, knowledge management, content creation, multi-project management, or feeling overwhelmed/stuck/burned out.
-
-**Agent:** Agent 8 (Prompt Architect) to structure it · Agent 6 (Concierge) for personal routines
-
-### The 20 Frameworks
-
-| # | Framework | Core Output |
-|---|-----------|-------------|
-| 1 | Deep Work Planner | Focus blocks, distraction elimination, recovery periods |
-| 2 | AI Executive Assistant | Prioritize tasks by urgency/impact, optimize schedule |
-| 3 | Productivity Audit | Audit routines/tools, identify bottlenecks and time leaks |
-| 4 | Daily Schedule Optimizer | Schedule based on goals, energy levels, and recovery |
-| 5 | Task Prioritization System | Rank by ROI/importance, delegate/automate/eliminate |
-| 6 | Time Blocking System | Weekly schedule with deep/shallow blocks and interruption rules |
-| 7 | Meeting Optimization | Agendas, action items, async communication systems |
-| 8 | Knowledge Management | Workflows for capturing, tagging, and retrieving info |
-| 9 | Anti-Procrastination Framework | Systems for discipline and execution when unmotivated |
-| 10 | Workflow Automation Planner | AI tool recommendations for repetitive tasks |
-| 11 | Weekly Review System | Reflection prompts, KPI tracking, bottleneck analysis |
-| 12 | Goal Execution Planner | Milestones, daily tasks, and accountability systems |
-| 13 | Productivity Dashboard Creator | Track focus hours, habits, and project KPIs |
-| 14 | Energy Optimization System | Maximize clarity/focus based on sleep, exercise, and workload |
-| 15 | Learning Productivity System | Meta-learning roadmap, active recall, revision schedules |
-| 16 | Inbox Management System | Prioritization, batching, templates, and filtering |
-| 17 | Decision-Making Framework | Prioritization, risk analysis, reducing cognitive overload |
-| 18 | Content Creator Productivity | Workflow for ideation, scripting, editing, and publishing |
-| 19 | Multi-Project Management | Dependency maps, workload balancing, execution timelines |
-| 20 | Second Brain System | Digital organization for capturing and reviewing long-term knowledge |
-
-### Steps
-1. Confirm which of the 20 frameworks is being triggered
-2. Ask the user for the necessary inputs (current task list, goals, pain points, etc.)
-3. Execute the framework exactly as defined, maintaining structured output (tables, bullet points, strict actionability)
-4. Do not offer generic advice — act strictly within the requested framework
-
----
-
-## Skill 20 — ISO Training Course Design
-
-**Trigger:** "Training course" / "Awareness course" / "Design course" / "Course outline" / "Training material" / "Awareness training" / "ISO training" / "Course content" / "Slide deck" / "PowerPoint course" / "Training slides" / "Facilitator guide" / "Assessment questions" / "Convert Lead Implementer course to awareness" / "Non-specialist training" / "Employee awareness" / "Management awareness" / "Arabic training course" / "GCC examples" / "Course for employees" / "Awareness level ISO course"
-
-**Auto-trigger:** ANY message about designing ISO awareness training courses, converting Lead Implementer or Internal Auditor material into non-specialist content, creating slide decks, facilitator notes, assessments, or adapting courses for Arabic/GCC audiences.
-
-**Agent:** Agent 5 (Arabic Technical Writer) for Arabic output · Agent 2 (Implementer) for structure and content layer
-
-**Core Methodology:**
-
-1. **Audience Analysis** — define before writing: general employees (what's in it for me), mid-level managers (role clarity), senior executives (strategic relevance). NOT auditors, implementers, or technical specialists.
-
-2. **Strip these** (do NOT include): implementation methodologies (PDCA, IMS2), gap analysis techniques, SWOT/PEST/Porter's Five Forces, stakeholder mapping, interview techniques, maturity models, facilitation notes, implementation sequencing, project management, any reference to "the implementer" or "the project team".
-
-3. **Keep and adapt:** clause definitions (awareness-level), lifecycle phases (plain language), benefits of the standard, strategic vs operational planning, asset/resource concepts, value concept, real-world domain examples, ISO family overview.
-
-4. **Nine-module format:**
-
-| Module | Title | Clauses |
-|--------|-------|---------|
-| 1 | What is [standard]? | Pre-standard context / vocabulary |
-| 2 | Context of the Organization | 4.1–4.4 |
-| 3 | Leadership | 5.1–5.3 |
-| 4 | Planning | 6.1–6.2 |
-| 5 | Support | 7.1–7.5 |
-| 6 | Operation | 8.1–8.3 |
-| 7 | Performance Evaluation | 9.1–9.3 |
-| 8 | Improvement | 10.1–10.3 |
-| 9 | Your Role | Synthesis |
-
-5. **Per-module structure (9 slides):** Module Opener → Clause Map → 4 Content Slides (≤8 word title, ≤4 bullets ≤12 words each, one real example, visual suggestion) → "What This Means For You" (3-row table: staff / manager / leadership) → 2 Reflection Questions → Module Summary.
-
-6. **Tone:** Short sentences, active voice, direct assertions. No "It is important to note that..." — just state it. No "Leverage / Utilize / Synergize". Real examples over abstract principles.
-
-7. **Arabic adaptation:** MSA throughout, ISO clause numbers in English, technical terms with no Arabic equivalent stay in English (SAMP, AMS, KPI). First-person practitioner voice: نقوم بـ / تم تطبيق / يُعدّ هذا. Short noun-phrase slide titles. RTL bullets ≤12 words. GCC context examples (ARAMCO, NEOM, SEC, SABIC, Ma'aden, PIF entities, ROSHN, KSA healthcare, municipal assets).
-
-8. **Assessment:** 10 multiple-choice questions (3 options, one correct, no tricks). Tests awareness only — "what" not "how". Answerable from course content. Pass mark: 7/10.
-
-9. **Facilitator Notes:** One paragraph per module — key points to emphasize, common misconceptions, suggested timing.
-
-**Brand Specs (PPTX):**
-- Slide size: 13.33" × 7.5" (widescreen)
-- Font: Tajawal throughout
-- Palette: #44546A (dark slate) primary · #C00000 (TÜV red) accent · #4472C4 (blue) · #FFC000 (gold)
-- Layouts: Section Header · 1_Logo · 2_Logo · 4_Logo
-- Clear iconography (line-style or flat icons)
-
-**Domain-Specific Example Banks (load per client context):**
-
-| Domain | GCC Examples |
-|--------|--------------|
-| Facility Management | Chiller plants, BMS, HVAC, elevators, fire pumps, UPS, CAFM/CMMS, SLA KPIs, FM contractors, tenant fit-outs |
-| Oil & Gas | ARAMCO facilities, SABIC plants, refineries, pipelines, vibration analysis, turnaround maintenance, permit-to-work |
-| Power & Utilities | SEC, ACWA Power, SWA, NWC, SCADA, transmission/distribution, desalination, gas turbines, solar farms |
-| Healthcare (KSA) | MOH hospitals, KFSH&RC, university medical cities, medical equipment lifecycle, imaging/OR/ventilator criticality |
-| Transport (GCC) | Riyadh Metro, SAR, Jeddah Airport, Saudi Airlines, rolling stock, signalling, baggage handling, fare collection |
-
-**Standard-Specific Adjustments:**
-
-| Standard | Key Adaptations |
-|----------|-----------------|
-| ISO 55001:2024 | Asset = anything of value (physical, human, financial, information, intangible); SAMP connects org objectives to asset direction; lifecycle: plan→acquire→operate→maintain→dispose; 2024 updates: climate change in 4.1, outsourcing in 8.3, KPIs linked to objectives |
-| ISO 45001:2018 | Worker participation (5.4); hazard identification (6.1.2.1); operational planning (8.1); emergency preparedness (8.2) |
-| ISO 14001:2015 | Lifecycle perspective (6.1.2); environmental aspects (6.1.2); compliance obligations (6.1.3); emergency preparedness (8.2) |
-| ISO 27001:2022 | ISMS context (4); risk assessment/treatment (6.1); Annex A controls; incident management (6.8 / A.5.24–5.28) |
+# SKILLS.md — Master Skill Index & Trigger Table
+_Last updated: 2026-08-09 · Projects vs Audit Clients model · Template population pipeline_
+
+## Skill → Agent Mapping
+
+| Skill # | Name | Agent | Domain File |
+|---------|------|-------|-------------|
+| 01b | Session-End Memory Trigger | 8+11 | SYSTEM.md |
+| 02 | IMS Audit | 1 | AUDIT.md |
+| 03 | Excel Risk Register | 2+4 | IMPLEMENT.md |
+| 04 | BIA Workbook | 2+4 | IMPLEMENT.md |
+| 05 | Arabic BCM Document | 2+5 | IMPLEMENT.md |
+| 06 | ISO 42001 AIMS | 2 | IMPLEMENT.md |
+| 07 | Gap Check (Pre-Assessment) | 1 | AUDIT.md |
+| 08 | Python Automation | 3 | DEV.md |
+| 09 | Risk Treatment Plan | 2+4 | IMPLEMENT.md |
+| 10 | Travel & Bookings | 6 | PERSONAL.md |
+| 11 | ComplianceHub Development | 3+7 | DEV.md |
+| 12 | CAPA | 1 | AUDIT.md |
+| 14 | Audit Package (TÜV Austria) | 1 | AUDIT.md |
+| 15 | Universal Prompt Transform | 8 | SYSTEM.md |
+| 16 | Six-Gate Certification Pipeline | 2+9 | IMPLEMENT.md |
+| 17 | Debugging | 3 | DEV.md |
+| 19 | Productivity | 6 | PERSONAL.md |
+| 20 | Training PPTX | 2+5+7 | IMPLEMENT.md |
+| 21 | Language Gate | 8+11 | SYSTEM.md |
+| 22 | Quality Gates (G1–G10) | 8+11 | SYSTEM.md |
+| 23 | Token Compression | 8 | SYSTEM.md |
+| 24 | Document Version Control | 2 | IMPLEMENT.md |
+| 25 | Client Onboarding (Projects vs Audit Clients) | 2 | IMPLEMENT.md |
+| 26 | Audit Report | 1 | AUDIT.md |
+| 27 | SoA (Statement of Applicability) | 1 | AUDIT.md |
+| 28 | Pre-Audit Research | 1 | AUDIT.md |
+| 29 | Skill Management | 8 | SYSTEM.md |
+| 30 | Auto-Trigger Router | 11 | SYSTEM.md |
+| 31 | Token Pipeline | 8 | SYSTEM.md |
+| 32 | Board Update | 11 | PERSONAL.md |
+| 33 | Adversarial Stress-Test | 11 | PERSONAL.md |
+| 34 | Automation Roadmap | 6 | PERSONAL.md |
+| 35 | Inbox Triage & Personal Voice | 6 | PERSONAL.md |
+| 37 | Workspace Configuration | 8 | SYSTEM.md |
+| 38 | Code Review Gate | 3 | DEV.md |
+| 39 | PII Scrub & Route (Projects vs Audit Clients) | 11 | SYSTEM.md |
+
+**Count: 38 active + 2 tombstoned (13, 18)**
+
+## Domain File Map
+
+| Domain File | Skills | Agent Focus |
+|-------------|--------|-------------|
+| `skills/AUDIT.md` | 02, 07, 12, 14, 26, 27, 28 | Agent 1 (Judge) |
+| `skills/IMPLEMENT.md` | 01, 03, 04, 05, 06, 09, 16, 20, 24, 25 | Agent 2 (Architect) |
+| `skills/DEV.md` | 08, 11, 17, 38 | Agent 3 (Developer), Agent 7 (Platform) |
+| `skills/SYSTEM.md` | 01b, 15, 21, 22, 23, 29, 30, 31, 37, 39 | Agent 8 (Prompt), Agent 11 (Router) |
+| `skills/PERSONAL.md` | 10, 19, 32, 33, 34, 35 | Agent 6 (Concierge), Agent 11 (Board/Stress) |
+| `skills/humanizer/SKILL.md` | (pre-pipeline) | All agents · 33-pattern anti-slop |
+
+## Auto-Trigger Table
+
+| Signal | Agent | Skills |
+|--------|-------|--------|
+| Audit / NC / gap / compliance | 1 | 02, 07, 26 |
+| Policy / procedure / implement | 2 | 16, 24, 25 |
+| New client / onboard / client setup | 2 | 25 (Project: full profile · Audit client: quick-add row) |
+| Python / script / automate | 3 | 08, 11, 17 |
+| Excel / risk register / BIA | 4 | 03, 04, 09 |
+| Arabic / RTL / BCM | 5 | 05, 20 |
+| Travel / flight / cashback / deal | 6 | 10, 19 |
+| ComplianceHub / React / frontend | 7 | 11, 14, 17 |
+| Prompt / improve / skill design | 8 | 15, 21, 29 |
+| Project / gate / timeline | 9 | 16 |
+| KSA / NCA / SAMA / PDPL | 10 | 02, 07, 28 |
+| Board update / executive summary | 11 | 32 |
+| Stress-test / blind spots / should I | 11 | 33 |
+| Inbox / triage / personal voice | 6 | 35 |
+| Automation / roadmap / workflow audit | 6 | 34 |
+| AutoClaw / scheduled / cron / automate | AutoClaw | 01b, 10, 14, 21, 22, 25, 28, 32, 34, 38 |
+| populate / new audit package / manday calc / audit plan / checklist / certificate | 1 + Skill 14 | 14, 02, 25 (see templates/tuv-austria/POPULATION.md) |
+| Z.ai Chat / quick question / lookup / spot-check | Any (light) | Chat mode |
+
+## Client Routing — Projects vs Audit Clients
+
+| Category | Who | Sensitivity | Default Route |
+|----------|-----|-------------|---------------|
+| **Projects** | MSD-MOI, Al-Ahsa (HIGH) | HIGH → Claude/Cline/Hermes ONLY | Full profile in `clients/<NAME>.md` |
+| **Projects** | SAGCO + new (MEDIUM) | MEDIUM → all with PII scrub | Full profile in `clients/<NAME>.md` |
+| **Audit Clients** | Daily by calendar | Varies → classify per client | One-line in CONTEXT.md |
+| Archived | UACC, MOC | — | `clients/archive/` |
+
+## Z.ai Mode Routing
+
+| Signal | Z.ai Mode | Why |
+|--------|-----------|-----|
+| CAPA / root cause / formula verify / stress-test | Agent | Multi-step reasoning needs full OWL context |
+| Arabic doc / pre-audit analysis | Agent | Needs client profile + skill domain file |
+| "What clause covers X?" / quick lookup / formula spot-check | Chat | One question, no agent overhead |
+| Brainstorm / triage / simple yes-no | Chat | Lightweight, fast |
+| Morning briefing / calendar sync / quality gate | AutoClaw | Scheduled, recurring, never manual |
+| Template population / deploy check / weekly recon | AutoClaw | Automated pipeline, cron-triggered |
+
+## Quality Gates (Skill 22)
+
+| Gate | Name | What It Checks |
+|------|------|----------------|
+| G1 | Completeness | No placeholders, no TBD, no half-finished |
+| G2 | Accuracy | Formulas correct, clause refs valid |
+| G3 | Consistency | Naming, terminology, doc codes match |
+| G4 | Formatting | Visual identity, layout, print-ready |
+| G5 | Language | Skill 21 passed, no AI filler |
+| G6 | Client isolation | No cross-contamination (Projects vs Audit Clients) |
+| G7 | AI patterns | Humanizer passed, no AI writing signs |
+| G8 | Visual polish | Alignment, spacing (if UI) |
+| G9 | Accessibility | Contrast, keyboard nav (if UI) |
+| G10 | Audit-defensibility | Every claim traceable |

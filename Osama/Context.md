@@ -1,553 +1,248 @@
-# Context.md — My Complete Brain
-_See also: USER.md (human facts) · SOUL.md (identity) · AGENTS.md (roles) · SKILLS.md (SOPs) · MEMORY.md (preferences) · TOOLS.md (infrastructure + keys)_
+# CONTEXT.md — Active Clients & Platform
+_Version: 4.2 · August 2026_
 
-Loads at the start of every session. Claude reads this to feel "experienced" — not starting from scratch every time. Last updated: June 2026
+_Single source of truth for client data, formulas, and visual identity._
+_See also: SOUL.md (identity) · PLATFORMS.md (platforms) · TOOLS.md (infrastructure)_
 
-## Who I Am
-→ See USER.md — single source for personal and professional facts.
+---
 
-## Professional Identity — Dual Role
+## Professional Identity
 
-I operate simultaneously as Lead Auditor AND Lead Implementer. These are two distinct roles with different outputs, language, and responsibilities. The same ISO standard can appear in both tracks for different clients.
+**Organization:** TÜV Austria GCC — Certification Body
+**Accreditation:** SAAC (Saudi Accreditation) · Austrian Accreditation · Hellas Accrediting
+**Scheme Head:** ISMS (ISO 27001) · ITSMS (ISO 20000-1) · BCMS (ISO 22301)
+**Full Audit Portfolio:** ISO 9001 · 14001 · 45001 · 50001 · 27001 · 42001 · 22301 · 20000-1 · 31000 · 37301
+**KSA Frameworks:** NCA ECC · SAMA CSF · DGA Qiyas · CITC CSF
 
-### Track A — Lead Auditor (Certification Body)
+---
 
-**Organization:** TÜV Austria GCC — acting as Certification Body
-**Accreditation:** UKAS · CQI/IRCA · PECB
+## Client Routing — Projects vs Audit Clients
 
-**Scheme Responsibilities (I am Scheme Head for):**
+**The two categories that matter in daily work:**
 
-| Scheme | Standard | Scope |
-|--------|----------|-------|
-| ISMS | ISO/IEC 27001:2022 | Information Security Management System |
-| ITSMS | ISO/IEC 20000-1:2018 | IT Service Management System |
-| BCMS | ISO 22301:2019 | Business Continuity Management System |
+| Category | What | Profile | Duration | Routing |
+|----------|------|---------|----------|---------|
+| **Projects** | Consultation & implementation engagements | Full `clients/<NAME>.md` | Weeks to months to years | Sensitivity-based (HIGH/MEDIUM) |
+| **Audit Clients** | CB certification audits from calendar | One-line entry below | 1–5 days | Classify per client on arrival |
 
-**Audit Output Rules:**
-- Identify only — never offer solutions during audit
-- Output format: Clause | Compliance Status | Evidence Required | NC Severity
-- Language: formal certification body English (or Arabic where required)
-- NC types: Major NC · Minor NC · OFI · Observation
-- CAPA required for all NCs — structure: Root Cause → Containment → Corrective → Preventive → Verification
+**How to decide:** If you're building deliverables (policies, risk registers, BIA, procedures, CAPA) → it's a Project. If you're auditing (plan → checklist → report → certificate) → it's an Audit Client. Some Projects also need audits — they appear in both tables when relevant.
 
-**Full Audit Portfolio (accredited to audit all of these):**
-ISO 9001 · ISO 14001 · ISO 45001 · ISO 50001 · ISO 27001 · ISO 42001
-ISO 22301 · ISO 20000-1 · ISO 31000 · ISO 37301
+---
 
-**KSA Frameworks (active audit practice):** NCA ECC · SAMA CSF · DGA Qiyas · CITC CSF · BCM · MVC
+## Projects (Consultation & Implementation)
 
-### Track B — Lead Implementer (Consulting & Implementation)
+_Each project has a full profile in `clients/<NAME>.md`. Formulas locked. Visual identity locked. Doc codes locked._
 
-**Role:** I design, build, and implement management systems for clients — end to end
-**Output:** Policies, registers, plans, frameworks, documented information — all audit-ready
+| Client | Standards | Status | Formula | Prefix | Language | Sensitivity |
+|--------|-----------|--------|---------|--------|----------|-------------|
+| **MSD-MOI** | ISO 22301 · 31000 | Active | S=O×Q · V=S×(1−U/4) | `MSD-MOI-GRC-` | Arabic MSA | HIGH |
+| **Al-Ahsa** | ISO 27001 | Active | L×I | `AHSA-ISMS-` | Arabic MSA | HIGH |
+| **SAGCO** | ISO 45001 · 14001 · 50001 | Stage 2 pending | L×S · L×S×R | `SAGCO-IMS-` | English | MEDIUM |
+| _Add new projects here_ | | | | | | |
 
-**Active Implementation Clients:**
+**Project lifecycle:**
+1. **New project** → Create `clients/<NAME>.md` from TEMPLATE.md → add row above → define formula + prefix + visual identity + sensitivity
+2. **Active project** → Build deliverables. Formula never changes. Visual identity never changes.
+3. **Project closes** → Move row to Archived table → move profile to `clients/archive/`
 
-| Client | Standards | Status |
-|--------|-----------|--------|
-| MSD-MOI | ISO 22301 · ISO 31000 | Active implementation |
-| UACC Taif Plant | ISO 50001 | Active implementation |
-| SAGCO | ISO 45001 · ISO 14001 | Active implementation |
-| Al-Ahsa Municipality | ISO 27001 | Implementation |
+**Sensitivity routing for ALL project work:**
+- **HIGH (MSD-MOI, Al-Ahsa, any government/PDPL):** Claude phone or Cline local ONLY — never through cloud providers
+- **MEDIUM (SAGCO, industrial clients):** All platforms with PII scrub (Skill 39)
+- **LOW:** All platforms freely
 
-**Implementation Output Rules:**
-- Solve, build, and deliver — not just identify gaps
-- Every deliverable is complete, print-ready, and audit-defensible
-- Match client's document code system exactly
-- Isolate each client: never mix formulas, colors, vocabulary, or styles between clients
+---
 
-## Active Clients — Full Detail
+## Audit Clients (Daily by Calendar)
 
-Each client is fully isolated. Claude loads only the relevant client context for the task at hand. Never cross-contaminate data, formulas, visual identity, or vocabulary between clients.
+_Changes every day based on Osama's audit calendar. No permanent profiles. No formulas. Uses TÜV templates._
 
-### Client 1 — MSD-MOI (General Directorate of Medical Services)
+| Client | Standard | Audit Type | Date | Auditor | Sensitivity | Notes |
+|--------|----------|------------|------|---------|-------------|-------|
+| _Updated daily from calendar_ | | | | | _Classify on arrival_ | Quick-add: `clients/TEMPLATE.md` |
 
-**Role:** Lead Implementer
-**Standards:** ISO 22301 · ISO 31000
-**Language:** Full Arabic MSA · ISO clause refs in English · Risk IDs in English
-**Doc Code Prefix:** MSD-MOI-GRC-
+**Daily workflow:**
+1. **Morning:** Check calendar → add today's audits to table above → classify sensitivity per client
+2. **During audit:** Identify client + standard → apply TÜV templates → classify sensitivity → choose platform
+3. **End of day:** Archive completed audit entries → remove from table
 
-**Active Deliverables:**
+**Sensitivity classification for audit clients:**
+- Government entity / PDPL-regulated → HIGH → same routing as HIGH projects (Claude/Cline/Hermes ONLY)
+- Corporate / industrial → MEDIUM → all platforms with PII scrub
+- Unknown → default MEDIUM with full scrub
 
-| Deliverable | Doc Code | Format | Status |
-|-------------|----------|--------|--------|
-| Corporate Risk Register (146 entries) | MSD-MOI-GRC-RR-001 | Excel .xlsx | Live — Arabic |
-| Enterprise Risk & Resilience Strategy 2026–2028 | MSD-MOI-GRC-STRAT-001-v5.0 | Word .docx | Approved |
-| BIA Workbook (30 processes) | MSD-MOI-GRC-BIA-001 | Excel .xlsx | Active |
-| BCM Forms Workbook (21 forms) | MSD-MOI-GRC-BCM-001 | Excel .xlsx | Active |
-| Business Continuity Plan | MSD-MOI-GRC-BCP-001 | Word .docx | Arabic — ISO 22301 |
-
-**Key BIA Processes:** EMR · Pharmacy · Lab · Radiology · Network · Billing
-**BCM Context:** 5 operational scenarios · phased response plans · 12-month 6-phase roadmap
-**Aligned to:** DGA Qiyas + NCA ECC + NRC framework
-
-**Risk Formulas — NEVER change:**
-
-| Formula | Expression |
-|---------|------------|
-| Latent Risk | S = O × Q |
-| Residual Risk | V = S × (1 − U/4) |
-| Priority Score | Cascades from _Data sheet |
-| Treatment Lookup | VLOOKUP by Risk ID |
-
-**Visual Identity — STRICT:**
-
-| Element | Spec |
-|---------|------|
-| Primary Headers | #004D26 Dark Green |
-| Accents | #C8A96E Gold |
-| Secondary Elements | #1A3A5C Navy |
-| Data Rows | Alternating light green |
-| Layout | A4 · Repeating headers · RTL Arabic |
-
-### Client 2 — UACC (Umm Alqura Cement Company — Taif Plant)
-
-**Role:** Lead Implementer
-**Standard:** ISO 50001:2018 (EnMS)
-**Language:** English technical · Arabic where specified
-**Doc Code Prefix:** UACC-EnMS-
-**Source Documents:** UACC-EnMS-ROR-01 · UACC-L2-P-01_05
-
-**Active Deliverables:**
-
-| Deliverable | Doc Code | Format | Detail |
-|-------------|----------|--------|--------|
-| EnMS Risk & Opportunity Register | UACC-EnMS-ROR-01 | Excel .xlsx | 6 sheets · 14 risks · 19 opportunities |
-| SEU Controls Documentation | UACC-EnMS-SEU-01 | Word .docx | Clause 8.1 — operational controls |
-| Energy Review Report | UACC-EnMS-ERR-01 | Word .docx | Clause 6.3 — consumption analysis |
-
-**Domain Vocabulary — preserve exactly, never translate:** SEU · EnPI · EnB · VFD · DCS · ALARP · SEEC
-
-**Risk Formulas:**
-
-| Formula | Expression |
-|---------|------------|
-| EnMS Risk Rating | L × S |
-| EnMS Risk Level | Nested IF on rating score |
-
-### Client 3 — SAGCO (Saudi Arabian Glass Company)
-
-**Role:** Lead Implementer
-**Standards:** ISO 45001 · ISO 14001 (cert scope), ISO 50001 (certified 2024), ISO 9001 (monitor), ISO 37001 (reference)
-**Status:** Active implementation — Stage 2 certification pending (Q2/Q3 2026)
-**Language:** English technical
-**Doc Code Prefix:** SAGCO-IMS-
-**Dashboard:** https://sagcodrv-ux.github.io/sagco-im/
-**Site:** Jeddah Industrial City Phase 4 — ~800 direct + 100+ contractors, 24/7, 3 shifts, 5 furnaces (F1–F5)
-**Certification Body:** TÜV Austria (our CB)
-
-**Certification Status:**
-
-| Standard | Stage 1 | Stage 2 | Status |
-|----------|---------|---------|--------|
-| ISO 45001:2018 | Q1 2026 ✅ | Q2 2026 ⚠️ | **3 blockers remain** |
-| ISO 14001:2015 | Q1 2026 ✅ | Q2 2026 ⚠️ | Concurrent with 45001 |
-| ISO 50001:2018 | 2024 ✅ | Surveillance ongoing | Cert held |
-| ISO 9001:2015 | — | — | Monitoring only |
-| ISO 37001:2016 | — | — | Reference framework, not cert scope |
-
-**⚠️ 3 URGENT Actions Blocking Stage 2 Certification:**
-
-| # | Item | Ref | Owner |
-|---|------|-----|-------|
-| 1 | Emergency drill 2026 OVERDUE — furnace blowback + gas leak scenarios required | MOC-07 | CEO approval required |
-| 2 | Fire extinguisher 2026 inspection MISSING | HS-04 / R-S-04 | IMS Champion |
-| 3 | Group A programme sign-off pending GM | I-17, RM-04 | GM |
-
-**Dashboard Metrics (live):**
-
-| Domain | Count | Key Detail |
-|--------|-------|------------|
-| Risk Register | 54 entries | 2 Critical, 27 High, 17 Medium, 4 Low |
-| Compliance Register | 65 obligations | 68% compliant — 3 urgent gaps |
-| Objectives & KPIs | 22 objectives | 3 on track, 2 urgent (OBJ-12 F2, OBJ-14 F4) |
-| Context Register | 73 records | 29 external (PESTLE), 28 internal, 16 interested parties |
-| MOC Register | ~10–15 entries | MOC-07 pending immediate |
-| Energy (Q1 2026) | Ongoing | Facility SPC 562.9 kWh/t (✓ ≤565), GHG 615 kgCO₂e/t (↑ 25 above target) |
-| Checklist | 61 items | 66% weighted completion |
-| PESTLE/SWOT | 38 + 51 | 14 threats, 14 weaknesses (2 critical), 12 opportunities, 11 strengths |
-
-**Dashboard Pages:**
-
-| Page | URL Path | Purpose |
-|------|----------|---------|
-| Executive Dashboard | `/sagco-im/` | Summary KPIs, risk distribution, objectives status, urgent items |
-| Risk Register | `/sagco-im/risk-register.html` | 54 entries — OHS, Env, Energy, Sustainability, Social, Opportunity |
-| Compliance Register | `/sagco-im/compliance.html` | 65 obligations — legal, regulatory, voluntary |
-| Objectives & KPIs | `/sagco-im/objectives.html` | 22 objectives with KPI tracking |
-| Context Register | `/sagco-im/context.html` | 73 records — PESTLE, internal, interested parties |
-| MOC Register | `/sagco-im/moc.html` | Management of Change — 7 change types |
-| Energy Planning | `/sagco-im/energy.html` | SEU register, EnPI performance, ECMs |
-| Scope & Process Map | `/sagco-im/scope.html` | IMS scope, 16-process PDCA map, exclusions |
-| Annual Context Review Checklist | `/sagco-im/checklist.html` | 61 items across 13 sections |
-| Risk Methodology | `/sagco-im/methodology.html` | WI-RA-01 — 5×5 L×S matrix, HIRA, hierarchy of controls |
-| PESTLE & SWOT | `/sagco-im/pestle-swot.html` | 38 PESTLE → 51 SWOT items |
-
-**Domain Vocabulary — preserve exactly, never translate:**
-
-| Term | Meaning |
-|------|---------|
-| SHC | Specific Heat Consumption (kcal/kg) |
-| EnB | Energy Baseline |
-| EnPI | Energy Performance Indicator |
-| SEU | Significant Energy Use |
-| SPC | Specific Power Consumption (kWh/tonne) |
-| GHG | Greenhouse Gas (kgCO₂e/tonne) |
-| HFO | Heavy Fuel Oil |
-| LPG | Liquefied Petroleum Gas |
-| HIRA | Hazard Identification and Risk Assessment |
-| PTW | Permit to Work |
-| MOC | Management of Change |
-| ECM | Energy Conservation Measure |
-| NPV / IRR / CAPEX | Net Present Value / Internal Rate of Return / Capital Expenditure |
-| SEET | Significant Energy Efficiency Tactic |
-| IMS Champion | System owner — primary contact for all IMS documentation |
-
-**Document Codes Observed:**
-- L4-430-RC-01 — IMS top-level
-- L4-IMS-410-WI-04 — Work instruction
-- SAGCO-IMS-CKL-001 — Annual context review checklist
-- SAGCO-IMS-WI-RA-01 — Risk assessment methodology work instruction
-
-**Risk Methodology (WI-RA-01):**
-- 5×5 matrix — Score = L × S (confirmed)
-- 5 risk types: OHS, Environmental, Energy, Sustainability, Social (plus Opportunity)
-- HIRA with mandatory assessment fields + Hierarchy of Controls
-- Category-specific scoring override rules
-- Mandatory 30-day review on any trigger event
-- Assessor competence requirements defined
-
-**Energy Context:**
-- 5 furnaces (F1–F5), primarily HFO + LPG (84.3% thermal share)
-- Q1 2026: 250.09 GWh total, 17.01M SAR cost (+22.5% vs 2025)
-- ECM 1 — Recuperative → Regenerative conversion (F3, F4, F5): NPV 457M SAR, IRR 17.4%, payback 7.3 yrs, CAPEX 220M SAR
-- F4 SHC Deviation +119 kcal/kg above target — URGENT RCA due Jun 2026
-- F2 Decision required Aug 2026 — URGENT
-
-**IMS Process Architecture (PDCA):**
-- **Plan:** Context & stakeholder analysis → Risk & aspect identification → Objective setting → Legal compliance → Energy planning (SEU)
-- **Do:** Operational controls (PTW) → Emergency response drills → Training → Procurement controls → MOC implementation
-- **Check:** Monitoring & measurement → Stack & EnPI monitoring → Compliance evaluation → Internal audit → KPI dashboard
-- **Act:** NC & CAPA → Management Review (9.3) → Continual improvement → Annual context review → Objective revision
-
-**Active Deliverables:** TBD — populate when next SAGCO deliverable starts.
-
-### Client 4 — Al-Ahsa Municipality
-
-**Role:** Lead Implementer
-**Standard:** ISO 27001:2022 (ISMS)
-**Language:** Arabic MSA · ISO refs and control IDs in English
-**Doc Code Prefix:** AHSA-ISMS-
-
-**Risk Formulas:**
-
-| Formula | Expression |
-|---------|------------|
-| Risk Score | L × I |
-| Risk Level | Nested IF on risk score |
-
-**Active Deliverables:** TBD — populate when next Al-Ahsa deliverable starts.
-Template: Active Deliverables · Asset Register · SoA · Risk Assessment methodology
-
-### Client 5 — MOC (Ministry of Culture)
-
-**Role:** Lead Implementer
-**Standard:** ISO 37001:2016 (Anti-Bribery Management System)
-**Status:** Pending — governance-focused engagement
-**Language:** Arabic MSA · ISO clause refs in English
-**Doc Code Prefix:** MOC-ABMS-
-**Note:** Governance is specialized — may need extra research before starting deliverables.
-
-Template — populate when confirmed.
-
-## ComplianceHub Platform
-
-**Repo:** https://github.com/0zMaradny/ComplianceHub
-**Type:** Full-stack — FastAPI backend + Vite/React frontend
-**Status:** Active development via opencode
-
-### Architecture
-
-| Layer | Technology | Port |
-|-------|------------|------|
-| Backend | Python · FastAPI · Uvicorn | 8000 |
-| Frontend | React · Vite · Tailwind CSS | 5173 |
-| AI Router | 5-tier: Claude (Anthropic) → OpenRouter frontier → OpenRouter strong → Groq → Local Qwen3-4B | — |
-| Local AI | llama.cpp server — qwen3-4b.gguf (preferred) / qwen-3b.gguf / qwen-0.5b.gguf | 8080 |
-| Data | clause_data.py — data-driven clause database for all 14 standards | — |
-| Doc Gen | python-docx with TÜV branding (TUV_BLUE #003D7A · TUV_RED #C00000) | — |
-| PDF | LibreOffice headless conversion | — |
-
-### Supported Standards (14)
-
-| Key | Standard | Structure |
-|-----|----------|-----------|
-| iso_9001 | ISO 9001:2015 — Quality | HLS Clause 1-10 |
-| iso_14001 | ISO 14001:2015 — Environmental | HLS Clause 1-10 |
-| iso_45001 | ISO 45001:2018 — OH&S | HLS Clause 1-10 |
-| iso_50001 | ISO 50001:2018 — Energy | HLS Clause 1-10 |
-| iso_13485 | ISO 13485:2016 — Medical Devices | HLS Clause 1-10 |
-| iso_27001 | ISO 27001:2022 — InfoSec | HLS + Annex A (4 themes, 93 controls) |
-| iso_20000 | ISO 20000-1:2018 — Service Mgmt | HLS Clause 1-10 |
-| iso_22301 | ISO 22301:2019 — Business Continuity | HLS Clause 1-10 |
-| iso_37301 | ISO 37301:2021 — Compliance | HLS Clause 1-10 |
-| iso_42001 | ISO 42001:2023 — AI Management | HLS + Annex A (9 objectives, 40 controls) |
-| iso_30401 | ISO 30401:2018 — Knowledge Mgmt | HLS Clause 1-10 |
-| iso_27701 | ISO 27701:2025 — Privacy | HLS + PIMS-specific clauses |
-| iso_31000 | ISO 31000:2018 — Risk (Guidelines) | Framework: Principles, Framework, Process |
-| iso_10002 | ISO 10002:2018 — Complaints | Framework: 5 sections |
-
-### Output Documents (8 types)
-
-| Type | Label |
-|------|-------|
-| Audit_Plan_Stage_1 | Audit Plan Stage 1 |
-| Audit_Plan_Stage_2 | Audit Plan Stage 2 |
-| Participation_List | Participation List |
-| Audit_Report | Audit Report |
-| ISO_Checklist | ISO Checklist |
-| Certificate_Text | Certificate Text |
-| TNL | Test / Nonconformity Log |
-| Certificate | Certificate |
-
-### AI Task Routing (5-tier fallback chain)
-
-All tasks route through the same 5-tier chain — no per-task provider assignment:
-
-```
-Tier 0: Claude (Anthropic) — premium, best quality (skipped if ANTHROPIC_API_KEY truncated)
-Tier 1: OpenRouter frontier — nemotron_ultra, qwen3_coder, kimi_k26, owl_alpha (4 parallel, all free)
-Tier 2: OpenRouter strong — nemotron_super, llama_70b, qwen3_next, hermes_405b (4 parallel, all free)
-Tier 3: Groq — groq_llama (Llama 3.3 70B, ~800 t/s, free)
-Tier 4: Local AI — qwen3-4b / qwen-3b / qwen-0.5b (Q4_K_M GGUF, localhost:8080)
-Fallback: Offline generator — static templates, instant, no AI needed
+**Quick-add format:**
+```markdown
+| [Client Name] | [Standard] | [Stage 1/2/Surv] | [Date] | [Auditor] | [HIGH/MEDIUM/LOW] | [Notes] |
 ```
 
-### AI Content Modes
+---
 
-| Mode | API Key | Provider Chain | Speed | Quality |
-|------|---------|----------------|-------|---------|
-| Free Cloud | OPENROUTER_API_KEY + GROQ_API_KEY set | OpenRouter frontier → strong → Groq → local | Fast | Good (Nemotron 550B best) |
-| Local AI | No keys (llama.cpp running) | local only | Slow | ~40s/doc qwen3-4b |
-| Offline | No keys, no model | offline generator only | Instant | Professional templates |
+## Archived Clients
 
-### Key Backend Modules
+| Client | Category | Standard | Prefix | Formula | Notes |
+|--------|----------|----------|--------|---------|-------|
+| UACC | Project (closed) | ISO 50001 | `UACC-EnMS-` | L×S | Finished · English · EnMS vocabulary locked (SEU, EnPI, EnB, VFD, DCS, ALARM, SEEC) |
+| MOC | Project (closed) | ISO 37001 | `MOC-ABMS-` | — | Archived July 2026 · Arabic MSA |
 
-| Module | Purpose |
-|--------|---------|
-| `app/config.py` | ISO_STANDARDS, STANDARD_FAMILIES, OUTPUT_DOCUMENTS, DOC_LABELS, paths |
-| `app/main.py` | FastAPI app, upload/generate endpoints, background job processing, progress_store |
-| `app/services/clause_data.py` | Data-driven clause database: HLS_CORE, CLAUSE_8 variants, ANNEX_A_27001/42001, PIMS_27701, FRAMEWORK_31000/10002, SUPPORTING_STANDARDS_EVIDENCE |
-| `app/services/ai_pipeline.py` | Shared context extraction + AI doc generation with family context injection + few-shot examples |
-| `app/services/ai/router.py` | 5-tier fallback chain: Claude → OpenRouter frontier → OpenRouter strong → Groq → Local. ThreadPoolExecutor + cache + rate limiter + health tracking |
-| `app/services/ai/debugger.py` | Autodebugger class: input validation, output validation, placeholder detection, self-heal retries |
-| `app/services/ai/anthropic_provider.py` | Claude API client (Tier 0, premium, key truncated = fast-fail skipped) |
-| `app/services/ai/openrouter_provider.py` | OpenRouter client for all frontier + strong free models (Tiers 1+2) |
-| `app/services/ai/groq_provider.py` | Groq client — Llama 3.3 70B (Tier 3, ~800 t/s) |
-| `app/services/ai/local_provider.py` | Local llama.cpp provider — qwen3-4b/qwen-3b/qwen-0.5b (Tier 4) |
-| `app/services/ai/model_registry.py` | 14 models: PREMIUM + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE |
-| `app/services/ai/rate_limiter.py` | Per-provider sliding window rate limiter |
-| `app/services/ai/json_utils.py` | JSON extraction utilities |
-| `app/services/offline_generator.py` | Dynamic standard-specific checklists — no hardcoded ISO 9001 sections |
-| `app/services/document_generator.py` | python-docx document generation with TÜV branding, RTL support, page numbers, landscape mode |
-| `app/services/file_parser.py` | DOCX + TXT parsing, audit notes extraction, manday data extraction via regex |
-| `app/services/pdf_converter.py` | LibreOffice headless PDF conversion |
-| `app/services/template_manager.py` | Template upload and management |
-| `app/services/doc_schemas.py` | Document schemas/validation |
-| `app/services/manday_calculator.py` | IAF MD 5 manday reference for all 14 standards |
-| `app/services/surveillance.py` | 3-year surveillance cycle management |
+---
 
-### Frontend Pages
+## Audit Calendar (Projects + Audit Clients)
 
-| Page | Purpose |
-|------|---------|
-| Dashboard | Stats overview, compliance health ring, quick actions, tunnel URL |
-| Audit | Upload audit notes + manday → select standards → generate 8 docs |
-| AuditPlan | Stage 1/2 audit plan generation |
-| Compliance | Framework viewer with pillar-based checklists |
-| Projects | Project management and tracking |
-| History | Past audits and document history |
-| Analytics | Compliance analytics and dashboards |
-| Surveillance | 3-year surveillance cycle management |
-| Chat | AI chat interface |
-| Templates | Document template management |
-| Reporting | Reports and exports |
+| Client | Category | Next Audit | Type | Status |
+|--------|----------|-----------|------|--------|
+| MSD-MOI | Project | [TBD] | Surveillance | In progress |
+| SAGCO | Project | [TBD] | Stage 2 | Prep phase |
+| Al-Ahsa | Project | [TBD] | Initial | Implementation |
 
-### TÜV Branded Templates (in repo)
+---
 
-17 template files in `backend/templates/04_03_26_consense_audit_documentation/`:
-- BSO_Audit_Questionaire_ISO22301.docx
-- AQC Form (ENG-Form FM-BA-ZET-MS-All_AQC_EN).docx
-- Audit Plan forms (FM-TAGMBH-MSZ-001 through MSZ-038)
-- ISO 27001 Audit Checklist (.xlsx)
-- Certificate Text, Participation List, Remote Audit Risk Analysis templates
+## Client Formulas — NEVER Change
 
-### Key Commands
+| Client | Category | Latent Risk | Residual Risk | Notes |
+|--------|----------|-------------|---------------|-------|
+| MSD-MOI | Project | S = O × Q | V = S × (1 − U/4) | Arabic MSA, DGA/NCA aligned |
+| Al-Ahsa | Project | L × I | Nested IF | NCA ECC aligned |
+| SAGCO | Project | L × S | L × S × R (env) | HIRA methodology |
+| UACC | Archived | L × S | Nested IF | EnMS vocabulary locked |
 
-```bash
-# Run full stack
-bash run.sh                    # offline mode
-bash run.sh --local-ai        # with local AI
+---
 
-# Backend only
-cd backend && uvicorn app.main:app --port 8000
-cd backend && python -m compileall . -q       # syntax check
-cd backend && python -m pyflakes app/          # zero errors mandatory
+## Supported Standards
 
-# Frontend only
-cd frontend && npm run dev
-cd frontend && npm run build
-cd frontend && npm run lint
+| Standard | Scheme | Status |
+|----------|--------|--------|
+| ISO 9001:2015 | QMS | Accredited |
+| ISO 14001:2015 | EMS | Accredited |
+| ISO 45001:2018 | OH&SMS | Accredited |
+| ISO 50001:2018 | EnMS | Accredited |
+| ISO 27001:2022 | ISMS | Scheme Head |
+| ISO 42001:2023 | AIMS | Accredited |
+| ISO 22301:2019 | BCMS | Scheme Head |
+| ISO 20000-1:2018 | ITSMS | Scheme Head |
+| ISO 31000:2018 | Risk | Accredited |
+| ISO 37301:2021 | CMS | Accredited |
+| NCA ECC | KSA Cyber | Active |
+| SAMA CSF | KSA Financial | Active |
+| DGA Qiyas | KSA Gov | Active |
+| CITC CSF | KSA Telecom | Active |
+| PDPL | Personal Data Protection | Active (enforced Sep 2024) |
+| DGA Qiyas V5.0 | Government Digital Maturity | Active |
+| SDAIA AI Ethics | AI Governance | Active |
+| SDAIA GenAI | Government GenAI Use | Active |
 
-# Local AI (llama.cpp)
-/opt/llama-server/llama-server -m /opt/llama-server/models/qwen3-4b.gguf -c 32768 -t 4 -b 2048 --mlock --port 8080
-/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-3b.gguf -c 8192 -t 4 -b 2048 --mlock --port 8080
-/opt/llama-server/llama-server -m /opt/llama-server/models/qwen-0.5b.gguf -c 4096 -t 4 -b 2048 --mlock --port 8080
+---
 
-# API smoke test
-curl http://localhost:8000/api/standards
+## TÜV Austria Audit Templates
+
+14 standardized CB forms in `templates/tuv-austria/`. NEVER modify — populate with client data only.
+
+| # | Form | Purpose | Code |
+|---|------|---------|------|
+| 1 | Audit Questionnaire (ISO 22301) | BCMS pre-audit questionnaire | Q01 |
+| 2 | Audit Questionnaire (General) | General pre-audit questionnaire | Q02 |
+| 3 | Manday Calculation | Audit duration determination | MD |
+| 4 | Audit Plan (General) | Audit scheduling and scope | AP-IMS |
+| 5 | Audit Plan (ISMS) | ISMS-specific audit plan | AP-ISMS |
+| 6 | Audit Report (IMS) | Post-audit findings and recommendation | AR |
+| 7 | Participation List | Audit attendee record | PL |
+| 8 | Audit Checklist (ISO 27001) | Clause-by-clause evidence check | CL-ISMS |
+| 9 | Audit Checklist (Combined) | QM/EMS/HSE clause evidence | CL-IMS |
+| 10 | Certificate Text | Certificate wording |
+| 11 | Audit Program | Audit program planning |
+| 12 | Checklist (ISO 50001) | EnMS clause evidence |
+| 13 | Auditor Assignment | Auditor designation |
+| 14 | Approval & Release | Documentation release approval | CERT |
+
+**Full details:** `templates/tuv-austria/README.md`
+**Population reference:** `templates/tuv-austria/POPULATION.md` — field maps, data sources, Projects vs Audit Clients population modes, regulatory overlays, naming convention
+
+### Population Workflow Order
+```
+Manday (03) → Questionnaire (01/02) → Plan (04/05) → Checklist (08/09) → Participation (07) → Report (06) → Certificate (10)
 ```
 
-### AI Keys (backend/.env)
-- OPENROUTER_API_KEY (prefix: sk-or-v1) — free frontier + strong models
-- GROQ_API_KEY (prefix: gsk_) — Llama 3.3 70B, free
-- ANTHROPIC_API_KEY (prefix: sk-ant-api) — Claude Sonnet 4, paid (truncated key = fast-fail skip)
-- HF_API_KEY (prefix: hf_) — HuggingFace free inference (optional backup)
+### Population Mode Summary
+| Mode | Who | Pre-fill % | Example |
+|------|-----|------------|---------|
+| **RICH** | Projects with prior deliverables | ≥70% | MSD-MOI (BIA exists) → BCM questionnaire 80% pre-filled |
+| **SEMI** | Projects without prior deliverables | 40–69% | Al-Ahsa (new impl) → ISMS plan 60% pre-filled |
+| **SPARSE** | Audit Clients (daily) | <40% | New audit client → name + standard only, rest flagged |
 
-### Git
-- Auto-pushes every commit on main via .git/hooks/post-commit
-- PAT token stored in ~/.git-credentials
+### Regulatory Overlay Auto-Detection
+| Condition | Overlay Added |
+|-----------|-------------|
+| KSA government entity | NCA ECC (114 controls) + PDPL (12 requirements) |
+| Financial sector | SAMA CSF (6 domains) + PDPL |
+| Digital government | DGA Qiyas V5.0 (8 dimensions) |
+| AI systems | SDAIA AI Ethics (7 principles) + GenAI |
 
-### Python Dependencies
-fastapi · uvicorn · python-docx · python-multipart · openpyxl · lxml · pydantic · aiofiles
-fpdf2 · pypdf2 · requests · psycopg2-binary · pytest · httpx · pyflakes
+## Document Types
 
-## Legacy React Artifact (TÜV Austria Hellas)
+| # | Type | Format |
+|---|------|--------|
+| 1 | Policy | Word |
+| 2 | Procedure | Word |
+| 3 | Risk Register | Excel |
+| 4 | BIA Workbook | Excel |
+| 5 | SoA | Excel |
+| 6 | Audit Report | Word |
+| 7 | CAPA Form | Word/Excel |
+| 8 | Training Deck | PPTX |
 
-**File:** TUV_Platform_Fixed.jsx — 1,983 lines · 157 KB
-**Type:** React artifact — Claude.ai sandbox (legacy, superseded by ComplianceHub)
-**Status:** Archived — replaced by full-stack ComplianceHub
+---
 
-### Artifact Sandbox Hard Rules (for reference)
+## Visual Identity Summary
 
-- NO import from firebase — use window.storage only
-- NO Gemini API (generativelanguage.googleapis.com)
-- NO process.env · NO require() · NO useTransition (React 18 only)
-- YES AI: https://api.anthropic.com/v1/messages — no key needed in artifact
-- YES Model: claude-sonnet-4-6 — response: content[0].text
-- YES CDN: cdnjs.cloudflare.com for mammoth + XLSX
-- YES Excel: window.XLSX.utils.aoa_to_sheet + writeFile — NOT HTML blob
-- YES Checklist IDs: deterministic — std-clause_with_underscores
-- YES setAuditProjects called ONCE after loop — never inside forEach
+| Client | Primary | Accent | Font | Category |
+|--------|---------|--------|------|----------|
+| TÜV Default | #C00000 (red) | black | Inter | Default |
+| MSD-MOI | #004D26 | #C8A96E | Inter | Project (HIGH) |
+| Al-Ahsa | #006400 | — | Inter | Project (HIGH) |
+| SAGCO | #1B3A4B | #E07B39 | Inter | Project (MEDIUM) |
 
-## ISO 42001 — 24 Mandatory Documents Reference
+---
 
-Full official list. Platform checklist + templates cover all 24. Items 13, 22, 23 covered via HLS_CLAUSES (applied to all standards).
+## Gemini Gem → Client Mapping
 
-| # | Document | Clause | Platform Coverage |
-|---|----------|--------|-------------------|
-| 1 | AIMS Scope | 4.1 | Checklist + Template |
-| 2 | Interested Parties & Requirements | 4.2 | Checklist + Template |
-| 3 | AI System Inventory | A.3.2 | Checklist + Template |
-| 4 | AI Context & Applicability Assessment | 4.1 & 4.3 | Checklist + Template |
-| 5 | AI Policy | 5.2 & A.2 | Checklist + Template |
-| 6 | Roles & Responsibilities | 5.3 & A.3.2 | Checklist + Template |
-| 7 | AI Risk Assessment Methodology | 6.1.2 | Checklist + Template |
-| 8 | AI Risk Register & Treatment Plan | 6.1.3 | Checklist + Template |
-| 9 | AI Objectives & Plans | 6.2 | Checklist + Template |
-| 10 | Statement of Applicability (SoA) | 6.1.3 | Checklist + Template |
-| 11 | Competency & Awareness Records | 7.2 | Checklist + Template |
-| 12 | AI Communication Process | 7.4 | Checklist + Template |
-| 13 | Document Control Procedure | 7.5 | HLS + baseTemplate |
-| 14 | AI Lifecycle Management Procedure | A.6 | Checklist + Template |
-| 15 | Human Oversight Mechanism | A.6.2 | Checklist + Template |
-| 16 | AI Incident Management Procedure | A.9 | Checklist + Template |
-| 17 | AI Change Management Procedure | A.9 | Checklist + Template |
-| 18 | Monitoring & Validation Records | 9.1 | Checklist + Template |
-| 19 | Internal Audit Procedure & Reports | 9.2 | HLS + baseTemplate |
-| 20 | Management Review Records | 9.3 | HLS + Template |
-| 21 | KPI & Monitoring Metrics | 9.1 | Checklist + Template |
-| 22 | Nonconformity & Corrective Action | 10.2 | HLS + Template |
-| 23 | Continual Improvement Records | 10.1 | HLS + Template |
-| 24 | AI Impact Assessment (AIA) — ISO/IEC 42005 (7 steps) | 6.1.4 & A.5.5 | Checklist (7 items) + 3 Templates |
+| Gem | Primary Use | Clients |
+|-----|------------|---------|
+| Gem 1 (Auditor) | Pre-audit research, gap analysis, audit reports | All (anonymized for HIGH) · Audit clients for daily work |
+| Gem 2 (Implementer) | Policy/procedure drafting, risk registers, BIA | MEDIUM projects on Gemini; HIGH projects via Claude only |
+| Gem 3 (KSA Lead) | NCA ECC, SAMA CSF, DGA Qiyas, Etimad | HIGH projects (KSA mandatory) |
+| Gem 4 (Personal) | Personal tasks, lifestyle, budget | Non-client only |
+| Gem 5 (Code) | Quick code help, snippets, refactoring | ComplianceHub dev |
 
-**ISO/IEC 42005 Note:** The AI Impact Assessment (Doc #24) follows the ISO/IEC 42005 7-step process:
-Step 1 Context → Step 2 Stakeholders → Step 3 Impact Categories (10) → Step 4 Severity×Likelihood → Step 5 Controls → Step 6 Residual Impact → Step 7 Governance Decision (Accept/Reject/Escalate).
+---
 
-10 mandatory impact categories: Fairness · Privacy · Safety · Security · Explainability · Accountability · Societal · Economic · Legal · Human Autonomy.
+## New Client Onboarding
 
-## Technical Defaults
-→ See MEMORY.md — Confirmed Preferences section. Single source of truth.
+**New Project:**
+1. Create `clients/<NAME>.md` from TEMPLATE.md
+2. Add row to Projects table above
+3. Define: formula, doc code prefix, visual identity, language, vocabulary, sensitivity
+4. Classify sensitivity → HIGH (gov/PDPL) / MEDIUM (industrial) / LOW → affects platform routing
+5. Wire into Audit Calendar if audit is expected
 
-## Claude Prompt Quick Reference (Merged Anatomy Framework)
+**New Audit Client:**
+1. One-line entry in Audit Clients table (from calendar each morning)
+2. Classify sensitivity on arrival
+3. No permanent profile — archive after audit closes
 
-12-part merged framework from Ruben Hassid + serveai.ig. Always include ROLE + TASK + OUTPUT + PUSH. Add others as needed. Full detail: Skill 15 and Agent 8.
+---
 
-**ROLE (🔴 always):**
-Act as [expert persona with specific credentials and priority].
-*Example: Act as a Senior Lead Auditor at a UKAS-accredited CB. Prioritize clause-level precision over general advice.*
+## Z.ai Mode Routing by Client Work
 
-**TASK (🔴 always):**
-[ACTION VERB] [specific deliverable] so that [recipient does X].
-Scope: [in/out]. Length: [exact]. Format: [table/Word/Excel].
+| Client Work | Z.ai Mode | Reason |
+|-------------|-----------|--------|
+| Project deliverable (policy, risk register, BIA) | Agent | Needs full client profile + skill domain file |
+| Audit package (plan, checklist, report) | Agent | Multi-step TÜV template pipeline |
+| Quick client question ("what's MOI's formula?") | Chat | One lookup, light load |
+| Formula spot-check ("verify V=S×(1−U/4)") | Chat | Quick math, no context needed |
+| Arabic doc review | Agent | Needs client vocabulary + RTL rules |
+| Morning audit list | AutoClaw | Scheduled, recurring |
+| Quality gate check on saved file | AutoClaw | Automated pipeline |
+| Evening summary | AutoClaw | Scheduled digest |
 
-**CONTEXT (🔵 situation + files):**
-Here's what I know:
-- Client: [name] | Standard: [ISO xxx] | Doc code: [prefix]
-- Team / constraints: [relevant situation]
-- Key risks: [what could go wrong with this deliverable]
-Read Context.md — identity, clients, formulas, standards
-Read Memory.md — confirmed preferences and corrections
+---
 
-**REASONING (🟡 for complex outputs):**
-The goal is [crisp one-sentence description of ideal output].
-By [approach / method], the output will be [quality standard].
-Ask yourself: does every section serve the goal? If not, cut it.
-
-**REFERENCE (🟢 for style matching):**
-Match the rhythm of: [paste or upload reference]
-Always [pattern 1 — structure]. Always [pattern 2 — tone].
-
-**SUCCESS BRIEF (🟡 for client deliverables):**
-Recipient reaction: [they approve / sign / reply / book]
-Voice: [paste 2–3 sentences in target voice]
-Tone: [2 words — direct, technical]
-Success means: [the one action they take after reading]
-
-**RULES (🩷 always positive):**
-- Plain English — short, concrete, specific
-- No leverage · no utilize · no synergies
-- [Arabic MSA · ISO refs in English · doc code format]
-
-**TOOLS (🟣 when action needed):**
-Web search: [exact query + "verify with 2+ sources"]
-Drive: [exact filename]. Calendar: [exact action + contact].
-
-**CONVERSATION (🔴 if ambiguous):**
-Before executing, ask about anything unclear.
-Match my answers exactly. Do not fill gaps silently.
-
-**PLAN (🔵 for multi-step work):**
-List the 3 rules from my context that matter most for this task.
-Then give your execution plan in 5 steps maximum.
-
-**OUTPUT (🔴 always):**
-Present as [format]. For each section:
-- Content: [what goes in]
-- Owner / clause: [reference]
-- Quality check: [how to verify it's right]
-
-**PUSH (🟢 always last):**
-Go beyond the basics. Ship it like a real client deliverable.
-Think before answering (maximum reasoning).
-
-## Personal Finance & Lifestyle Context
-
-| Area | Details |
-|------|---------|
-| Cashback Platforms | STC Pay · Urpay · Noon KSA · Amazon KSA |
-| Banking | Al-Rajhi · SNB (Saudi National Bank) |
-| Travel Routes | Riyadh (RUH) to Alexandria (HBE/ALY) |
-| Airlines | Saudia · Flynas · EgyptAir |
-| Faith Trips | Makkah & Madinah — value + quiet options preferred |
-| Interests | Formula 1 · Android development · Rugby · Reading · Information Security |
+_Last updated: 2026-08-09 · OWL v4.2 · Z.ai Agent/Chat/AutoClaw + Projects vs Audit Clients model_

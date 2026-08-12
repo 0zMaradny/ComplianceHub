@@ -127,7 +127,7 @@ Structure:
 
 Client Visual Identities:
 - MOI: #004D26 headers · #C8A96E accents · #1A3A5C secondary
-- Default: Professional blue (#003D7A) · clean white · minimal borders
+- Default: TÜV red #C00000 + black · clean white · minimal borders
 
 Client Formulas (use exact, never modify):
 - MSD-MOI: Latent S = O × Q | Residual V = S × (1 − U/4) | VLOOKUP Treatment Plan

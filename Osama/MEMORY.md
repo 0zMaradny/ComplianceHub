@@ -1,306 +1,262 @@
-# MEMORY.md — Current Session State
+# MEMORY.md — Session State & Confirmed Preferences
+_Version: 4.1 · August 2026 (restored from 07-08 original + enhancements)_
 
-## Cherry Studio Setup (Windows)
+_See also: SOUL.md (identity) · AGENTS.md (roles) · SKILLS.md (SOPs) · PLATFORMS.md (platforms) · TOOLS.md (infrastructure)_
 
-### Provider Status
-| Provider | Key? | Status |
-|----------|------|--------|
-| **cherryIn** | No key | ✅ Works |
-| **OpenRouter** | Has key | ✅ Works (free models, $0 balance) |
-| **DeepSeek** direct | Needs key | ❌ Not configured |
-| **SiliconFlow** | Needs key | ❌ Not configured |
-| **BigModel** | Needs key | ❌ Not configured |
-| **Anthropic** | Has key | ❌ Connection failed in KSA |
-| **OpenAI** | Invalid key | ❌ Auth failed |
-| **Groq** | — | ❌ Models no longer supported |
-| **Google Gemini** | — | ❌ Not available |
+_Updated at session end via Skill 01b. Works on any AI model._
 
-### 3 Model Slots
-| Slot | Provider | Model |
-|------|----------|-------|
-| Default Assistant | **cherryIn** | TBD |
-| Quick Model | **cherryIn** | TBD |
-| Translate Model | **cherryIn** | TBD |
+**Memory authority:** MEMORY.md is the **authoritative source** — overrides any conflicting auto-memory.
 
-### Settings Done
-- General: English, Enter to send
-- Display: Font 14, auto-scroll ON
-- Memories: ON
-- Document Processing: All formats, 50MB, OCR OFF
-- MCP/API/Channels/Tasks/Phrases/Quick/Selection Assistant: SKIP
-
-### 9 Agents to Create
-Knowledge files: AGENTS.md, MEMORY.md.
-1. **Lead Auditor** — NC precision
-2. **Lead Implementer** — Client formulas non-negotiable
-3. **AI Developer** — CONFIG block at top
-4. **Excel Engineer** — openpyxl, hidden _Data sheets
-5. **Arabic Writer** — MSA, ISO refs in English
-6. **Personal Concierge** — KSA context
-7. **Platform Engineer** — FastAPI+React, ComplianceHub
-8. **Prompt Architect** — 12-part anatomy
-9. **Delivery Manager** — Six-Gate pipeline
-
-### New UI
-- **Agents tab**: per-agent model + tools
-- **OpenClaw plugin**: installed, features TBD
+**Security:** ⚠️ NEVER load MEMORY.md in shared contexts — group chats, sessions with other people. Contains personal context.
 
 ---
 
-## OpenCode Desktop Setup Guide (Windows)
+## Confirmed Preferences
 
-### Step 1: Settings → Providers
-| Provider | Key |
-|----------|-----|
-| OpenRouter | `sk-or-...` |
-| OpenAI | `sk-proj-...` |
-| Anthropic | `sk-ant-...` (skip if blocked) |
+### Output & Formatting
+- Direct output first — no preamble, no "Great question!", no filler
+- Tables over bullet lists for structured data
+- Inline code blocks for all formulas, commands, file paths
+- English for technical work · Arabic MSA for client documents
+- ISO clause refs always in English even inside Arabic documents
+- Short sentences in client-facing documents — one idea per sentence
+- Skill 22 Quality Gates before every client deliverable — no exceptions
 
-### Step 2: Settings → Model
-- Default: `nvidia/llama-3.3-nemotron-super-49b-v1` (OpenRouter, free, 128K)
+### Code Preferences
+- Python: modular scripts · `# --- CONFIG ---` at top · zero pyflakes errors
+- Excel: openpyxl only · live Excel formulas · hidden `_Lists`/`_Data` sheets · A4 print · recalc.py after every build
+- React/Frontend: Vite · ESLint clean · `npm run lint` + `npm run build` before delivery
+- Word/Arabic: python-docx · explicit RTL bidi properties · `WD_ALIGN_PARAGRAPH.RIGHT`
 
-### Step 3: Settings → Instructions (System Prompt)
-```
-You are ComplianceHub — an ISO compliance automation assistant. The project is at C:\Users\eos\ComplianceHub.
+### Token Pipeline (current platforms — August 2026)
+- markitdown: convert ALL incoming files before reading — PDF/DOCX/PPTX/XLSX/URL
+- LeanCTX: compress terminal reads in Cline (VS Code) — `lean-ctx init --agent cline`
+- caveman: full at 60 turns on desktop · ultra from message 1 on phone
+- Order: markitdown (inputs) → LeanCTX (terminal reads) → caveman (output)
 
-Always read AGENTS.md and HUMANIZE.md before responding. All output must sound human-written — scan for AI patterns before responding.
+### Working Habits (apply every session)
+- Stack multiple asks into one message rather than five follow-ups
+- To fix bad output: edit original prompt and regenerate — don't chase with incremental fixes
+- Start fresh session when topic changes
+- Default to free models for easy tasks — reserve heavy models for reasoning or client-facing
+- Never combine audit findings and implementation solutions in same output
+- If multiple things asked in one message, respond to each in order
+- Be proactive — flag gaps without being asked
+- Never assume which client — ask if ambiguous
 
-Arabic MSA for MSD-MOI outputs, English for technical notes. ISO clause refs stay in English.
+### AI Behaviour (any model)
+- Never simplify client formulas: V=S×(1−U/4) MOI · L×S SAGCO · L×I Al-Ahsa · Audit clients: no formulas (TÜV templates) · UACC (L×S) archived
+- Client isolation mandatory — never cross-contaminate formulas, colours, vocabulary, doc codes
+- Deliver complete files — no placeholders, no TBD, no half-finished sections
+- Activate correct agent from AGENTS.md auto-trigger map without being asked
 
-For audit work: prioritize NC precision over general advice.
-For code: modular Python, CONFIG block at top, zero pyflakes errors.
-For document generation: work through the 7-phase pipeline.
-For Excel: openpyxl with live formulas, hidden _Data sheets, A4 print layout.
+### Z.ai Mode Preferences
+- **Z.ai Agent:** Use for multi-step reasoning, CAPA, stress-test, formula verification, Arabic doc drafting. Full OWL load.
+- **Z.ai Chat:** Use for quick lookups, one-off analysis, brainstorming, formula spot-checks. Light load only.
+- **AutoClaw:** Use for scheduled/recurring tasks. Never invoke manually — let cron trigger it.
+- **Decision rule:** If it needs full OWL context + multiple steps → Agent. If it's one question → Chat. If it repeats → AutoClaw.
 
-Client formulas are non-negotiable. Client isolation is required.
-```
-
-### Step 4: Settings → Servers (MCP)
-Find the mcp-server.cjs path:
-```powershell
-Get-ChildItem -Path "$env:LOCALAPPDATA\claude\plugins" -Recurse -Filter "mcp-server.cjs" | Select FullName
-```
-Add server with Type=stdio, Command=node, Env=`NODE_PATH=...;CLAUDE_MEM_WORKER_PORT=37700`
-
-### Step 5: Settings → Skills → Enable `.opencode/skills/`
-
-### Step 6: Settings → Workspace → `C:\Users\eos\ComplianceHub`
-
----
-
-## ComplianceHub Backend
-
-### API Keys (`backend\.env`)
-```
-ANTHROPIC_API_KEY=sk-ant-...
-OPENROUTER_API_KEY=sk-or-...
-OPENAI_API_KEY=sk-proj-...
-GOOGLE_API_KEY=AIza...
-GROQ_API_KEY=
-```
-
-### Start
-```powershell
-cd C:\Users\eos\ComplianceHub
-.\go.ps1
-```
-Auto-sync: pulls on start, pushes MEMORY.md + `.tunnel-url` on exit.
+### Session Behaviour
+- Load CONTEXT.md client data at start — identify active client before building
+- Confirm client + track (A or B) before any deliverable
+- Use Skill 01b at session end to log new preferences and decisions
+- **Session sync:** Save state to `memory/YYYY-MM-DD.md` before leaving any platform
 
 ---
 
-## Antigravity API — Free Claude via Google (CONFIRMED June 18)
+## Mistakes to Avoid
 
-**Status: ✅ WORKING**
-- Plugin client ID + PKCE OAuth → access + refresh tokens obtained
-- **Claude Sonnet 4.6**: ✅ PASS (free, unlimited via Antigravity)
-- **Claude Opus 4.6 Thinking**: ✅ PASS (free, unlimited via Antigravity)
-- **Gemini 3 Pro**: ❌ FAIL (500/401 — different endpoint needed)
-- Token refresh: ✅ Verified (works, 3599s expiry)
+### Client & Formula Rules
 
-### Setup (values in `backend/.env`, never commit to git)
-```
-ANTIGRAVITY_CLIENT_ID=<plugin-client-id>
-ANTIGRAVITY_CLIENT_SECRET=<plugin-client-secret>
-ANTIGRAVITY_REFRESH=<refresh-token>
-```
-Saved to `backend/.env`.
+| # | Mistake | Rule |
+|---|---------|------|
+| 1 | Mixing client formulas | Load from CONTEXT.md per client — never guess or reuse |
+| 6 | Missing approval blocks | Every client doc needs filled approval block — blank = G1 gate failure |
+| 9 | Mixed Arabic/English in one section | Language consistency is Quality Gate G5 |
+| 10 | Wrong doc code prefix | SAGCO-IMS- · AHSA-ISMS- · MSD-MOI-GRC- · UACC-EnMS- · MOC-ABMS- |
+| 14 | Producing Chinese output | OWL operates in English (technical) and Arabic MSA (client docs) only — never Chinese |
+| 41 | Replacing OWL files with generic templates | OWL files contain domain-specific professional context. Never overwrite with generic/template versions. |
 
-### Auth Flow (Cross-Device)
-1. Generate OAuth URL on Android with PKCE
-2. Open URL in Windows browser
-3. Google redirects to `localhost:51121/oauth-callback?code=...` (fails on Windows)
-4. Copy redirect URL from address bar → paste into Android terminal
-5. Script extracts code + state → exchanges for tokens
-6. Refresh token reused indefinitely without re-auth
+### Code & Build Rules
 
-### User's Desktop OAuth Client (for custom use)
-- Client ID: `<user-desktop-client-id>`
-- Test user: `OsMaradny@gmail.com` added
-- Note: Scopes insufficient for Antigravity API (use plugin client instead)
+| # | Mistake | Rule |
+|---|---------|------|
+| 2 | Hardcoding Python values | All calculations = live Excel formulas — Python builds structure only |
+| 3 | setAuditProjects inside forEach | Accumulate results first, call setAuditProjects ONCE after loop |
+| 4 | Firebase imports in React | window.storage only — no Firebase ever |
+| 33 | Bash fences with Windows paths | Match fence label to actual shell |
 
----
+### Process & Quality Rules
 
-## Blocked Items
-| Issue | Workaround |
-|-------|-----------|
-| Anthropic blocked | Use Antigravity free Claude Sonnet 4.6 + Opus 4.6 Thinking |
-| OpenAI key invalid | Fresh key at https://platform.openai.com/api-keys |
-| Groq removed | Not usable |
-| Gemini not available (direct) | Different endpoint needed for Antigravity Gemini |
-| Railway expiring | Android tunnel + Windows local backend |
+| # | Mistake | Rule |
+|---|---------|------|
+| 7 | Phantom agent references | Only Agents 1–11 exist — check AGENTS.md roster |
+| 8 | Skipping Quality Gates | Skill 22 before every client deliverable — no exceptions |
+| 29 | Treating pasted prompt as reformat-and-stop | Reformat AND execute — don't just hand back restructured version |
+| 30 | Burying Skill 15 inside general routing | Skill 15 is Layer 0 — mandatory FIRST check on every message |
+| 34 | Confusing Agent 9, 11, and Skill 30 | Agent 9 = project gates. Agent 11 = message routing. Skill 30 = silent mechanism |
+| 35 | Accepting external numbering without checking | Always check AGENTS.md/SKILLS.md current headers before accepting numbered proposals |
+| 36 | Merging Skill 32 and Skill 33 | Status report vs decision debate — different triggers, different outputs |
+| 37 | Building skill without checking overlap | Check TOOLS.md/SKILLS.md/AGENTS.md first — only build what's genuinely missing |
+| 38 | Routing personal-voice to client agent | Skill 35 lives under Agent 6 — non-client only |
+| 40 | Writing guide without wiring into index | Every new file must update README + TOOLS.md cross-refs + MEMORY.md session log |
 
----
+### Token & Platform Rules
 
-## NTIS IMS Audit (ISO 27001 + ISO 22301)
-- 2-day audit (ongoing)
-- Tools: ComplianceHub doc gen, Cherry Studio agents, OpenCode
-- Windows: `.\go.ps1` morning/evening
-- Android: `bash go.sh` for tunnel + backend
+| # | Mistake | Rule |
+|---|---------|------|
+| 5 | Wrong API endpoint | OpenRouter: `openrouter.ai/api/v1`. Gemini: via Google AI Studio. Never hardcode provider endpoints. |
+| 11 | graphify on small repos | Only for repos 30+ files — overhead not worth it below that |
+| 12 | markitdown URL scraping | Government/ISO sites 403 — use agent-browser to fetch first |
+| 13 | caveman mode persistence | Stays active until "normal mode" — no need to re-trigger each message |
+| 15 | PUSH on non-Claude models | Strip PUSH → "Work through this step by step" on all platforms |
+| 19 | Reading raw DOCX/PDF in agent | Always run markitdown first — agent reads .md, not binary |
+| 20 | caveman on code blocks | caveman must never modify code blocks, formulas, clause refs, or doc codes |
+| 22 | markitdown on government sites | Returns 403 — use agent-browser to fetch first, then markitdown |
+| 31 | PUSH line on non-Claude models | All platforms → "Work through this step by step". DeepSeek/GLM → native reasoning mode |
 
----
+### Gemini Gems Rules
 
-## Watchdog Automation (Added June 18)
-
-### How it works
-```
-crontab (every 10 min)
-  └─ watchdog.sh
-       ├─ Pings localhost:8000/api/health
-       ├─ Checks /tmp/compliancehub-url.txt exists + non-empty
-       ├─ Both OK → silent exit
-       ├─ Backend down → start uvicorn → start tunnel → sync URL to git
-       └─ Tunnel down → start tunnel.sh → sync URL to git
-```
-
-### Files
-| File | Purpose |
-|------|---------|
-| `watchdog.sh` | Lightweight health check + auto-restart |
-| `crontab` | 3 entries: watchdog every 10min, disk check every 30min, @reboot |
-
-### Coverage
-| Scenario | Before | After |
-|----------|--------|-------|
-| Phone reboot | Manual `bash go.sh` | Auto within 10 min via @reboot + cron |
-| Termux killed | Manual restart | Auto within 10 min |
-| Tunnel drop + go.sh down | Manual fix | Auto within 10 min |
-| Backend crash during tile gap | Silent failure | Auto restarted next cycle |
-
-### Setup (already done)
-- `/usr/sbin/cron` running (PID verified)
-- Crontab installed with 3 entries
-- `watchdog.sh` tested — backend auto-started successfully
-- Tunnel URL synced to `Osama/.tunnel-url` and git-pushed on each restart
+| # | Mistake | Rule |
+|---|---------|------|
+| 23 | PUSH in Gemini Gems | Use "Work through this step by step" instead |
+| 24 | Uploading raw PDF/DOCX to Gem | Always markitdown first → upload .md |
+| 25 | Uploading full SKILLS.md to Gems | Split into topic files — full file too large for RAG |
 
 ---
 
-## `/v1/chat/completions` — Universal OpenAI Endpoint
+## Client-Specific Patterns
 
-### Current Tunnel URL
+### How Clients Work in OWL
+
+**Two categories — different treatment:**
+
+| Category | Who | Duration | Profile | Update Frequency |
+|----------|-----|----------|---------|------------------|
+| **Projects** | MSD-MOI, Al-Ahsa, SAGCO (+ new ones) | Weeks to years | Full `clients/<NAME>.md` file | When status changes |
+| **Audit Clients** | Changes daily by calendar | 1–5 days | One-line entry in CONTEXT.md Audit Clients table | Every morning from calendar |
+| Archived | UACC, MOC | Closed | Move to `clients/archive/` | On project close |
+
+**Daily workflow:**
+1. Morning: Check calendar → update CONTEXT.md Audit Clients table with today's audits → classify sensitivity per client
+2. During work: Load project client from `clients/<NAME>.md` OR work audit client from CONTEXT.md
+3. End of day: Archive completed audit entries, sync project status if changed
+
+### Projects (Consultation & Implementation)
+
+#### MSD-MOI (Active)
+- Full Arabic MSA · ISO refs and Risk IDs in English only
+- Formula: S=O×Q (latent) · V=S×(1−U/4) (residual)
+- Visual: #004D26 headers · #C8A96E accents · #1A3A5C secondary · RTL layout
+- Aligned to: DGA Qiyas · NCA ECC · NRC framework
+- Active: Corporate Risk Register (146 entries) · BIA Workbook (30 processes) · BCP
+- Sensitivity: HIGH (government, PDPL) — see PLATFORMS.md §3
+
+#### SAGCO (Active — Stage 2 Pending)
+- English technical
+- Formula: L×S (OHS/Env) · L×S×R (Environmental Significance)
+- HIRA methodology + Hierarchy of Controls + mandatory 30-day review on trigger events
+- Stage 2 blockers: emergency drill · fire extinguisher inspection · Group A sign-off
+- Dashboard: https://sagcodrv-ux.github.io/sagco-im/
+- Prefix: SAGCO-IMS- · Visual: #1B3A4B / #E07B39
+- Sensitivity: MEDIUM — PII scrub required for non-Claude platforms
+
+#### Al-Ahsa Municipality (Active)
+- Arabic MSA · ISO refs in English · NCA ECC aligned
+- Formula: L×I (Risk Score) · Nested IF Risk Level
+- Prefix: AHSA-ISMS- · Visual: #006400
+- Sensitivity: HIGH (government, PDPL) — see PLATFORMS.md §3
+
+### Audit Clients (Dynamic by Calendar)
+
+Audit clients come and go based on Osama's calendar. **Do not create permanent profiles.**
+
+**Today's audit clients** are tracked in the Audit Clients table in CONTEXT.md (updated daily from calendar).
+
+**Quick-add format (one line per client):**
+```markdown
+| [Client Name] | [Standard] | [Stage 1/2/Surv] | [Date] | [Auditor] | [Notes] |
 ```
-https://extraordinary-october-databases-remote.trycloudflare.com
-```
 
-### Models available through tunnel
-| Model ID | Type | Status |
-|----------|------|--------|
-| `claude-sonnet-4-6` | Sonnet 4.6 (default) | ✅ Tested |
-| `claude-opus-4-6-thinking` | Opus 4.6 Thinking | ✅ Tested |
-| `antigravity_claude_sonnet_46` | Antigravity direct | ✅ Available |
-| `antigravity_claude_opus_46` | Antigravity direct | ✅ Available |
-| Any other model | Falls through OpenRouter → Groq → Local | ✅ Auto
+**For audit work, always:**
+- Identify the client + standard at session start
+- Apply correct doc code prefix (ask if not in CONTEXT.md)
+- Use TÜV Austria CB templates from `templates/tuv-austria/`
+- Follow audit package workflow: manday calc → questionnaire → plan → checklist → report → certificate
+- Classify sensitivity (HIGH if government, MEDIUM if industrial) — affects platform routing
 
-### Endpoint
-```
-POST {tunnel-url}/v1/chat/completions
-```
+### Archived Clients
 
-### Models
-| Model ID | Provider | Type |
-|----------|----------|------|
-| `claude-sonnet-4-6` | Antigravity | Tier 0 |
-| `claude-opus-4-6-thinking` | Antigravity | Tier 0 (extended thinking) |
-| Any other | Auto-fallback | OpenRouter → Groq → Local |
-
-### Cherry Studio Setup (Windows)
-1. Settings → Providers → Add **OpenAI**
-2. Name: `Antigravity`
-3. API URL: `{tunnel-url}/v1/chat/completions`
-4. Model: `claude-sonnet-4-6`
-5. API Key: anything (not checked)
-6. Assign to 3 model slots:
-   - Default: `claude-sonnet-4-6`
-   - Quick: `claude-sonnet-4-6`
-   - Translate: `claude-sonnet-4-6`
-
-### OpenCode Desktop Setup (Windows)
-1. Settings → Providers → Add **OpenAI-compatible**
-2. Name: `Antigravity`
-3. Base URL: `{tunnel-url}/v1/chat/completions`
-4. Model: `claude-sonnet-4-6`
-5. API Key: anything (not checked)
-6. Also add OpenRouter as backup for when tunnel is down
-
-### Notes
-- Backend must be running on Android for this to work
-- The backend auto-refreshes the Antigravity OAuth token
-- If Antigravity fails, backend falls through to OpenRouter → Groq → Local
+| Client | Standard | Prefix | Notes |
+|--------|----------|--------|-------|
+| UACC | ISO 50001 | UACC-EnMS- | Finished — English · EnMS vocabulary locked (SEU, EnPI, EnB, VFD, DCS, ALARM, SEEC) |
+| MOC | ISO 37001 | MOC-ABMS- | Archived July 2026 · Arabic MSA |
 
 ---
 
-## Reference Docs
-- `Osama/WINDOWS_SETUP.md` — Cherry Studio + OpenCode Desktop + go.ps1 config steps
-- `Osama/AGENT_PROMPTS.md` — copy-paste system prompts for all 9 agents
+## Active Platform Stack (August 2026)
 
-## Audit Fixes (completed June 18)
-All 16 identified issues fixed in commit `41b93ef`:
-- **Critical:** Removed tunnel health_check_url (NAT hairpinning caused infinite restart loop)
-- **Critical:** Removed git push from watchdog (crontab has no credentials)
-- **High:** Wired rate limiting + health tracking to /v1/chat/completions
-- **High:** Updated .env.example (Anthropic → Antigravity)
-- **High:** Fixed setup-windows.ps1 (Out-Null bug, Anthropic refs)
-- **High:** Deleted dead anthropic_provider.py
-- **Medium:** Streaming path consistency, git stash cleanup, grep -oE portability
-- **Low:** Performance recording reuse, Find-Git version sort, MODEL_NAME var
+| Platform | Role | Notes |
+|---|---|---|
+| VS Code + Cline | Terminal coding | Primary terminal · LeanCTX enabled |
+| Qwen Studio | Web workspace | Primary web · 1M context |
+| Qwen Coder | Free coding | Web + Android |
+| Z.ai Agent | Agents, reasoning | GLM-5.2 · full OWL load |
+| Z.ai Chat | Quick Q&A | GLM-5.2 · light load |
+| AutoClaw | Automated workflows | 7 automations · cron-driven |
+| Gemini Pro | Deep Research, 5 Gems | Paid · Gem 1-3 (audit/impl/KSA) · Gem 4 (personal) · Gem 5 (code) |
+| Hermes Agent | Persistent agent | Windows · Telegram/WhatsApp |
+| MiniMax | Free until limit | Quick queries |
+| Xiaomi MiMo | OWL tasks | OpenClaw · 4hr/day free |
+| Phone | Qwen, Z.ai, MiMo, DeepSeek, Claude, Gemini | Multi-app |
 
-## Refactors (completed June 18)
-All 4 refactors committed in `87086ab`:
-1. **Router dedup** — extracted `_route()` shared function, `generate()` and `extract_structured()` are now thin wrappers (−120 lines)
-2. **Chat uses resolve_chain** — `FALLBACK_CHAIN` now auto-syncs with router (14 providers)
-3. **Config consolidation** — new `app/settings.py` centralizes all 21 env var reads from 11 files
-4. **Streaming cleanup** — removed `generate_stream()` from AntigravityProvider (uses parent default)
+---
 
-## Android Agent Testing (curl commands)
-Test any agent directly against localhost backend (no tunnel needed):
-```bash
-# Agent 1 — Gap Analysis
-curl -s -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior Lead Auditor. ISO clause-level precise. Identify findings only — no solutions."},{"role":"user","content":"Run gap analysis on ISO 27001 Annex A.5 (Information Security Policies). List all controls and their compliance status."}],"temperature":0.2,"max_tokens":4096}' | python3 -m json.tool
+## Session Log
+_Newest first._
 
-# Agent 2 — Implementation Doc
-curl -s -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior Lead Implementer. Complete audit-defensible docs. Client formulas non-negotiable."},{"role":"user","content":"Create ISO 27001 Information Security Policy document outline for MSD-MOI with clause references."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
+### August 2026 — File Restoration (08-08)
+- SOUL.md restored from 07-08 original: replaced Chinese security template with English domain-specific content
+- SOUL.md enhanced: v3.1→v4.0 · added Quality Pipeline section · Law #14 (never Chinese) · skills 35→38 · Gemini 3→5 Gems · phone workflow
+- AGENTS.md restored from 07-08 original: replaced generic OpenClaw template with 11-agent roster
+- AGENTS.md enhanced: v4.0→v4.1 · MEMORY.md security note · Gemini 5 Gems in strip rules · Gem 4+5 trigger signals · Phone 6 apps
+- CONTEXT.md restored from 07-08 original: added Platform routing, Audit Calendar, Visual Identity Summary, Gem→Client mapping
+- CONTEXT.md fix: Accreditation changed from UKAS to SAAC (Saudi Accreditation) + Austrian Accreditation + Hellas Accrediting
+- MEMORY.md restored from 07-08 original: 34→206+ lines · all preferences, mistakes, client patterns, session log recovered
+- MEMORY.md enhanced: Client-Specific Patterns restructured → Consultation (stable) + Audit (dynamic, daily by calendar) + Archived
+- MEMORY.md added mistakes #14 (no Chinese) and #41 (never replace OWL files with generic templates)
+- Key lesson: 08-08 session incorrectly replaced domain-specific OWL files with generic templates — must not happen again
 
-# Agent 5 — Arabic Output
-curl -s -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"claude-sonnet-4-6","messages":[{"role":"system","content":"Act as Senior ISO Implementer and Arabic technical writer. MSA first-person practitioner voice. ISO refs in English."},{"role":"user","content":"Write an Arabic ISO 22301 Business Continuity Policy introduction for MSD-MOI."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
+### August 2026 — OWL v4.0 Consolidation (07-08)
+- Major platform consolidation: killed opencode, Cherry Studio, claude.ai configs
+- Actual stack: Cline (VS Code), Qwen Studio, Z.ai, MiniMax, MiMo, Hermes Agent, Gemini Pro, Qwen Coder
+- SOUL.md updated to v3.1: agent count fixed (9→11), platform stack updated, Law #4 reworded
+- PLATFORMS.md rewritten: 46KB → 14KB. Merged PLATFORMS_RULES.md. Added Gemini activation plan (3 Gems), Hermes Agent setup, Qwen Coder guide, session sync protocol
+- MEMORY.md pruned: 29KB → 10KB. Removed 12 dead mistakes, grouped remaining by category
+- SKILLS.md split: 133KB → 4KB index + 5 domain files (~7KB each). 122KB saved per session
+- TOOLS.md split: 61KB → 3KB. Install guides to docs/INSTALL_GUIDES.md
+- CONTEXT.md simplified: 33KB → 3KB. Client profiles to clients/ folder. Quick-add template created
+- Skills 37/38/39 integrated: Qwen Workspace, Code Review Gate (Alibaba OCR), PII Scrub & Route
+- 8 OpenClaw skills mapped to OWL agents
+- LeanCTX confirmed compatible with Cline: `lean-ctx init --agent cline`
+- Session sync protocol: Hermes Agent cron jobs for daily digest + sync reminder
+- Client model simplified: Audit clients (quick-add) + Consultation (full profile) + Finished (archived)
+- Gemini Pro activation plan: 3 Gems (Auditor, Implementer, KSA Lead) with setup instructions
+- AGENTS.md updated: 29KB → 12KB. Removed dead platform refs, updated Agent 3/7 tools, added Skills 37/38/39 to trigger map
+- Dead platform guide files deleted (CHERRY_STUDIO, OPENCODE, GEMINI_GEMS, DEEPSEEK, QWEN_STUDIO, ZAI_ARENA, CLAUDE.md, GEMINI.md)
+- Total token savings: ~78K tokens per session (90K → 12K baseline)
+- Client data: all 4 clients have profiles (MSD-MOI, SAGCO, AL-AHSA active; UACC archived)
+- ACTIVE_CLIENTS.md created for daily audit client tracking (one-line entries)
+- SETUP.md created: complete platform setup guide for v4.0
+- Hermes Agent: desktop application (not CLI) — setup guide in SETUP.md §6
+- KSA regulatory layer expanded: PDPL (12 requirements, ISO 27701 mapping), DGA Qiyas V5.0 (8 dimensions, 5 maturity levels), SDAIA AI Ethics (7 principles), SDAIA GenAI Guidelines, NCA ECC (114 controls), SAMA CSF (6 domains), Etimad scoring
+- clients/KSA-REGULATORY.md created: 15KB comprehensive reference with cross-framework integration maps
+- Agent 10 updated: expanded auto-trigger, cross-framework integration table, reference to KSA-REGULATORY.md
+- Gem 3 (KSA Lead) instructions updated: full PDPL/DGA/SDAIA coverage with specific control references
+- docs/QWEN_PROJECTS.md created: 4 Projects with task rules, Hybrid Thinking triggers, Deep Research triggers
+- TÜV Austria audit templates installed: 10 standardized CB forms in templates/tuv-austria/
+- Audit package workflow defined: manday calculation → questionnaire → plan → checklist → report → certificate
+- Templates are IMMUTABLE — never modify, always save as new file with client data
+- PLATFORM_RULES.md v1.0 content integrated into PLATFORMS.md: prompt injection defense, hard token caps (60 turns/60K chars/5K per file), token pressure drop order, cross-client denial rule, API key echo protection
 
-# Test Opus thinking for complex reasoning
-curl -s -X POST http://localhost:8000/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model":"claude-opus-4-6-thinking","messages":[{"role":"user","content":"Evaluate this risk scenario: A manufacturing plant has single generator for backup power. 8-hour fuel supply. No maintenance contract. Lead time for parts 72 hours. Score inherent and residual risk using ISO 31000 methodology."}],"temperature":0.3,"max_tokens":4096}' | python3 -m json.tool
-```
-
-## Next Steps
-1. ~~Create watchdog.sh + crontab for auto-restart~~ ✅
-2. ~~Test Antigravity API — Claude Sonnet 4.6 + Opus 4.6 Thinking~~ ✅
-3. ~~Create antigravity_provider.py + `/v1/chat/completions` endpoint~~ ✅
-4. ~~Create `backend/start.sh` (setsid, survives shell kills)~~ ✅
-5. ~~Wire Antigravity accounts into OpenCode CLI plugin~~ ✅
-6. ~~16 audit fixes + 4 refactors~~ ✅
-7. **Configure Cherry Studio on Windows** — follow `Osama/WINDOWS_SETUP.md` + `AGENT_PROMPTS.md`
-8. **Configure OpenCode Desktop on Windows** — follow `Osama/WINDOWS_SETUP.md`
-9. **Start NTIS IMS audit production** — Agent 1 gap analyses, Agent 2 BCM docs, Agent 5 Arabic outputs
+---
