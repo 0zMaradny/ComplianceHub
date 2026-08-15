@@ -1,14 +1,22 @@
 """Model capability registry — single source of truth for all AI models.
 
 Each model has:
-  - tier: 'frontier_free' | 'strong_free' | 'groq' | 'local'
+  - tier: 'premium' | 'frontier_free' | 'strong_free' | 'groq' | 'local'
   - context_length: max tokens
   - strengths: list of task types it excels at
   - provider: which provider class handles it
-  - model_id: the OpenRouter model identifier
+  - model_id: the OpenRouter/model identifier
 
 Only verified free models from OpenRouter are registered.
 Paid fallbacks (fusion, auto) kept as last resort only.
+
+Updated 2026-07-22/2026-08-11: claude-sonnet-5 (Antigravity Tier-0); added
+kimi_k3 (replaces retired kimi_k26), glm_52, minimax_m3, qwen38_max_preview
+(frontier); deepseek_v4_flash, llama_4_scout, glm_5_turbo, longcat_2 (strong);
+groq_scout (groq). Total 21. Gemini removed from this chain (Mistake #5) —
+chat/platform only. VERIFY kimi-k3, glm-5.2, minimax-m3, qwen3.8-max-preview,
+deepseek-v4-flash, llama-4-scout, glm-5-turbo, meituan/longcat-2.0 ids live.
+Generation providers only.
 """
 
 from dataclasses import dataclass
@@ -26,7 +34,38 @@ class ModelCaps:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# FREE OPENROUTER MODELS — verified as of June 2026
+# TIER 0 — PREMIUM (free Claude via Antigravity, Google internal API)
+# ═══════════════════════════════════════════════════════════════════════════
+
+PREMIUM = [
+    ModelCaps(
+        model_id="claude-sonnet-5",
+        openrouter_name="premium_claude",
+        provider="antigravity",
+        tier="premium",
+        context_length=1_000_000,
+        strengths=(
+            "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
+            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Participation_List", "TNL",
+            "Management_Review_Minutes", "Corrective_Action_Report", "Gap_Analysis_Report",
+            "Statement_of_Applicability", "Business_Impact_Analysis",
+            "Records_of_Processing_Activities", "Risk_Treatment_Plan",
+            "Incident_Investigation_Report", "Internal_Audit_Program",
+            "Environmental_Aspect_Register", "Hazard_Identification_Register",
+            "Energy_Review", "Compliance_Obligations_Register",
+            "Service_Portfolio", "Service_Catalogue", "Supplier_Agreement_Register",
+            "Business_Relationship_Register", "Capacity_Management_Plan",
+            "Change_Management_Register", "Release_Deployment_Plan",
+            "Incident_Management_Log", "Problem_Management_Register",
+            "Service_Continuity_Plan", "Availability_Management_Report",
+            "extract_shared_context", "chat_query",
+        ),
+        notes="Claude Sonnet 5 — free via Antigravity (Google Cloud Workstations internal API). 2 concurrent per account. Tier 0 primary.",
+    ),
+]
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FREE OPENROUTER MODELS — verified as of August 2026
 # Only models suitable for ISO audit document generation are included.
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -51,13 +90,13 @@ FRONTIER_FREE = [
         notes="35B active / 480B total. Best for structured/JSON extraction.",
     ),
     ModelCaps(
-        model_id="moonshotai/kimi-k2.6:free",
-        openrouter_name="kimi_k26",
+        model_id="moonshotai/kimi-k3:free",
+        openrouter_name="kimi_k3",
         provider="openrouter",
         tier="frontier_free",
-        context_length=262_144,
+        context_length=1_000_000,
         strengths=("Audit_Report", "Certificate_Text", "chat_query"),
-        notes="Kimi K2.6 — ties GPT-5.5 on coding, 262k ctx. Excellent narrative generation.",
+        notes="Kimi K3 — 1M ctx. Excellent narrative generation. Replaces retired kimi_k26.",
     ),
     ModelCaps(
         model_id="openrouter/owl-alpha",
@@ -67,6 +106,33 @@ FRONTIER_FREE = [
         context_length=1_048_756,
         strengths=("Audit_Report", "Certificate_Text", "chat_query", "extract_shared_context"),
         notes="Owl Alpha — 1M ctx, agentic tool use. Designed for agentic workloads.",
+    ),
+    ModelCaps(
+        model_id="z-ai/glm-5.2:free",
+        openrouter_name="glm_52",
+        provider="openrouter",
+        tier="frontier_free",
+        context_length=1_000_000,
+        strengths=("Audit_Report", "Gap_Analysis_Report", "chat_query"),
+        notes="GLM-5.2 — 1M ctx. Strong reasoning (Z.ai).",
+    ),
+    ModelCaps(
+        model_id="minimax/minimax-m3:free",
+        openrouter_name="minimax_m3",
+        provider="openrouter",
+        tier="frontier_free",
+        context_length=1_000_000,
+        strengths=("Audit_Report", "chat_query"),
+        notes="MiniMax M3 — 1M ctx. Fast frontier.",
+    ),
+    ModelCaps(
+        model_id="qwen/qwen3.8-max-preview:free",
+        openrouter_name="qwen38_max_preview",
+        provider="openrouter",
+        tier="frontier_free",
+        context_length=1_000_000,
+        strengths=("ISO_Checklist", "TNL", "extract_shared_context"),
+        notes="Qwen3.8 Max Preview — 1M ctx. Best Arabic/Chinese multilingual.",
     ),
 ]
 
@@ -108,10 +174,55 @@ STRONG_FREE = [
         strengths=("Audit_Report", "Certificate", "Certificate_Text"),
         notes="405B. Agentic capabilities. Good for complex reasoning docs.",
     ),
+    ModelCaps(
+        model_id="deepseek/deepseek-v4-flash:free",
+        openrouter_name="deepseek_v4_flash",
+        provider="openrouter",
+        tier="strong_free",
+        context_length=1_000_000,
+        strengths=("Audit_Report", "ISO_Checklist", "chat_query"),
+        notes="DeepSeek V4 Flash — 1M ctx. Fast + strong coding/general.",
+    ),
+    ModelCaps(
+        model_id="meta-llama/llama-4-scout-17b-16e-instruct:free",
+        openrouter_name="llama_4_scout",
+        provider="openrouter",
+        tier="strong_free",
+        context_length=128_000,
+        strengths=("ISO_Checklist", "Audit_Report"),
+        notes="Llama 4 Scout 17B — fast MoE strong tier.",
+    ),
+    ModelCaps(
+        model_id="z-ai/glm-5-turbo:free",
+        openrouter_name="glm_5_turbo",
+        provider="openrouter",
+        tier="strong_free",
+        context_length=1_000_000,
+        strengths=("Gap_Analysis_Report", "chat_query"),
+        notes="GLM-5-Turbo — 1M ctx. Fast reasoning (Z.ai).",
+    ),
+    ModelCaps(
+        model_id="meituan/longcat-2.0:free",
+        openrouter_name="longcat_2",
+        provider="openrouter",
+        tier="strong_free",
+        context_length=262_000,
+        strengths=("Audit_Report", "chat_query"),
+        notes="LongCat 2.0 (Meituan) — Chinese origin. Anonymized Track A + general/coding only, never PII/KSA/healthcare (privacy tier = DeepSeek).",
+    ),
 ]
 
 # Groq: independent API endpoint, ~800 t/s
 GROQ_FREE = [
+    ModelCaps(
+        model_id="meta-llama/llama-4-scout-17b-16e-instruct",
+        openrouter_name="groq_scout",
+        provider="groq",
+        tier="groq",
+        context_length=128_000,
+        strengths=("ISO_Checklist", "Audit_Report", "chat_query"),
+        notes="Groq Llama 4 Scout — fastest free inference. Preferred Groq model.",
+    ),
     ModelCaps(
         model_id="llama-3.3-70b-versatile",
         openrouter_name="groq_llama",
@@ -154,111 +265,6 @@ LOCAL_FREE = [
     ),
 ]
 
-# Antigravity: free Claude + Gemini via Google's internal API
-# Stress-tested June 2026 — Claude/gemini-3-flash = 2 concurrent per account,
-# gemini-2.5-flash/thinking = 20+ concurrent per account
-ANTIGRAVITY_FREE = [
-    ModelCaps(
-        model_id="claude-sonnet-4-6",
-        openrouter_name="antigravity_claude_sonnet_46",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=200_000,
-        strengths=(
-            "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
-            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Participation_List", "TNL",
-            "Management_Review_Minutes", "Corrective_Action_Report", "Gap_Analysis_Report",
-            "Statement_of_Applicability", "Business_Impact_Analysis",
-            "Records_of_Processing_Activities", "Risk_Treatment_Plan",
-            "Incident_Investigation_Report", "Internal_Audit_Program",
-            "Environmental_Aspect_Register", "Hazard_Identification_Register",
-            "Energy_Review", "Compliance_Obligations_Register",
-            "Service_Portfolio", "Service_Catalogue", "Supplier_Agreement_Register",
-            "Business_Relationship_Register", "Capacity_Management_Plan",
-            "Change_Management_Register", "Release_Deployment_Plan",
-            "Incident_Management_Log", "Problem_Management_Register",
-            "Service_Continuity_Plan", "Availability_Management_Report",
-            "extract_shared_context", "chat_query",
-        ),
-        notes="Claude Sonnet 4.6 — free via Antigravity v2.0 API. 2 concurrent per account. Tier 0 primary.",
-    ),
-    ModelCaps(
-        model_id="claude-opus-4-6-thinking",
-        openrouter_name="antigravity_claude_opus_46",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=200_000,
-        strengths=(
-            "Audit_Report", "ISO_Checklist", "Certificate_Text", "Certificate",
-            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Gap_Analysis_Report",
-            "Statement_of_Applicability", "Risk_Treatment_Plan",
-            "extract_shared_context",
-        ),
-        notes="Claude Opus 4.6 — free via Antigravity v2.0 API. Extended thinking, 2 concurrent per account.",
-    ),
-    ModelCaps(
-        model_id="gemini-3-flash",
-        openrouter_name="antigravity_gemini_3_flash",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=1_000_000,
-        strengths=(
-            "Audit_Report", "ISO_Checklist", "Certificate_Text",
-            "Gap_Analysis_Report", "Statement_of_Applicability",
-            "Records_of_Processing_Activities", "Risk_Treatment_Plan",
-            "Business_Impact_Analysis", "Incident_Investigation_Report",
-            "extract_shared_context", "chat_query",
-        ),
-        notes="Gemini 3 Flash — thinking model (63 avg thought tokens). 2 concurrent per account.",
-    ),
-    ModelCaps(
-        model_id="gemini-2.5-flash",
-        openrouter_name="antigravity_gemini_25_flash",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=1_000_000,
-        strengths=(
-            "Audit_Plan_Stage_1", "Audit_Plan_Stage_2", "Participation_List", "TNL",
-            "Management_Review_Minutes", "Corrective_Action_Report",
-            "Environmental_Aspect_Register", "Hazard_Identification_Register",
-            "Energy_Review", "Compliance_Obligations_Register",
-            "Service_Portfolio", "Service_Catalogue", "Supplier_Agreement_Register",
-            "Business_Relationship_Register", "Capacity_Management_Plan",
-            "Change_Management_Register", "Release_Deployment_Plan",
-            "Incident_Management_Log", "Problem_Management_Register",
-            "Service_Continuity_Plan", "Availability_Management_Report",
-            "chat_query",
-        ),
-        notes="Gemini 2.5 Flash — 20+ concurrent per account, 1M context. Highest throughput.",
-    ),
-    ModelCaps(
-        model_id="gemini-2.5-flash-thinking",
-        openrouter_name="antigravity_gemini_25_flash_thinking",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=1_000_000,
-        strengths=(
-            "Audit_Report", "Gap_Analysis_Report", "Statement_of_Applicability",
-            "Risk_Treatment_Plan", "Business_Impact_Analysis",
-            "extract_shared_context",
-        ),
-        notes="Gemini 2.5 Flash Thinking — extended reasoning + 20+ concurrent.",
-    ),
-    ModelCaps(
-        model_id="gemini-2.5-pro",
-        openrouter_name="antigravity_gemini_25_pro",
-        provider="antigravity",
-        tier="antigravity",
-        context_length=1_000_000,
-        strengths=(
-            "Audit_Report", "ISO_Checklist", "Certificate_Text",
-            "Gap_Analysis_Report", "Statement_of_Applicability",
-            "Risk_Treatment_Plan",
-        ),
-        notes="Gemini 2.5 Pro — often returns 503 (no capacity). Fallback only.",
-    ),
-]
-
 # Paid fallbacks — only used when all free tiers fail or aren't available
 FUSION = ModelCaps(
     model_id="openrouter/fusion",
@@ -287,14 +293,16 @@ LOCAL_NAMES = [m.openrouter_name for m in LOCAL_FREE]
 # ═══════════════════════════════════════════════════════════════════════════
 
 ALL_MODELS: dict[str, ModelCaps] = {}
-for _m in ANTIGRAVITY_FREE + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
+for _m in PREMIUM + FRONTIER_FREE + STRONG_FREE + GROQ_FREE + LOCAL_FREE + [FUSION, AUTO]:
     ALL_MODELS[_m.openrouter_name] = _m
 
-ANTIGRAVITY_NAMES = [m.openrouter_name for m in ANTIGRAVITY_FREE]
+# Back-compat aliases: PREMIUM was previously the Antigravity layer
+PREMIUM_NAMES = [m.openrouter_name for m in PREMIUM]
+ANTIGRAVITY_NAMES = PREMIUM_NAMES
 FRONTIER_NAMES = [m.openrouter_name for m in FRONTIER_FREE]
 STRONG_NAMES = [m.openrouter_name for m in STRONG_FREE]
 GROQ_NAMES = [m.openrouter_name for m in GROQ_FREE]
-ALL_API_NAMES = ANTIGRAVITY_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
+ALL_API_NAMES = PREMIUM_NAMES + FRONTIER_NAMES + STRONG_NAMES + GROQ_NAMES + LOCAL_NAMES
 
 
 def get_tier_models(tier: str) -> list[ModelCaps]:

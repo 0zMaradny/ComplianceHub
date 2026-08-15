@@ -17,7 +17,7 @@ from app.settings import ANTIGRAVITY_CLIENT_ID, ANTIGRAVITY_CLIENT_SECRET, ANTIG
 # Claude + gemini-3-flash: 2 concurrent per account (429 at 3+)
 # gemini-2.5-*: 15+ concurrent per account (effectively unlimited)
 _MODEL_CONCURRENCY = {
-    'claude-sonnet-4-6': 2,
+    'claude-sonnet-5': 2,
     'claude-opus-4-6-thinking': 2,
     'gemini-3-flash': 2,
     'gemini-2.5-pro': 2,
@@ -57,16 +57,16 @@ class _FatalError(Exception):
 
 class AntigravityProvider(AIProvider):
     def __init__(self, provider_name: str | None = None):
-        self.provider_name = provider_name or 'antigravity_claude_sonnet_46'
+        self.provider_name = provider_name or 'premium_claude'
         self.model_map = {
-            'antigravity_claude_sonnet_46': 'claude-sonnet-4-6',
+            'premium_claude': 'claude-sonnet-5',
             'antigravity_claude_opus_46': 'claude-opus-4-6-thinking',
             'antigravity_gemini_3_flash': 'gemini-3-flash',
             'antigravity_gemini_25_flash': 'gemini-2.5-flash',
             'antigravity_gemini_25_flash_thinking': 'gemini-2.5-flash-thinking',
             'antigravity_gemini_25_pro': 'gemini-2.5-pro',
         }
-        self.model = self.model_map.get(self.provider_name, 'claude-sonnet-4-6')
+        self.model = self.model_map.get(self.provider_name, 'claude-sonnet-5')
         self.client_id = ANTIGRAVITY_CLIENT_ID
         self.client_secret = ANTIGRAVITY_CLIENT_SECRET
 

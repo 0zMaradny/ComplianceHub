@@ -41,11 +41,11 @@ logger = logging.getLogger(__name__)
 
 # ── Council Mode configuration ──────────────────────────────────────────────
 COUNCIL_MODE_ENABLED = os.getenv("COUNCIL_MODE_ENABLED", "false").lower() == "true"
-COUNCIL_JUDGE_MODEL = os.getenv("COUNCIL_JUDGE_MODEL", "antigravity_claude_sonnet_46")
+COUNCIL_JUDGE_MODEL = os.getenv("COUNCIL_JUDGE_MODEL", "premium_claude")
 
 # ── Arabic client routing ──────────────────────────────────────────────────
 ARABIC_CLIENTS = {"MSD-MOI", "Al-Ahsa", "AHSA", "MOI"}
-ARABIC_PREFERRED_MODEL = "antigravity_claude_sonnet_46"
+ARABIC_PREFERRED_MODEL = "premium_claude"
 
 # ── Model performance tracking ─────────────────────────────────────────────
 _PERF_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "model_performance.json"
@@ -218,7 +218,7 @@ def resolve_chain(
 ) -> list[str]:
     """Resolve the provider chain for a given task."""
     if override_provider:
-        ALIASES = {"claude": "antigravity_claude_sonnet_46"}
+        ALIASES = {"claude": "premium_claude"}
         resolved = ALIASES.get(override_provider, override_provider)
         return [resolved]
     
@@ -309,6 +309,8 @@ def _provider_has_key(provider_name: str) -> bool:
     if model and model.provider == 'antigravity':
         return bool(app_settings.ANTIGRAVITY_REFRESH_TOKENS.strip())
     if provider_name == 'groq':
+        return bool(app_settings.GROQ_API_KEY.strip())
+    if provider_name in ('groq_llama', 'groq_scout'):
         return bool(app_settings.GROQ_API_KEY.strip())
     return False
 

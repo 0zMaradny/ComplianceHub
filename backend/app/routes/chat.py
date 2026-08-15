@@ -10,6 +10,7 @@ from app.services import db
 from app.services.ai import create_provider
 from app.services.ai.rate_limiter import ProviderRateLimiter
 from app.services.ai.router import _provider_health, _PROVIDER_DEGRADE_THRESHOLD, record_model_result, resolve_chain
+from app.services.ai.model_registry import ALL_MODELS
 
 logger = logging.getLogger(__name__)
 
@@ -17,12 +18,28 @@ router = APIRouter(tags=["AI Chat"])
 
 _rate_limiter = ProviderRateLimiter()
 
-MODEL_MAP = {
-    "claude-sonnet-4-6": "antigravity_claude_sonnet_46",
-    "claude-opus-4-6-thinking": "antigravity_claude_opus_46",
+_PUBLIC_ID_OVERRIDES = {
+    "premium_claude": "claude-sonnet-5",
 }
 
-FALLBACK_CHAIN = resolve_chain('chat_query')
+MODELS_LIST = []
+MODEL_MAP = {}
+for _c in sorted(ALL_MODELS.values(), key=lambda m: m.openrouter_name):
+    pid = _PUBLIC_ID_OVERRIDES.get(_c.openrouter_name, _c.openrouter_name.replace("_", "-"))
+    MODELS_LIST.append(
+        {
+            "id": pid,
+            "object": "model",
+            "created": 0,
+            "owned_by": _c.provider,
+        }
+    )
+    MODEL_MAP[pid] = _c.openrouter_name
+
+# Legacy alias: 'auto' routes through the full provider chain
+MODELS_LIST.append({"id": "auto", "object": "model", "created": 0, "owned_by": "router"})
+
+FALLBACK_CHAIN = resolve_chain("chat_query")
 
 
 def _call_provider(provider_name: str, prompt: str, system_prompt: str | None = None,
@@ -50,11 +67,16 @@ def _call_provider(provider_name: str, prompt: str, system_prompt: str | None = 
         return {"error": str(e)}
 
 
+@router.get("/v1/models", summary="List available models (OpenAI-compatible)")
+async def list_models():
+    return {"object": "list", "data": MODELS_LIST}
+
+
 @router.post("/v1/chat/completions", summary="OpenAI-compatible chat completions endpoint")
 async def openai_chat_completions(request: Request):
     body = await request.json()
     messages = body.get("messages", [])
-    model = body.get("model", "claude-sonnet-4-6")
+    model = body.get("model", "claude-sonnet-5")
     temperature = body.get("temperature", 0.3)
     max_tokens = body.get("max_tokens", 4096)
     stream = body.get("stream", False)
@@ -168,4 +190,4 @@ async def chat_stream_endpoint(request: Request):
             yield f"data: {json.dumps({'token': token})}\n\n"
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(event_stream(), media_type='text/event-stream')
+    return StreamingResponse(event_stream(), media_type="text/event-stream")

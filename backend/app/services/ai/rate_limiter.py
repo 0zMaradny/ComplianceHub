@@ -4,25 +4,29 @@ from collections import defaultdict
 
 
 PROVIDER_LIMITS = {
-    'antigravity_claude_sonnet_46': 30,
-    'antigravity_claude_opus_46': 30,
-    'antigravity_gemini_3_flash': 30,
-    'antigravity_gemini_25_flash': 60,
-    'antigravity_gemini_25_flash_thinking': 60,
-    'antigravity_gemini_25_pro': 30,
+    'premium_claude': 30,
     'groq': 30,
     'groq_llama': 30,
+    'groq_scout': 30,
     'openrouter': 30,
 
     'nemotron_ultra': 20,
     'nemotron_super': 20,
     'qwen3_coder': 20,
-    'gemma_31b': 20,
-    'llama_70b': 20,
-    'kimi_k26': 20,
+    'qwen3_next': 20,
+    'kimi_k3': 20,
     'hermes_405b': 20,
     'owl_alpha': 20,
+    'glm_52': 20,
+    'minimax_m3': 20,
+    'qwen38_max_preview': 20,
+    'deepseek_v4_flash': 20,
+    'llama_4_scout': 20,
+    'glm_5_turbo': 20,
+    'longcat_2': 20,
     'local': 5,
+    'local_qwen3_4b': 5,
+    'local_qwen_3b': 5,
     'local_qwen': 5,
 }
 

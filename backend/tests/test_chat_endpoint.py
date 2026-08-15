@@ -15,7 +15,7 @@ class TestListModels:
         assert resp.status_code == 200
         data = resp.json()
         assert data["object"] == "list"
-        assert len(data["data"]) == 12
+        assert len(data["data"]) == 24
 
     def test_auto_model_present(self):
         resp = client.get("/v1/models")
@@ -25,15 +25,14 @@ class TestListModels:
     def test_antigravity_models_present(self):
         resp = client.get("/v1/models")
         models = {m["id"] for m in resp.json()["data"]}
-        assert "claude-sonnet-4-6" in models
-        assert "claude-opus-4-6-thinking" in models
+        assert "claude-sonnet-5" in models
 
     def test_openrouter_models_present(self):
         resp = client.get("/v1/models")
         models = {m["id"] for m in resp.json()["data"]}
         assert "nemotron-ultra" in models
         assert "qwen3-coder" in models
-        assert "kimi-k26" in models
+        assert "kimi-k3" in models
         assert "owl-alpha" in models
         assert "nemotron-super" in models
         assert "llama-70b" in models
@@ -100,7 +99,7 @@ class TestChatCompletionsValidation:
         with patch("app.routes.chat._call_provider") as mock_call:
             mock_call.return_value = {"text": "sonnet_response"}
             resp = client.post("/v1/chat/completions", json={
-                "model": "claude-sonnet-4-6",
+                "model": "claude-sonnet-5",
                 "messages": [{"role": "user", "content": "hello"}],
             })
             assert resp.status_code == 200
@@ -108,13 +107,13 @@ class TestChatCompletionsValidation:
 
     def test_antigravity_opus_specific_model(self):
         with patch("app.routes.chat._call_provider") as mock_call:
-            mock_call.return_value = {"text": "opus_response"}
+            mock_call.return_value = {"text": "sonnet_response"}
             resp = client.post("/v1/chat/completions", json={
-                "model": "claude-opus-4-6-thinking",
+                "model": "claude-sonnet-5",
                 "messages": [{"role": "user", "content": "hello"}],
             })
             assert resp.status_code == 200
-            assert "opus_response" in resp.json()["choices"][0]["message"]["content"]
+            assert "sonnet_response" in resp.json()["choices"][0]["message"]["content"]
 
     def test_groq_specific_model(self):
         with patch("app.routes.chat._call_provider") as mock_call:

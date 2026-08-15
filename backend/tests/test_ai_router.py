@@ -29,12 +29,13 @@ class TestModelRegistry:
 
     def test_all_models_registered(self):
         expected = [
-            'antigravity_claude_sonnet_46', 'antigravity_claude_opus_46',
-            'antigravity_gemini_3_flash', 'antigravity_gemini_25_flash',
-            'antigravity_gemini_25_flash_thinking', 'antigravity_gemini_25_pro',
-            'nemotron_ultra', 'qwen3_coder', 'kimi_k26', 'owl_alpha',
+            'premium_claude',
+            'nemotron_ultra', 'qwen3_coder', 'kimi_k3', 'owl_alpha',
+            'glm_52', 'minimax_m3', 'qwen38_max_preview',
             'nemotron_super', 'llama_70b', 'qwen3_next', 'hermes_405b',
-            'groq_llama', 'local_qwen', 'local_qwen_3b', 'local_qwen3_4b',
+            'deepseek_v4_flash', 'llama_4_scout', 'glm_5_turbo', 'longcat_2',
+            'groq_scout', 'groq_llama',
+            'local_qwen3_4b', 'local_qwen_3b', 'local_qwen',
             'fusion', 'auto',
         ]
         for name in expected:
@@ -84,7 +85,7 @@ class TestResolveChain:
 
     def test_chain_has_local_last(self):
         chain = resolve_chain('Audit_Report')
-        assert 'antigravity_claude_sonnet_46' in chain
+        assert 'premium_claude' in chain
         assert 'groq_llama' in chain
         assert 'local_qwen' in chain
         assert 'local_qwen_3b' in chain
@@ -107,8 +108,8 @@ class TestResolveChain:
         assert len(chain) > 13
 
     def test_override_provider(self):
-        chain = resolve_chain('Audit_Report', override_provider='kimi_k26')
-        assert chain[0] == 'kimi_k26'
+        chain = resolve_chain('Audit_Report', override_provider='kimi_k3')
+        assert chain[0] == 'kimi_k3'
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -122,16 +123,14 @@ class TestProviderHasKey:
         assert _provider_has_key('nemotron_ultra') is True
         assert _provider_has_key('qwen3_coder') is True
         assert _provider_has_key('llama_70b') is True
-        assert _provider_has_key('kimi_k26') is True
+        assert _provider_has_key('kimi_k3') is True
         assert _provider_has_key('owl_alpha') is True
 
     def test_groq_key_set(self):
         assert _provider_has_key('groq') is True
 
     def test_antigravity_key_set(self):
-        assert _provider_has_key('antigravity_claude_sonnet_46') is True
-        assert _provider_has_key('antigravity_gemini_3_flash') is True
-        assert _provider_has_key('antigravity_gemini_25_flash') is True
+        assert _provider_has_key('premium_claude') is True
 
     def test_local_always_true(self):
         assert _provider_has_key('local_qwen') is True
@@ -157,17 +156,17 @@ class TestGetModelId:
         mid = _get_model_id('llama_70b')
         assert 'llama-3.3-70b' in mid
 
-    def test_kimi_k26(self):
-        mid = _get_model_id('kimi_k26')
-        assert 'kimi-k2.6' in mid
+    def test_kimi_k3(self):
+        mid = _get_model_id('kimi_k3')
+        assert 'kimi-k3' in mid
 
     def test_hermes_405b(self):
         mid = _get_model_id('hermes_405b')
         assert '405b' in mid
 
     def test_claude_model_id(self):
-        mid = _get_model_id('antigravity_claude_sonnet_46')
-        assert 'claude-sonnet-4' in mid
+        mid = _get_model_id('premium_claude')
+        assert 'claude-sonnet-5' in mid
 
     def test_unknown_falls_back_to_auto(self):
         mid = _get_model_id('nonexistent')

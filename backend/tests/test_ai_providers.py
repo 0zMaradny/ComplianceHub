@@ -46,57 +46,12 @@ class TestProviderInstantiation:
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
-    def test_antigravity_claude_sonnet_46_is_provider(self):
-        p = create_provider('antigravity_claude_sonnet_46')
+    def test_premium_claude_is_provider(self):
+        p = create_provider('premium_claude')
         assert isinstance(p, AIProvider)
 
-    def test_antigravity_claude_sonnet_46_has_generate(self):
-        p = create_provider('antigravity_claude_sonnet_46')
-        assert hasattr(p, 'generate')
-        assert callable(p.generate)
-
-    def test_antigravity_claude_opus_46_is_provider(self):
-        p = create_provider('antigravity_claude_opus_46')
-        assert isinstance(p, AIProvider)
-
-    def test_antigravity_claude_opus_46_has_generate(self):
-        p = create_provider('antigravity_claude_opus_46')
-        assert hasattr(p, 'generate')
-        assert callable(p.generate)
-
-    def test_antigravity_gemini_3_flash_is_provider(self):
-        p = create_provider('antigravity_gemini_3_flash')
-        assert isinstance(p, AIProvider)
-
-    def test_antigravity_gemini_3_flash_has_generate(self):
-        p = create_provider('antigravity_gemini_3_flash')
-        assert hasattr(p, 'generate')
-        assert callable(p.generate)
-
-    def test_antigravity_gemini_25_flash_is_provider(self):
-        p = create_provider('antigravity_gemini_25_flash')
-        assert isinstance(p, AIProvider)
-
-    def test_antigravity_gemini_25_flash_has_generate(self):
-        p = create_provider('antigravity_gemini_25_flash')
-        assert hasattr(p, 'generate')
-        assert callable(p.generate)
-
-    def test_antigravity_gemini_25_flash_thinking_is_provider(self):
-        p = create_provider('antigravity_gemini_25_flash_thinking')
-        assert isinstance(p, AIProvider)
-
-    def test_antigravity_gemini_25_flash_thinking_has_generate(self):
-        p = create_provider('antigravity_gemini_25_flash_thinking')
-        assert hasattr(p, 'generate')
-        assert callable(p.generate)
-
-    def test_antigravity_gemini_25_pro_is_provider(self):
-        p = create_provider('antigravity_gemini_25_pro')
-        assert isinstance(p, AIProvider)
-
-    def test_antigravity_gemini_25_pro_has_generate(self):
-        p = create_provider('antigravity_gemini_25_pro')
+    def test_premium_claude_has_generate(self):
+        p = create_provider('premium_claude')
         assert hasattr(p, 'generate')
         assert callable(p.generate)
 
@@ -128,7 +83,7 @@ class TestErrorPaths:
 
     def test_antigravity_no_tokens(self):
         from app.services.ai.antigravity_provider import AntigravityProvider
-        p = AntigravityProvider(provider_name='antigravity_claude_sonnet_46')
+        p = AntigravityProvider(provider_name='premium_claude')
         # Empty the tokens list to simulate no config
         p.tokens = []
         result = p.generate('test prompt')
@@ -152,7 +107,7 @@ class TestInitialization:
         assert p.model in ('openrouter/free', 'openrouter/auto') or 'nemotron' in p.model or 'qwen' in p.model
 
     def test_antigravity_init_with_name(self):
-        p = create_provider('antigravity_claude_sonnet_46')
+        p = create_provider('premium_claude')
         assert isinstance(p, AIProvider)
         assert hasattr(p, 'model_map')
-        assert 'antigravity_claude_sonnet_46' in p.model_map
+        assert 'premium_claude' in p.model_map
