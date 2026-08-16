@@ -5,7 +5,6 @@ and unified error handling in the router.
 """
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any
@@ -47,24 +46,27 @@ def classify_error(code: str) -> AIError:
 
 def from_exception(exc: Exception, provider: str) -> AIError:
     """Create an AIError from an exception."""
-    msg = str(exc)
+    msg = str(exc).lower()
     code = "GENERATION"
 
-    # Classify common error types
-    if "rate limit" in msg.lower() or "429" in msg:
+    # Classify common error types. Order matters: 'timeout' must be checked
+    # before 'connection' so messages like 'Connection timed out' classify
+    # as TIMEOUT (a sub-type of connection failure) rather than the
+    # generic CONNECTION bucket.
+    if "rate limit" in msg or "429" in msg:
         code = "RATE_LIMIT"
-    elif "timeout" in msg.lower():
+    elif "timeout" in msg or "timed out" in msg:
         code = "TIMEOUT"
-    elif "auth" in msg.lower() or "401" in msg or "403" in msg:
+    elif "auth" in msg or "401" in msg or "403" in msg:
         code = "AUTH"
-    elif "connection" in msg.lower():
+    elif "connection" in msg or "refused" in msg or "reset" in msg or "unreachable" in msg:
         code = "CONNECTION"
     elif "500" in msg or "502" in msg or "503" in msg:
         code = "SERVER_ERROR"
 
     return AIError(
         code=code,
-        message=msg[:500],  # Truncate long messages
+        message=str(exc)[:500],  # Preserve original-case message
         provider=provider,
         retryable=code in RETRYABLE_CODES,
         details={"exception_type": type(exc).__name__},
@@ -97,7 +99,11 @@ def ensure_error_dict(result: dict[str, Any], provider: str) -> dict[str, Any]:
 
     If the result already has an 'error' key, standardize it.
     If it has 'text', wrap it in the standard format.
+    If the input is not a dict (e.g. an int, str, None), wrap it as an
+    UNKNOWN error so callers always get a dict.
     """
+    if not isinstance(result, dict):
+        return {"error": str(result), "code": "UNKNOWN", "provider": provider}
     if "error" in result:
         if "code" not in result:
             result["code"] = "GENERATION"

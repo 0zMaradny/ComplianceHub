@@ -10,10 +10,8 @@ Extends file_parser.py with:
 import os
 import re
 import logging
-import shutil
-from pathlib import Path
 
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 
 logger = logging.getLogger(__name__)
 

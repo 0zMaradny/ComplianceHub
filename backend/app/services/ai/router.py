@@ -35,7 +35,6 @@ from .debugger import Autodebugger
 from .rate_limiter import ProviderRateLimiter
 from .model_registry import ANTIGRAVITY_NAMES, FRONTIER_NAMES, STRONG_NAMES, GROQ_NAMES, LOCAL_NAMES, ALL_MODELS, TASK_PRIORITY
 from app import settings as app_settings
-from app.services.validator import validate_and_heal
 
 logger = logging.getLogger(__name__)
 

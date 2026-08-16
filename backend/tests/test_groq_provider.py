@@ -7,9 +7,13 @@ from app.services.ai.groq_provider import GroqProvider
 
 class TestGroqProvider:
     def test_init_reads_env_key(self):
-        with patch.dict('app.services.ai.groq_provider.os.environ',
-                        {'GROQ_API_KEY': 'gsk_test_key'}):
+        # Patch os.environ, then reload BOTH app.settings (which reads env
+        # at module-import time) AND the provider (which re-imports the
+        # value from settings) so the new key takes effect.
+        with patch.dict('os.environ', {'GROQ_API_KEY': 'gsk_test_key'}):
             import importlib
+            import app.settings
+            importlib.reload(app.settings)
             import app.services.ai.groq_provider as gp
             importlib.reload(gp)
             p = gp.GroqProvider()

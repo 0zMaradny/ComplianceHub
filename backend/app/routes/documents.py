@@ -1,6 +1,5 @@
 import os
 import json
-import mimetypes
 import zipfile
 import uuid
 import shutil

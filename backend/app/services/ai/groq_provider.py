@@ -3,7 +3,7 @@ from typing import Any
 from openai import OpenAI
 
 from . import AIProvider
-from .errors import from_exception, from_http_error
+from .errors import from_exception
 from .json_utils import extract_json
 from app.settings import GROQ_API_KEY
 

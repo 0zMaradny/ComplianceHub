@@ -142,7 +142,6 @@ def _extract_ncs(text: str) -> list[dict]:
         r'(?:#?\d+\s*)?(?:NC|Non-Conformity|Nonconformity|Finding)\s*[-–—:]*\s*(Major|Minor)?\s*[-–—:]+\s*(.+?)(?:\s*\(?(?:Clause|Cl)\s*([\d.]+)\)?)?(?:\s*$|\s*\n)',
         re.I
     )
-    continuation_pattern = re.compile(r'^\s+(.+)$')
     i = 0
     lines = text.split('\n')
     while i < len(lines):

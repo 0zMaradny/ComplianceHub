@@ -1,7 +1,10 @@
+import logging
 import os
 import re
 from docx import Document
 from app import settings as app_settings
+
+logger = logging.getLogger(__name__)
 
 
 def parse_with_markitdown(filepath):

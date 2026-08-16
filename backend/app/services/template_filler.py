@@ -4,16 +4,12 @@ Loads a TÜV .docx/.xlsx form and injects AI-generated data into labeled fields,
 clause tables, and findings/NC tables. Layout is preserved 100%.
 """
 
-import os
 import logging
 
 from docx import Document
 from docx.shared import Pt, RGBColor
 
-from app.services.template_manager import (
-    TEMPLATES_DIR, fill_cell, find_table_by_header, find_table_by_col_count,
-    set_cell_shading, TUV_RED, TUV_BLUE,
-)
+from app.services.template_manager import find_table_by_header
 
 logger = logging.getLogger(__name__)
 

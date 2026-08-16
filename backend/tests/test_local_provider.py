@@ -11,10 +11,15 @@ class TestLocalProviderInit:
         assert p._call is not None
 
     def test_reads_env_vars(self):
-        with patch.dict('app.services.ai.local_provider.os.environ',
+        # LOCAL_BASE and LOCAL_TIMEOUT are read from os.environ at module
+        # import time. Patch os.environ, then reload BOTH app.settings and
+        # local_provider so the new values take effect.
+        with patch.dict('os.environ',
                         {'LOCAL_AI_BASE': 'http://custom:9090',
                          'LOCAL_AI_TIMEOUT': '30'}):
             import importlib
+            import app.settings
+            importlib.reload(app.settings)
             import app.services.ai.local_provider as lp
             importlib.reload(lp)
             assert lp.LOCAL_BASE == 'http://custom:9090'

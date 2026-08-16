@@ -166,7 +166,7 @@ class TestExcelExport:
 class TestDocumentGenerators:
     def test_all_generators_import(self):
         from app.services.document_generator import GENERATORS
-        assert len(GENERATORS) == 32
+        assert len(GENERATORS) == 35
 
     def test_all_generators_have_client_key(self):
         import inspect
@@ -213,7 +213,8 @@ class TestDocumentGenerators:
             path = generate_tnl(data, f.name, client_key="uacc")
             assert os.path.exists(path)
             assert os.path.getsize(path) > 1000
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_tnl_generation_arabic(self):
         from app.services.document_generator import generate_tnl
@@ -227,7 +228,8 @@ class TestDocumentGenerators:
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
             path = generate_tnl(data, f.name, client_key="msd_moi")
             assert os.path.exists(path)
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_certificate_generation(self):
         from app.services.document_generator import generate_certificate
@@ -242,7 +244,8 @@ class TestDocumentGenerators:
         with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as f:
             path = generate_certificate(data, f.name, client_key="uacc")
             assert os.path.exists(path)
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_iso_checklist_generation(self):
         from app.services.document_generator import generate_iso_checklist
@@ -266,7 +269,8 @@ class TestDocumentGenerators:
             path = generate_iso_checklist(data, f.name, client_key="uacc")
             assert os.path.exists(path)
             assert os.path.getsize(path) > 0
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_checklist_docx_two_section_layout(self):
         from app.services.document_generator import generate_iso_checklist
@@ -296,7 +300,8 @@ class TestDocumentGenerators:
             cell_text = ' '.join(c.text for t in doc.tables for r in t.rows for c in r.cells)
             assert 'How are external issues identified?' in cell_text
             assert 'Strategic planning documents' in cell_text
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
 
 # ── Bilingual System Tests ──
@@ -343,7 +348,8 @@ class TestExcelFormulas:
             ws = wb["Risk Register"]
             k5 = str(ws["K5"].value)
             assert "(1-J5/4)" in k5, f"MOI formula not found: {k5}"
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_uacc_risk_formula(self):
         from app.services.excel_generator import generate_risk_register
@@ -354,7 +360,8 @@ class TestExcelFormulas:
             ws = wb["Risk Register"]
             k5 = str(ws["K5"].value)
             assert "(1-J5/5)" in k5, f"UACC formula not found: {k5}"
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_hidden_lists_sheet(self):
         from app.services.excel_generator import generate_risk_register
@@ -363,7 +370,8 @@ class TestExcelFormulas:
             from openpyxl import load_workbook
             wb = load_workbook(path)
             assert "_Lists" in wb.sheetnames
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
     def test_enms_lxS_formula(self):
         from app.services.excel_generator import generate_enms_register
@@ -374,7 +382,8 @@ class TestExcelFormulas:
             ws = wb["EnMS Risk & Opportunity"]
             h4 = str(ws["H4"].value)
             assert "F4*G4" in h4 or "F4" in h4, f"L×S formula not found: {h4}"
-            os.unlink(path)
+            try: os.unlink(path)
+            except OSError: pass  # Windows may hold the file lock briefly
 
 
 # ── AI Pipeline Tests ──
@@ -440,7 +449,7 @@ class TestCodeQuality:
     def test_compileall_clean(self):
         import subprocess
         r = subprocess.run(
-            ["python3", "-m", "compileall", ".", "-q"],
+            [sys.executable, "-m", "compileall", ".", "-q"],
             capture_output=True,
             cwd=os.path.join(os.path.dirname(__file__), '..')
         )
@@ -449,7 +458,7 @@ class TestCodeQuality:
     def test_pyflakes_clean(self):
         import subprocess
         r = subprocess.run(
-            ["python3", "-m", "pyflakes", "app/"],
+            [sys.executable, "-m", "pyflakes", "app/"],
             capture_output=True,
             cwd=os.path.join(os.path.dirname(__file__), '..')
         )
@@ -502,7 +511,8 @@ class TestUploadPipe:
             doc = DocxDocument()
             doc.save(f.name)
             valid_docx = open(f.name, "rb").read()
-            os.unlink(f.name)
+            try: os.unlink(f.name)
+            except OSError: pass  # Windows may hold the file lock briefly
         with TestClient(app) as c:
             res = c.post("/api/upload", files={
                 "audit_notes": ("notes.txt", b"plain text", "text/plain"),

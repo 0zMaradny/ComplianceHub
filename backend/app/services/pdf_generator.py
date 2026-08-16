@@ -22,6 +22,33 @@ FONT_BI = os.path.join(FONT_DIR, 'LiberationSans-BoldItalic.ttf')
 ARABIC_FONT_REGULAR = os.path.join(ARABIC_FONT_DIR, 'NotoNaskhArabic-Regular.ttf')
 ARABIC_FONT_BOLD = os.path.join(ARABIC_FONT_DIR, 'NotoNaskhArabic-Bold.ttf')
 
+
+def _resolve_windows_fonts():
+    """Fall back to Windows Arial when Linux Liberation Sans is not present.
+
+    Arial is metrically compatible with Liberation Sans / Helvetica, so PDFs
+    look the same on both platforms. Returns a dict of {style: ttf_path}
+    for regular/bold/italic/bold_italic, or None if not available.
+    """
+    if os.name != 'nt':
+        return None
+    win_fonts = os.path.join(os.environ.get('WINDIR', r'C:\Windows'), 'Fonts')
+    if not os.path.isdir(win_fonts):
+        return None
+    mapping = {
+        'regular': 'arial.ttf',
+        'bold': 'arialbd.ttf',
+        'italic': 'ariali.ttf',
+        'bold_italic': 'arialbi.ttf',
+    }
+    out = {}
+    for style, fname in mapping.items():
+        p = os.path.join(win_fonts, fname)
+        if not os.path.exists(p):
+            return None
+        out[style] = p
+    return out
+
 ARABIC_RANGE = set(range(0x0600, 0x06FF + 1)) | set(range(0x0750, 0x077F + 1)) | set(range(0x08A0, 0x08FF + 1)) | set(range(0xFE70, 0xFEFF + 1)) | set(range(0xFB50, 0xFDFF + 1))
 
 
@@ -37,15 +64,36 @@ WHITE = (255, 255, 255)
 
 
 class AuditPDF(FPDF):
+    def set_font(self, family=None, style='', size=0):
+        # When no TTF was registered (no Liberation Sans on Linux, no Arial on
+        # Windows), fall back to fpdf2's built-in Helvetica by translating the
+        # alias 'Sans' → 'helvetica' on the fly.
+        if getattr(self, '_builtin_helvetica', False) and family == 'Sans':
+            family = 'helvetica'
+        return super().set_font(family, style, size)
+
     def __init__(self, doc_type_label='Document', standard=''):
         super().__init__('P', 'mm', 'A4')
         self.doc_type_label = doc_type_label
         self.standard = standard
         if os.path.exists(FONT_REGULAR):
+            # Linux / Railway / container — use Liberation Sans
             self.add_font('Sans', '', FONT_REGULAR)
             self.add_font('Sans', 'B', FONT_BOLD)
             self.add_font('Sans', 'I', FONT_ITALIC)
             self.add_font('Sans', 'BI', FONT_BI)
+        else:
+            # Windows / dev — fall back to Arial (always present in C:\Windows\Fonts)
+            win_fonts = _resolve_windows_fonts()
+            if win_fonts:
+                self.add_font('Sans', '', win_fonts['regular'])
+                self.add_font('Sans', 'B', win_fonts['bold'])
+                self.add_font('Sans', 'I', win_fonts['italic'])
+                self.add_font('Sans', 'BI', win_fonts['bold_italic'])
+            else:
+                # Last-resort fallback: alias 'Sans' to fpdf2's built-in Helvetica
+                # by translating the family on the fly in our overridden set_font.
+                self._builtin_helvetica = True
         if os.path.exists(ARABIC_FONT_REGULAR):
             self.add_font('Arabic', '', ARABIC_FONT_REGULAR)
             self.add_font('Arabic', 'B', ARABIC_FONT_BOLD)

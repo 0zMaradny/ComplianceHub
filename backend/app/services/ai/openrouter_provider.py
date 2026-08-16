@@ -13,7 +13,7 @@ import urllib.request
 import urllib.error
 from typing import Any
 
-from .errors import from_http_error, from_exception, ensure_error_dict
+from .errors import from_http_error, from_exception
 
 logger = logging.getLogger(__name__)
 

@@ -7,8 +7,6 @@ with past NCs / findings / terminology.
 Embeddings via sqlite-vec are optional; FTS5 works with zero extra deps.
 """
 
-import os
-import json
 import sqlite3
 import logging
 from pathlib import Path

@@ -78,6 +78,7 @@ TABLE_HEADERS = {
         "daily_schedule": ["Day", "Date", "Time", "Activity", "Auditee", "Auditor", "Clause"],
         "participants": ["Name", "Company", "Function / Department", "Closing Meeting", "Signature"],
         "nc_table": ["Clause", "Severity", "Description", "Due Date"],
+        "checklist": ["Clause", "Title", "Status", "Findings", "Evidence", "Notes"],
         "certificate_fields": [
             "Certificate Number", "Client", "Standard", "Audit Date", "Scope",
             "Lead Auditor", "Certification Body", "Certification Decision",
@@ -90,6 +91,7 @@ TABLE_HEADERS = {
         "daily_schedule": ["اليوم", "التاريخ", "الوقت", "النشاط", "المراجَع", "المراجع", "البند"],
         "participants": ["الاسم", "الشركة", "الوظيفة / القسم", "اجتماع الإغلاق", "التوقيع"],
         "nc_table": ["البند", "الخطورة", "الوصف", "تاريخ الاستحقاق"],
+        "checklist": ["البند", "العنوان", "الحالة", "النتائج", "الأدلة", "ملاحظات"],
         "certificate_fields": [
             "رقم الشهادة", "العميل", "المواصفة", "تاريخ المراجعة", "النطاق",
             "المراجع الرئيسي", "جهة الاعتماد", "قرار الاعتماد",

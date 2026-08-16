@@ -129,7 +129,7 @@ def add_page_number(doc):
     footer.is_linked_to_previous = False
     p = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = apply_tuv_font(p.add_run('Page '), 'Arial', 8, color=RGBColor(0x66, 0x66, 0x66))
+    apply_tuv_font(p.add_run('Page '), 'Arial', 8, color=RGBColor(0x66, 0x66, 0x66))
     fld_char1 = OxmlElement('w:fldChar')
     fld_char1.set(qn('w:fldCharType'), 'begin')
     p.runs[-1]._r.addnext(fld_char1)
