@@ -62,3 +62,4 @@ Thumbs.db
 backend/data/
 backend/app/data/
 backend/compliancehub.db
+node_modules/
