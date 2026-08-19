@@ -1,0 +1,409 @@
+{
+  "file_type": "docx",
+  "total_paragraphs": 9,
+  "total_tables": 6,
+  "total_form_fields": 16,
+  "sections": [],
+  "paragraphs_sample": [
+    {
+      "index": 1,
+      "style": "Normal",
+      "text": "Declaration of independence"
+    },
+    {
+      "index": 3,
+      "style": "Normal",
+      "text": "All the members of the audit team have signed the declaration of independence, in which they are committed that there is no professional relationship of any kind and have not provided any kind of advi"
+    },
+    {
+      "index": 10,
+      "style": "footnote text",
+      "text": "Changes of the audit action are possible"
+    },
+    {
+      "index": 11,
+      "style": "footnote text",
+      "text": "2 Is to be appointed by the company"
+    },
+    {
+      "index": 12,
+      "style": "footnote text",
+      "text": "3 for ISO 45001: 1) management legally responsible for occupational health and safety. 2) personnel responsible for monitoring employees’ health (e.g., doctors and nurses) 3) employees’ representative"
+    },
+    {
+      "index": 13,
+      "style": "footnote text",
+      "text": "4 The participants in the closing meeting must always be updated here in the event of a change or listed separately in the audit report."
+    },
+    {
+      "index": 14,
+      "style": "footnote text",
+      "text": "for ISO 45001: A justification must be provided if certain people are unable to attend the closing meeting."
+    },
+    {
+      "index": 15,
+      "style": "footnote text",
+      "text": "5 The required number of shifts must be taken from the OEB and the audit planning must be entered in the audit plan."
+    },
+    {
+      "index": 16,
+      "style": "footnote text",
+      "text": "6)The customer has agreed to the figures stated here."
+    }
+  ],
+  "tables": [
+    {
+      "table_index": 0,
+      "rows": 6,
+      "cols": 4,
+      "header_row": [
+        "1.  Company information",
+        "1.  Company information",
+        "1.  Company information",
+        "1.  Company information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Company name",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Address",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Other audited sites",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Company representative",
+            "",
+            "E-mail",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Scope of application / Certificate text",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 1,
+      "rows": 10,
+      "cols": 9,
+      "header_row": [
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Audit date",
+            "Audit date",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 2:  dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "Remote: yes / no / partly"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Audit method:",
+            "Audit method:",
+            "Audit method:",
+            "No. of employees6): xx",
+            "No. of employees6): xx",
+            "No. of employees6): xx",
+            "No. of employees in scope6): xx",
+            "No. of employees in scope6): xx",
+            "Audit duration in hours:"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Audit standard(s)",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 2:",
+            "Standard 3:",
+            "Standard 4:",
+            "Standard 5:"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Audit standard(s)"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Audit type \nper standard",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 2,
+      "rows": 3,
+      "cols": 2,
+      "header_row": [
+        "General",
+        "General"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Audit Objectives",
+            "Conformity of the management system with the respective standard/s\nAbility of th"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Audit Language",
+            "German / English"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 3,
+      "rows": 13,
+      "cols": 4,
+      "header_row": [
+        "Date / Time1",
+        "Audit content / Processes",
+        "Department / Organizational unit / Participants 2 3 4",
+        "Auditor(s)"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "dd.mm.yyyy",
+            "Location address (Remote incl. method to be specified per audit unit)",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "",
+            "Opening meeting Introduction of all participants, Confirmation of the audit plan",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "",
+            "For shift work: Auditing of Shift 1 (if necessary acc. IAF MD 5)",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 4,
+      "rows": 3,
+      "cols": 4,
+      "header_row": [
+        "Place / Date",
+        "",
+        "",
+        ""
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Lead auditor",
+            "",
+            "Auditor(s)",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Signature",
+            "",
+            "Signature(s)",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 5,
+      "rows": 2,
+      "cols": 1,
+      "header_row": [
+        "Significant issues impacting on the audit plan"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Notes:\nThe audit plan has been confirmed by the customer."
+          ]
+        }
+      ]
+    }
+  ],
+  "form_fields": [
+    {
+      "alias": null,
+      "tag": "Audit method",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 1",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 2",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 3",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 4",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 5",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Scopes",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    }
+  ],
+  "merge_fields": [],
+  "header_text": "",
+  "footer_text": ""
+}

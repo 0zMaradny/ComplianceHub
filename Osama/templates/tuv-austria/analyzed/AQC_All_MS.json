@@ -1,0 +1,281 @@
+{
+  "file_type": "docx",
+  "total_paragraphs": 6,
+  "total_tables": 4,
+  "total_form_fields": 0,
+  "sections": [],
+  "paragraphs_sample": [
+    {
+      "index": 5,
+      "style": "Normal",
+      "text": "Instructions for the completion of Questionnaire:"
+    },
+    {
+      "index": 6,
+      "style": "Normal",
+      "text": "The column «Requirements» identifies the clause of the standard (s), according to which the audit is conducted. In Section “A” the clauses of the Standard ISO 20000 are recorded. The matching with oth"
+    },
+    {
+      "index": 7,
+      "style": "Normal",
+      "text": "In the column «Evidence of the audit» are recorded the objective evidences, which are evaluated during the audit (files, examples, etc.)"
+    },
+    {
+      "index": 8,
+      "style": "Normal",
+      "text": "The column “A” is completed with the result of the evidences’ evaluation, which are submitted to the auditor, as follows:"
+    },
+    {
+      "index": 10,
+      "style": "Normal",
+      "text": "For each audit a separate completed questionnaire is required."
+    },
+    {
+      "index": 11,
+      "style": "Normal",
+      "text": "The questionnaire is an integral part of the overall audit documentation. Incomplete filling and / or non completion of it, in a whole or in a part, is reason for non completion of the relevant audit "
+    }
+  ],
+  "tables": [
+    {
+      "table_index": 0,
+      "rows": 20,
+      "cols": 16,
+      "header_row": [
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information",
+        "1. Basic Company Information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Company Name",
+            "Company Name",
+            "Company Name",
+            "Company Name",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf",
+            "General Authority of Awqaf"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo",
+            "ITCC, Prince Turki bin Abdulaziz Al Awwal Rd, Building No. CU01, Riyadh – Kingdo"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Company Representative",
+            "Company Representative",
+            "Company Representative",
+            "Company Representative",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa",
+            "Sara Al-Angari/ 00966118390717/ s.alangari@awqaf.gov.sa"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s",
+            "Enhancing the role of endorsements in economic, social development, and social s"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 1,
+      "rows": 2,
+      "cols": 3,
+      "header_row": [
+        "SIGNATURES",
+        "Tariq Al Hassan",
+        ""
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "",
+            "Lead Auditor",
+            "Auditors"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 2,
+      "rows": 3,
+      "cols": 2,
+      "header_row": [
+        "1: Full Compliance",
+        "3: Non Conformity (-ies): Correction through the submission of Documents"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "2: (O): Point of Improvement, the effectiveness of the corrective action is eval",
+            "4: Non Conformity (-ies): Correction through Re-audit"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "NA: Not Applicable or/and is Excluded",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 3,
+      "rows": 72,
+      "cols": 4,
+      "header_row": [
+        "ISO/IEC 20000-1:2018",
+        "ISO/IEC 20000-1:2018",
+        "ISO/IEC 20000-1:2018",
+        "ISO/IEC 20000-1:2018"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Requirements",
+            "Objective Evidence – Samples",
+            "Objective Evidence – Samples",
+            "Α"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "4 Context of the organization",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "4.1 Understanding the organization and its context\n\nThe organization shall deter",
+            "GAA has established, determined, and documented the external and internal issues",
+            "GAA has established, determined, and documented the external and internal issues",
+            "1"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "4.2 Understanding the needs and expectations of interested parties.\n\nThe organiz",
+            "GAA has identified interested parties and their needs that are related to its co",
+            "GAA has identified interested parties and their needs that are related to its co",
+            "1"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "4.3 Determining the scope of the information management system\n\ndocumented\nThe o",
+            "GAA has defined the boundaries taking into consideration SMS and relevant issues",
+            "GAA has defined the boundaries taking into consideration SMS and relevant issues",
+            "1"
+          ]
+        }
+      ]
+    }
+  ],
+  "form_fields": [],
+  "merge_fields": [
+    "Requirements",
+    "Evidence of the audit"
+  ],
+  "header_text": "",
+  "footer_text": ""
+}

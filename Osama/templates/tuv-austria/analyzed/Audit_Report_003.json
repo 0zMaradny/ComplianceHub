@@ -1,0 +1,1750 @@
+{
+  "file_type": "docx",
+  "total_paragraphs": 9,
+  "total_tables": 19,
+  "total_form_fields": 162,
+  "sections": [],
+  "paragraphs_sample": [
+    {
+      "index": 31,
+      "style": "Normal",
+      "text": "Other Information / Disclaimer:"
+    },
+    {
+      "index": 33,
+      "style": "Normal",
+      "text": "During the validity of the certificate, the certified company is obliged to inform the certification body about relevant changes in the management system and its documentation."
+    },
+    {
+      "index": 34,
+      "style": "Normal",
+      "text": "It should be noted that the audit is conducted based on sampling of available information, which may result in nonconformities in addition to those documented during the audit."
+    },
+    {
+      "index": 35,
+      "style": "Normal",
+      "text": "The result of the audit does not relieve the audited company of its responsibility for the control of the existing management system and for the maintenance and conformity with the requirements of the"
+    },
+    {
+      "index": 36,
+      "style": "Normal",
+      "text": "The certification body or the auditor shall under no circumstances replace the control carried out by the competent national authorities."
+    },
+    {
+      "index": 38,
+      "style": "Normal",
+      "text": "*) The audit involves assessing the performance of the management system in ensuring that the company fundamentally meets the applicable legal, regulatory, and contractual requirements. This evaluatio"
+    },
+    {
+      "index": 42,
+      "style": "List Paragraph",
+      "text": "Client"
+    },
+    {
+      "index": 43,
+      "style": "List Paragraph",
+      "text": "Certification body of TÜV AUSTRIA"
+    },
+    {
+      "index": 44,
+      "style": "List Paragraph",
+      "text": "Audit team"
+    }
+  ],
+  "tables": [
+    {
+      "table_index": 0,
+      "rows": 6,
+      "cols": 4,
+      "header_row": [
+        "1.  Company information",
+        "1.  Company information",
+        "1.  Company information",
+        "1.  Company information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Company name",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Address",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Other audited sites",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Company representative",
+            "",
+            "E-mail",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Scope of certification",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 1,
+      "rows": 10,
+      "cols": 9,
+      "header_row": [
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Audit date",
+            "Audit date",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 2:  dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "Remote: no / yes / partly"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Audit method:",
+            "Audit method:",
+            "Audit method:",
+            "No. of employees: xx",
+            "No. of employees: xx",
+            "No. of employees in scope: xx",
+            "No. of employees in scope: xx",
+            "No. of employees in scope: xx",
+            "Audit duration: acc. plan"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Audit standard(s)",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 2:",
+            "Standard 3:",
+            "Standard 3:",
+            "Standard 4:",
+            "Standard 5:"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Audit standard(s)"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Audit type \nper standard",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 2,
+      "rows": 3,
+      "cols": 1,
+      "header_row": [
+        "3. Audit objectives"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "The audit objectives are the following:\nDetermination of the conformity of the c"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "*) RATING of audit findings:\n1:    Fully compliant\n2:    Opportunity for improve"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 3,
+      "rows": 1,
+      "cols": 1,
+      "header_row": [
+        "4. Detailed result of the audit"
+      ],
+      "sample_rows": []
+    },
+    {
+      "table_index": 4,
+      "rows": 1,
+      "cols": 2,
+      "header_row": [
+        "Result of Audit stage 1",
+        ""
+      ],
+      "sample_rows": []
+    },
+    {
+      "table_index": 5,
+      "rows": 2,
+      "cols": 6,
+      "header_row": [
+        "Requirement",
+        "Standard 1:",
+        "Standard 2:",
+        "Standard 3:",
+        "Standard 4:",
+        "Standard 5:"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Requirement"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 6,
+      "rows": 6,
+      "cols": 6,
+      "header_row": [
+        "Α. Management system\n(Justification of any exclusion for ISO 9001)",
+        "Rating / Evidence / Comment",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Β. Management review",
+            "Rating / Evidence / Comment",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "C. Internal audit",
+            "Rating / Evidence / Comment",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "D. Legislative Requirements\n(License of Operation, Authorizations etc.)",
+            "Rating / Evidence / Comment",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Ε. Infrastructure, basic requirements, HACCP/oPRP plans",
+            "Rating / Evidence / Comment",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "F. Miscellaneous",
+            "Rating / Evidence / Comment",
+            "",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 7,
+      "rows": 13,
+      "cols": 8,
+      "header_row": [
+        "LIST OF DEVIATIONS FOR STAGE 1",
+        "LIST OF DEVIATIONS FOR STAGE 1",
+        "LIST OF DEVIATIONS FOR STAGE 1",
+        "LIST OF DEVIATIONS FOR STAGE 1",
+        "LIST OF DEVIATIONS FOR STAGE 1",
+        "Time allowed to close deviations until \nmaximum 6 months after the completion of",
+        "Time allowed to close deviations until \nmaximum 6 months after the completion of",
+        ""
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "No.",
+            "Description of finding",
+            "Description of finding",
+            "Relevant standard",
+            "Clause of the standard",
+            "Corrective action",
+            "Correction evidence",
+            "Rating of corrective action"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 8,
+      "rows": 88,
+      "cols": 5,
+      "header_row": [
+        "Audit conclusions",
+        "Audit conclusions",
+        "Audited",
+        "Audited",
+        "Rating *)"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Mandatory requirements",
+            "Mandatory requirements",
+            "Mandatory requirements",
+            "Mandatory requirements",
+            "Mandatory requirements"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Compliance to all the requirements of the relevant management system standard (o",
+            "Compliance to all the requirements of the relevant management system standard (o",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Monitoring of the performance, measurement, reports, and reviews in comparison t",
+            "Monitoring of the performance, measurement, reports, and reviews in comparison t",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:",
+            "Conclusion / Comment:"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 9,
+      "rows": 16,
+      "cols": 4,
+      "header_row": [
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Annex A of ISO 27001:2022",
+            "CA / R",
+            "1. SA",
+            "2. SA"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "05. Organizational information security"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "06. Configuration- and data management"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "07. Human resource security"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "08. Asset Management"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 10,
+      "rows": 10,
+      "cols": 4,
+      "header_row": [
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Annex A and Annex B of ISO 27701:2019",
+            "CA / R",
+            "1. SA",
+            "2. SA"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "A.7.2 Conditions for collection and processing"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "A.7.3 Obligations to PII principals"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "A.7.4 Privacy by design and privacy by default"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "A.7.5 PII sharing, transfer and disclosure"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 11,
+      "rows": 6,
+      "cols": 4,
+      "header_row": [
+        "Critical processes, systems, and applications (only applies to IT-SiKat)",
+        "CA / R",
+        "1. SA",
+        "2. SA"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Guidance system …"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Transmission technology"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Front-end system"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Used software"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Other:"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 12,
+      "rows": 15,
+      "cols": 2,
+      "header_row": [
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Process oriented audit according to ISO 20000-1",
+            "Audited"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "4 - Scope, processes of the service management system (SMS)"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "5 - Leadership and commitment"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "6 - Risks and opportunities, objectives of the SMS"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "7 - Ressources of the SMS"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 13,
+      "rows": 14,
+      "cols": 2,
+      "header_row": [
+        "Inspected requirements of the standard according to the audit plan",
+        "Inspected requirements of the standard according to the audit plan"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Process oriented audit according to ISO 22301",
+            "Audited"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "4 - Scope, processes of the business continuity management system (BCM)"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "5 - Leadership and commitment"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "6 - Risks and opportunities, objectives of the BCM"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "7 - Ressources of the BCM"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 14,
+      "rows": 5,
+      "cols": 2,
+      "header_row": [
+        "LIST OF POSITIVE FINDINGS",
+        "LIST OF POSITIVE FINDINGS"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "No.",
+            "Description"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 15,
+      "rows": 16,
+      "cols": 10,
+      "header_row": [
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES",
+        "LIST OF FINDINGS / NONCONFORMITIES"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "No.",
+            "Relevant standard",
+            "Clause of the standard",
+            "Description of finding",
+            "Description of finding",
+            "Rating *)",
+            "Root cause and corrective action",
+            "Completion of corrective action until:",
+            "Correction evidence for nonconformities",
+            "Evaluation/Verification of corrective action"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco",
+            "*) Rating: 1 = Fully compliant; 2 = Opportunity for improvement; 3 = Minor nonco"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit",
+            "NONCONFORMITIES from the last audit"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit",
+            "LIST OF FINDINGS / NONCONFORMITIES from this audit"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 16,
+      "rows": 8,
+      "cols": 8,
+      "header_row": [
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team",
+        "5. Recommendation of the audit team"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "The certification scope is appropriate",
+            "The certification scope is appropriate",
+            "The certification scope is appropriate",
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "The audit objectives have been fulfilled",
+            "The audit objectives have been fulfilled",
+            "The audit objectives have been fulfilled",
+            "Yes",
+            "No"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Standard(s)",
+            "Audit team suggestion",
+            "Audit team suggestion",
+            "Audit team suggestion",
+            "Audit team suggestion",
+            "Audit team suggestion",
+            "Audit team suggestion",
+            "Audit team suggestion"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "……………",
+            "Issue of the certificate",
+            "AFTER",
+            "no other action",
+            "no other action",
+            "no other action"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "……………",
+            "Maintenance of certificate",
+            "AFTER",
+            "Correction of nonconformities with the submission of documents",
+            "Correction of nonconformities with the submission of documents",
+            "Correction of nonconformities with the submission of documents"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 17,
+      "rows": 3,
+      "cols": 5,
+      "header_row": [
+        "Place, date:",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Lead auditor",
+            "",
+            "Auditor(s)",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Signature",
+            "",
+            "Signature",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 18,
+      "rows": 1,
+      "cols": 1,
+      "header_row": [
+        "6.  Distribution list"
+      ],
+      "sample_rows": []
+    }
+  ],
+  "form_fields": [
+    {
+      "alias": null,
+      "tag": "Audit method",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 1",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 2",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 3",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 4",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 5",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Scopes",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Statement on stage 1",
+      "content": "Statement on the summary result of stage 1 - please select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 1",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 2",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 3",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 4",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 5",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": "SCC**",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "SCC**",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "SCC**",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": "☐"
+    }
+  ],
+  "merge_fields": [],
+  "header_text": "",
+  "footer_text": ""
+}

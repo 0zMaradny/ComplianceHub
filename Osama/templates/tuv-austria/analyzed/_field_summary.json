@@ -1,0 +1,76 @@
+[
+  {
+    "template": "Auditplan_001",
+    "sdt_fields": 16,
+    "table_label_pairs": 12,
+    "field_types": {
+      "dropDownList": 12,
+      "unknown": 2,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Auditplan_ISMS_002",
+    "sdt_fields": 16,
+    "table_label_pairs": 12,
+    "field_types": {
+      "dropDownList": 12,
+      "unknown": 2,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Audit_Report_003",
+    "sdt_fields": 162,
+    "table_label_pairs": 13,
+    "field_types": {
+      "dropDownList": 21,
+      "unknown": 139,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Participation_List_005",
+    "sdt_fields": 68,
+    "table_label_pairs": 5,
+    "field_types": {
+      "dropDownList": 12,
+      "unknown": 54,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Checklist_QM_EM_HSE_033",
+    "sdt_fields": 298,
+    "table_label_pairs": 24,
+    "field_types": {
+      "dropDownList": 12,
+      "unknown": 284,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Certificate_Text_038",
+    "sdt_fields": 34,
+    "table_label_pairs": 15,
+    "field_types": {
+      "dropDownList": 12,
+      "unknown": 20,
+      "comboBox": 2
+    }
+  },
+  {
+    "template": "Ensan_MD_Calculation",
+    "sdt_fields": 3,
+    "table_label_pairs": 31,
+    "field_types": {
+      "dropDownList": 3
+    }
+  },
+  {
+    "template": "AQC_All_MS",
+    "sdt_fields": 0,
+    "table_label_pairs": 5,
+    "field_types": {}
+  }
+]

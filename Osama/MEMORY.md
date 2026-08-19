@@ -215,18 +215,6 @@ Audit clients come and go based on Osama's calendar. **Do not create permanent p
 ## Session Log
 _Newest first._
 
-### August 2026 — AI Provider Refresh + Agent Harness (08-16)
-- Registry rewritten to 21 models: PREMIUM (premium_claude/claude-sonnet-5) + 7 FRONTIER + 8 STRONG + 2 GROQ + 3 LOCAL; Gemini dropped from doc-gen chain (chat-only) per Mistake #5
-- Antigravity provider: key renamed antigravity_claude_sonnet_46 → premium_claude, model claude-sonnet-5 (retired -4-6)
-- Fixed Groq tier dead: router._provider_has_key only recognized legacy 'groq' key, not groq_llama/groq_scout
-- Added registry-driven /v1/models endpoint + MODELS_LIST to chat.py
-- Full AI test suite green: 84 passed (router 46 + providers + chat)
-- model_bench.py fixed (was broken: only benched openrouter, malformed dict) + verify_groq.py added
-- Branding scrub: Osama/*.md red #C00000 + black only (no blue hexes) — synced from G: OWL-Complete workspace
-- HARNESS.md created: portable agent bootstrap with 33 Cherny rules + memory table + model strip
-- tasks/ second brain created: todo.md + lessons.md correction log
-- Commits: 6671cc4 (provider refresh), e832672 (Groq fix + /v1/models, 84/84 green) — both pushed
-
 ### August 2026 — File Restoration (08-08)
 - SOUL.md restored from 07-08 original: replaced Chinese security template with English domain-specific content
 - SOUL.md enhanced: v3.1→v4.0 · added Quality Pipeline section · Law #14 (never Chinese) · skills 35→38 · Gemini 3→5 Gems · phone workflow

@@ -1,0 +1,533 @@
+{
+  "file_type": "docx",
+  "total_paragraphs": 0,
+  "total_tables": 3,
+  "total_form_fields": 68,
+  "sections": [],
+  "paragraphs_sample": [],
+  "tables": [
+    {
+      "table_index": 0,
+      "rows": 5,
+      "cols": 2,
+      "header_row": [
+        "1. Company information",
+        "1. Company information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Company name",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Address",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Other audited sites",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Company representative",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 1,
+      "rows": 10,
+      "cols": 8,
+      "header_row": [
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information",
+        "2. Audit information"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Audit date",
+            "Audit date",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 1:   dd.mm.yyyy",
+            "Stage 2:  dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "until:    dd.mm.yyyy",
+            "Remote: yes / no / partly"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Audit method:",
+            "Audit method:",
+            "Audit method:",
+            "No. of employees: xx",
+            "No. of employees: xx",
+            "No. of employees in scope: xx",
+            "No. of employees in scope: xx",
+            "Audit duration: acc. plan"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Audit standard(s)",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 1:",
+            "Standard 2:",
+            "Standard 3:",
+            "Standard 4:",
+            "Standard 5:"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Audit standard(s)"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Audit type \nper standard",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:",
+            "Audit type:"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 2,
+      "rows": 27,
+      "cols": 5,
+      "header_row": [
+        "Name",
+        "Company",
+        "Function / Department",
+        "Participation at the closing meeting",
+        "Signature"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "",
+            "",
+            "",
+            "Yes      No",
+            ""
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "",
+            "",
+            "",
+            "Yes      No",
+            ""
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "",
+            "",
+            "",
+            "Yes      No",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "",
+            "",
+            "",
+            "Yes      No",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "",
+            "",
+            "",
+            "Yes      No",
+            ""
+          ]
+        }
+      ]
+    }
+  ],
+  "form_fields": [
+    {
+      "alias": null,
+      "tag": "Audit method",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 1",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 2",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 3",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 4",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Standard 5",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": "Audit type",
+      "content": "Select"
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Scopes",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": "Audit team",
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    },
+    {
+      "alias": null,
+      "tag": null,
+      "content": ""
+    }
+  ],
+  "merge_fields": [],
+  "header_text": "",
+  "footer_text": ""
+}

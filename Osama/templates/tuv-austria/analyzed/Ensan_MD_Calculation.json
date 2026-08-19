@@ -1,0 +1,382 @@
+{
+  "file_type": "docx",
+  "total_paragraphs": 1,
+  "total_tables": 4,
+  "total_form_fields": 3,
+  "sections": [],
+  "paragraphs_sample": [
+    {
+      "index": 6,
+      "style": "Normal",
+      "text": "*calculations after applying the corrections and the 50% cut-offf limit"
+    }
+  ],
+  "tables": [
+    {
+      "table_index": 0,
+      "rows": 20,
+      "cols": 17,
+      "header_row": [
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION",
+        "COMPANY INFORMATION"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Company Name:",
+            "Company Name:",
+            "Company Name:",
+            "Company Name:",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)",
+            "Charitable Society for Orphans Care in Riyadh Region (Ensan)"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "Full Address \n(Street / Number / P.O/Town/Country)",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud",
+            "6969 Eastern Ring Branch Rd, 2325 Al Rawabi Dist., 14215 Riyadh, Kingdom of Saud"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "Other audited sites (permanent or temporary)",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A",
+            "N/A"
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Company Representative",
+            "Company Representative",
+            "Company Representative",
+            "Company Representative",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa",
+            "Mr. Abdullah Saad Alshehri – +966504449947- assh11@ensan.org.sa"
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Description of the company (number of personnel, basic business processes, comme",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i",
+            "Out of a deep sense of responsibility felt by the people of Riyadh towards the i"
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 1,
+      "rows": 25,
+      "cols": 6,
+      "header_row": [
+        "ANNEX I",
+        "ANNEX I",
+        "ANNEX I",
+        "ANNEX I",
+        "ANNEX I",
+        "ANNEX I"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "Individual Management Systems – Manday Calculation",
+            "Individual Management Systems – Manday Calculation",
+            "Individual Management Systems – Manday Calculation",
+            "Individual Management Systems – Manday Calculation",
+            "Individual Management Systems – Manday Calculation",
+            "Individual Management Systems – Manday Calculation"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Applicable Management System:",
+            "Applicable Management System:",
+            "Applicable Management System:",
+            "Applicable Management System:",
+            "ISO 37000: 2021, ISO 56002: 2019, ISO 37001: 2022, ISO 31000: 2018",
+            "ISO 37000: 2021, ISO 56002: 2019, ISO 37001: 2022, ISO 31000: 2018"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Complexity / risk  Ranking",
+            "Complexity / risk  Ranking",
+            "Complexity / risk  Ranking",
+            "Complexity / risk  Ranking",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Justification of Reduced Complexity / Risk",
+            "Justification of Reduced Complexity / Risk",
+            "Justification of Reduced Complexity / Risk",
+            "Justification of Reduced Complexity / Risk",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Total number of Personnel",
+            "Total number of Personnel",
+            "Total number of Personnel",
+            "33",
+            "Number of employees on shifts",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 2,
+      "rows": 31,
+      "cols": 6,
+      "header_row": [
+        "ANNEX II",
+        "ANNEX II",
+        "ANNEX II",
+        "ANNEX II",
+        "ANNEX II",
+        "ANNEX II"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "M/D CALCULATION – Integrated Management Systems",
+            "M/D CALCULATION – Integrated Management Systems",
+            "M/D CALCULATION – Integrated Management Systems",
+            "M/D CALCULATION – Integrated Management Systems",
+            "M/D CALCULATION – Integrated Management Systems",
+            "M/D CALCULATION – Integrated Management Systems"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "Applicable Management System:",
+            "Applicable Management System:",
+            "Applicable Management System:",
+            "ISO 37000: 2021, ISO 56002: 2019, ISO 37001: 2022, ISO 31000: 2018",
+            "ISO 37000: 2021, ISO 56002: 2019, ISO 37001: 2022, ISO 31000: 2018",
+            "ISO 37000: 2021, ISO 56002: 2019, ISO 37001: 2022, ISO 31000: 2018"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "Total number of Personnel",
+            "Total number of Personnel",
+            "",
+            "Number of employees on shifts",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "Number of employees without shifts",
+            "Number of employees without shifts",
+            "",
+            "Number of shifts",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "Permanent contracted personnel",
+            "Permanent contracted personnel",
+            "",
+            "Seasonal personnel",
+            "",
+            ""
+          ]
+        }
+      ]
+    },
+    {
+      "table_index": 3,
+      "rows": 14,
+      "cols": 6,
+      "header_row": [
+        "Final M/D calculation – Integrated Management Systems",
+        "Final M/D calculation – Integrated Management Systems",
+        "Final M/D calculation – Integrated Management Systems",
+        "Final M/D calculation – Integrated Management Systems",
+        "Final M/D calculation – Integrated Management Systems",
+        "Final M/D calculation – Integrated Management Systems"
+      ],
+      "sample_rows": [
+        {
+          "row": 1,
+          "cells": [
+            "METHOD 1: EXTENDED AUDIT APPROACH",
+            "METHOD 1: EXTENDED AUDIT APPROACH",
+            "METHOD 1: EXTENDED AUDIT APPROACH",
+            "METHOD 1: EXTENDED AUDIT APPROACH",
+            "METHOD 1: EXTENDED AUDIT APPROACH",
+            "METHOD 1: EXTENDED AUDIT APPROACH"
+          ]
+        },
+        {
+          "row": 2,
+          "cells": [
+            "",
+            "M/D after decrease / increase",
+            "Percentage % of decrease due to integrated audit",
+            "*Certification  / \nre - Certification  (Stage 1, 2)",
+            "*1st surveillance",
+            "*2nd surveillance"
+          ]
+        },
+        {
+          "row": 3,
+          "cells": [
+            "System 1",
+            "A=",
+            "Level of integration %:      %\nDue to: \n-     \n-     \n\nAbility to perform combin",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 4,
+          "cells": [
+            "System 2",
+            "B=",
+            "Level of integration %:      %\nDue to: \n-     \n-     \n\nAbility to perform combin",
+            "",
+            "",
+            ""
+          ]
+        },
+        {
+          "row": 5,
+          "cells": [
+            "System 3",
+            "C=",
+            "Level of integration %:      %\nDue to: \n-     \n-     \n\nAbility to perform combin",
+            "",
+            "",
+            ""
+          ]
+        }
+      ]
+    }
+  ],
+  "form_fields": [
+    {
+      "alias": null,
+      "tag": "AUDIT TYPE",
+      "content": "CERTIFICATION"
+    },
+    {
+      "alias": null,
+      "tag": "AUDIT KIND",
+      "content": "Choose an item."
+    },
+    {
+      "alias": null,
+      "tag": "RISK LEVEL",
+      "content": "Choose an item."
+    }
+  ],
+  "merge_fields": [],
+  "header_text": "KFM-002b, Rev.01",
+  "footer_text": ""
+}
